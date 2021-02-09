@@ -48,11 +48,15 @@ Now let's write out our causal model with these assumptions, and see which varia
 library("dagitty")
 library("ggdag")
 dag0<- dagify(
-  JobLevel ~ Years + Psycho + Age + Male + Edu + JobTime  + U,
+  JobLevel ~ Years + Psycho ,
+  JobLevel ~ Age + Male + Edu + JobTime  + U,
   Psycho ~ Male + Years,
   JobTime ~ Years + Psycho + U,
   Edu ~ Years + U,
   Age ~ Years,
+  exposure =  "Psycho",
+  latent = "U",
+  outcome =   "JobLevel",
   labels = c(
     "Psycho" = "Psychopathy",
     "JobLevel" = "JobLevel",
@@ -73,6 +77,9 @@ ggdag_adjustment_set(
   exposure =  "Psycho",
   outcome =   "JobLevel",
 ) + theme_dag_blank()
+
+ggdag::ggdag_collider(dag0)
+ggdag::ggdag_collider(dag0)
 ```
 
 
