@@ -44,6 +44,8 @@ We assume that
 Now let's write out our causal model with these assumptions, and see which variables we need to include to understand the relationship between Psychopathic Personality and JobLevel. 
 
 
+
+
 ```{r}
 library("dagitty")
 library("ggdag")
@@ -80,6 +82,55 @@ ggdag_adjustment_set(
 
 ggdag::ggdag_collider(dag0)
 ggdag::ggdag_collider(dag0)
+```
+
+```{r}
+
+# AARONS
+library("dagitty")
+library("ggdag")
+
+ag0<- dagify(
+  js_f ~ time + p_f + p_o + jt_f + male ,
+  p_f ~ male,
+  p_o ~ male,
+  jt_f ~ time,
+  exposure =  "p_o",
+ # latent = c("U_s","U_o"),
+  outcome =   "js_f",
+  labels = c(
+    "js_f" = "Prof Success Focal",
+   # "js_o" = "Prof Sucess Other",
+    "p_f" = "psychopathy_focal",
+    "p_o" = "psychopathy_other",
+   "time" = "time",
+    "jt_f" = "Job Time Focal",
+     "male" = "male"
+  )
+) 
+
+ggdag_adjustment_set(
+  ag0,
+  text = FALSE,
+  use_labels = "label",
+  shadow = TRUE,
+  exposure =  "p_o",
+  outcome =   "js_f",
+) + theme_dag_blank()
+
+ggdag::ggdag_collider(ag0)
+
+
+ggdag_dseparated(ag0,
+    from = "p_o",
+    to = "js",
+    controlling_for = c( "p_s",  "male"),
+    collider_lines = TRUE,
+    text = FALSE,
+        use_labels = "label"
+  ) + theme_dag_blank()
+
+
 ```
 
 
@@ -141,6 +192,29 @@ ggdag_adjustment_set(
 ```
 
 I doubt we believe such a model, though it might be implied by our decision to include all "control" covariates. In any case, we need to think about causation when adding "controls."
+
+
+## Round 2 
+
+```{r}
+ar<-dagify(
+  ps1 ~ py1 + py2 + reldur + jobdur + male, 
+  py1 ~~ py2,
+  py1 ~ male,
+  py2 ~ male,
+  reldur ~ py1 + py2,
+  jobdur ~ py2 + py1, 
+  exposure = "py2",
+  outcome = "ps1"
+)
+
+ggdag_collider(ar)+ theme_dag_blank()
+ggdag::ggdag_adjustment_set(ar, node_size = 14) +
+  theme(legend.position = "bottom") + theme_dag_blank()
+ggdag_drelationship(ar,collider_lines = TRUE, controlling_for = c("py1","py2","male","jobdur","reldur")) + theme_dag_blank()
+
+
+```
 
 
 <!-- Below is a more complicated version of the same.  -->

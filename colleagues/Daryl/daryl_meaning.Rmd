@@ -1,0 +1,416 @@
+---
+title: "Notes_Daryl_Meaning"
+author: "Joseph Bulbulia"
+date: "12/02/2021"
+output: html_document
+---
+
+
+```{r global_options, include = FALSE}
+knitr::opts_chunk$set(
+  fig.path = "figs/",
+  message = FALSE,
+  warning = FALSE,
+  collapse = TRUE,
+  echo = FALSE,
+  fig.width = 10,
+  fig.height = 8
+)
+#results="hide",
+#fig.width= 8,
+#fig.height=,
+#fig.fullwidth = TRUE)
+```
+
+```{r load_libraries, include=FALSE}
+library("tidyverse")
+library("dplyr")
+library("easystats")
+library("lme4")
+library("splines")
+library("mgcv")
+library("table1")
+library("ggplot2")
+library("ggeffects")
+library("gghighlight")
+library("Amelia")
+library("magrittr")
+library("patchwork")
+library("sjPlot")
+library("texreg")
+library("tinytex")
+library("kableExtra")
+library("ggpubr")
+#library("viridis")
+#library("ggpubr")
+#library("wesanderson")
+library("ggsci")
+library("report")
+library("papaja")
+library("here")
+library("citr")
+library("here")
+library("brms")
+library("rstan")
+library("rstanarm")
+library("tidybayes")
+library("dagitty")
+library("ggdag")
+library("lubridate")
+#library("furniture") # messes with table1
+library("ggdag")
+library("ggplot2")
+library("lubridate")
+library("viridisLite")
+library("msm")
+library("glmmTMB")
+library("bmlm")
+library("bayesplot")
+library("msm")
+library("broom")
+#library("magick")
+# rstan options
+rstan_options(auto_write=TRUE)
+options(mc.cores=parallel::detectCores ())
+#theme_set(theme_few())
+```
+
+```{r loaddata, include =FALSE, cache =TRUE}
+#load data
+df <- readRDS("~/The\ Virtues\ Project\ Dropbox/Joseph\ Bulbulia/00Bulbulia\ Pubs/2021/DATA/ldf.5")
+```
+
+```{r}
+# data
+ord_dates_class <- c("Early_March_2020", "BaseLine_2018_19_w10", "Pre_COVID_2019_w11", "Jan_Feb_2020", "L4_Lockdown_2020","Post_Lockdown_2020")
+cv <- df %>%
+  dplyr::filter(YearMeasured == 1) %>%
+  dplyr::filter(Wave == 2018 | Wave == 2019) %>%
+  dplyr::group_by(Id) %>% filter(n() > 1) %>%
+  dplyr::filter(n() != 0) %>%
+  dplyr::ungroup(Id) %>%
+  dplyr::mutate(Covid_Timeline =
+                 # ifelse(
+                 # TSCORE %in% 3837:3894,
+                 # "Baseling",
+                    as.factor(ifelse(
+                      TSCORE %in% 3895:3921,
+                      "Early_March_2020",
+                      ifelse(
+                        TSCORE %in% 3921:3954,
+                        "L4_Lockdown_2020",
+                        ifelse(
+                          TSCORE > 3954,
+                          "Post_Lockdown_2020",
+                          ifelse(
+                            TSCORE %in% 3842:3894,
+                            "Jan_Feb_2020",
+                          ifelse(
+                            TSCORE %in% 3665:3842 &
+                              Wave == 2019,
+                            "Pre_COVID_2019_w11",
+                            "BaseLine_2018_19_w10"
+                          )
+                        )
+                      )
+                    ) 
+                 ) ))%>%
+  dplyr::mutate(PrePostCovid =
+                  ifelse(
+                    TSCORE > 3895, "post_covid",
+                    ifelse(
+                      TSCORE < 3895 &
+                        Wave == 2019,
+                      "before_COVID_wave11",
+                      "baseline_wave10"
+                    )
+                  ))%>% 
+  dplyr::select(
+    TSCORE,
+    Wave,
+    PrePostCovid,
+    years,
+    Id,
+    SWB.SatPWI02, # your health
+    Hours.Work,
+    Hours.Exercise,
+    LIFEMEANING,
+    KESSLER6,
+    SWB.SatPWI03, # your future security
+    #  K6sum,
+    KESSLER6sum,
+    Age,
+    Male,
+    Relid,
+    Pol.Orient,
+    Urban,
+    GenCohort,
+    Edu,
+    YearMeasured,
+    Covid_Timeline,
+    HLTH.SleepHours,
+    HLTH.Fatigue,
+    LIFESAT,
+    PWI,
+    EthnicCats,
+    NZdep,
+    Partner,
+    Pol.Orient,
+    Urban,
+    Euro,
+    Religious,
+    NZdep,
+    WSCORE,
+    Religion.Church,
+    Emp.JobSecure,
+    Alcohol.Intensity,
+    Alcohol.Frequency
+  ) %>%
+  dplyr::group_by(Id) %>% filter(n() > 1) %>%
+  dplyr::filter(n() != 0) %>%
+  dplyr::ungroup(Id) %>%
+  dplyr::filter(!is.na(KESSLER6sum),
+                !is.na(LIFEMEANING)) %>%
+  dplyr::mutate(
+    Urban = (Urban),
+    Euro = (Euro),
+    Religious = as.factor(Religious),
+    Your_Health = (SWB.SatPWI02),
+    Your_Future_Security = SWB.SatPWI03, 
+    Covid_Timeline = as.factor(Covid_Timeline)
+  ) %>%
+  dplyr::mutate(
+    WSCORE = as.factor(WSCORE),
+    EduC = scale(as.numeric(Edu), scale = F, center = TRUE),
+    AgeDecadeC = scale(Age, scale = F, center = T) / 10,
+    HoursWork10_C = scale(Hours.Work, scale = F, center = T) / 10,
+    HoursSleep_C = scale(HLTH.SleepHours, scale=FALSE, center=TRUE),
+    HoursExercise_C = scale(Hours.Exercise, scale=FALSE, center=TRUE),
+    K6sum = as.integer(KESSLER6 * 6),
+    LIFEMEANING_S = scale(LIFEMEANING),
+    NZdepS = scale(NZdep),
+    PolOrientS = scale(Pol.Orient, scale = T, center = T),
+    Relid_S = scale(Relid, scale = T, center = T),
+    Conservative = Pol.Orient,
+    Conservative_S = PolOrientS,
+    Religion_Church_S = scale(Religion.Church),
+    Emp.JobSecure_S = scale(Emp.JobSecure),
+    KESSLER6sum_S = scale(KESSLER6sum),
+    KESSLER6sum = as.integer(KESSLER6sum),
+    Alcohol.Intensity_S = scale(Alcohol.Intensity),
+    Alcohol.Frequency_S = scale( Alcohol.Frequency),
+    Hours.Work = as.integer(Hours.Work),
+    Hours.Exercise = as.integer(Hours.Exercise)
+  )%>%
+  dplyr::mutate(Covid_Timeline = forcats::fct_relevel(Covid_Timeline, ord_dates_class))
+
+table(cv$Covid_Timeline)
+# 
+# 
+
+cv1 <- cbind(cv,
+             demean(
+               cv,
+               select = c(
+                 "Emp.JobSecure",
+                 "KESSLER6sum",
+                 "HLTH.SleepHours",
+                 "HLTH.Fatigue",
+                 "Religion.Church",
+                 "Hours.Work",
+                 "Hours.Exercise",
+                 "Relid",
+                 "Your_Health",
+                 "Your_Future_Security",
+                 "Religion.Church",
+                 "LIFEMEANING"
+               ),
+               group = "Id"
+             ))
+```
+
+
+
+# What is the relationship between meaning and pyschological distress? 
+
+```{r}
+# note that if we were to include both in the model we would cause the variables to separate further. 
+# To see this consider the dag
+# 
+## If you want to understand the relationship of ML to distress then condition on RELIGION
+dja <- dagify(
+k6  ~  cv + ml + rel,
+  rel ~  a + m,
+  ml ~ a + m + rel,
+  labels = c(
+    "k6" = "Kessler 6 Distress",
+    "ml" = "Meaning in Life",
+    "a" = "Age",
+    "cv" = "Covid Timeline",
+    "rel" = "Religion",
+    "m" = "Male"
+  ),
+  exposure =  "ml",
+  outcome =   "k6"
+) %>%
+  tidy_dagitty()
+colliders2 <- ggdag::ggdag_collider(
+  dja,
+  from = "ml",
+  to = "k6",
+  control_for(c(
+    "ml",
+    "a",
+    "m",
+    "rel"
+  )),
+  text = FALSE,
+  use_labels = "label"
+) +   theme_dag_blank() + labs(title = "Lurking collider counfounders")
+colliders2# note that if we were to include both in the model we would cause the variables to separate further. 
+# To see this consider the dag
+# 
+## If you want to understand the relationship of ML to distress then condition on RELIGION
+dja <- dagify(
+strat0 <- ggdag_drelationship(
+  dja,
+  from = "ml",
+  to = "k6",
+  controlling_for = c("cv",
+                      "rel"),
+  collider_lines = TRUE,
+  text = FALSE,
+  use_labels = "label"
+) + theme_dag_blank() + labs(title = "Do not include Age + Male or there will be confounding")
+
+
+ggdag::ggdag_adjustment_set(dja, node_size = 14, text = FALSE, use_labels = "label") +
+  theme(legend.position = "bottom") + theme_dag_blank()
+
+
+## IF YOU WANT TO UNDERSTND THE RELATIONSHIP BETWEEN CK an AND DISTRESS CONDITION while controlling for REL and ML??
+
+djc<- dagify(
+  k6  ~  cv + ml + rel,
+  rel ~  a + m,
+  ml ~ a + m + rel,
+  labels = c(
+    "k6" = "Kessler 6 Distress",
+    "ml" = "Meaning in Life",
+    "a" = "Age",
+    "cv" = "Covid Timeline",
+    "rel" = "Religion",
+    "m" = "Male"
+  ),
+  exposure =  "cv",
+  outcome =   "k6"
+) %>%
+  tidy_dagitty()
+colliders4 <- ggdag::ggdag_collider(
+  djc,
+  from = "cv",
+  to = "k6",
+  control_for(c(
+    "rel",
+    "a",
+    "m",
+    "ml"
+  )),
+  text = FALSE,
+  use_labels = "label"
+) +   theme_dag_blank() + labs(title = "Lurking collider counfounders")
+colliders4
+
+strat04<- ggdag_drelationship(
+  djc,
+  from = "cv",
+  to = "k6",
+  controlling_for = c("rel",
+                      "ml"),
+  collider_lines = TRUE,
+  text = FALSE,
+  use_labels = "label"
+) + theme_dag_blank() + labs(title = "Do not include Age + Male or there will be confounding")
+strat04
+
+ggdag::ggdag_adjustment_set(djc, node_size = 14) +
+  theme(legend.position = "bottom") + theme_dag_blank()
+
+
+strat1 <- ggdag_drelationship(
+  djc,
+  from = "cv",
+  to = "k6",
+  controlling_for = c("ml",
+                      "rel"),
+  collider_lines = TRUE,
+  text = FALSE,
+  use_labels = "label"
+) + theme_dag_blank() + labs(title = "Do not include Age + Male or there will be confounding")
+strat1
+#
+
+## IF YOU WANT TO UNDERSTND THE RELATIONSHIP BETWEEN RELIGINO AND DISTRESS CONDITION ON AGE AND MALE
+
+djb <- dagify(
+  k6  ~  cv + ml + rel,
+  rel ~  a + m,
+  ml ~ a + m + rel,
+  labels = c(
+    "k6" = "Kessler 6 Distress",
+    "ml" = "Meaning in Life",
+    "a" = "Age",
+    "cv" = "Covid Timeline",
+    "rel" = "Religion",
+    "m" = "Male"
+  ),
+  exposure =  "rel",
+  outcome =   "k6"
+) %>%
+  tidy_dagitty()
+colliders3 <- ggdag::ggdag_collider(
+  djb,
+  from = "rel",
+  to = "k6",
+  control_for(c(
+    "cv",
+    "a",
+    "m",
+    "rel"
+  )),
+  text = FALSE,
+  use_labels = "label"
+) +   theme_dag_blank() + labs(title = "Lurking collider counfounders")
+colliders3
+strat0 <- ggdag_drelationship(
+  djb,
+  from = "rel",
+  to = "k6",
+  controlling_for = c("cv",
+                      "ml"),
+  collider_lines = TRUE,
+  text = FALSE,
+  use_labels = "label"
+) + theme_dag_blank() + labs(title = "Do not include Age + Male or there will be confounding")
+strat0
+
+ggdag::ggdag_adjustment_set(djb, node_size = 14) +
+  theme(legend.position = "bottom") + theme_dag_blank()
+
+
+strat1 <- ggdag_drelationship(
+  dj,
+  from = "cv",
+  to = "k6",
+  controlling_for = c("ml",
+                      "rel",
+                      "a",
+                      "m"),
+  collider_lines = TRUE,
+  text = FALSE,
+  use_labels = "label"
+) + theme_dag_blank() + labs(title = "Do not include Age + Male or there will be confounding")
+strat1
+```
+
+
