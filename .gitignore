@@ -7,4 +7,5 @@
  *.html
  *_files/
  *DS_Store
- */daryl_meaning_cache
+ */daryl_meaning_cache/
+/*
