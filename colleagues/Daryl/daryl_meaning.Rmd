@@ -583,33 +583,6 @@ It is worrying that we might expect such community effects both to exist, and to
 
 These re the paths by which meaning might causally effect well-being on the model above
 
-```{r, echo = TRUE}
-library(ggdag)
-dg<-dagify(d ~ r + m + i + h + sb + male + cv, 
-       r ~ a + male,
-       m ~ r + e + male + a,
-       i ~ e + cv,
-       e ~ cv,
-       h ~ i + sb,
-       sb ~ r + male + cv, 
-       labels = c(
-    "d" = "well being",
-    "r" = "religion",
-    "m" = "meaning",
-    "i" = "income",
-    "h" = "health",
-    "sb" = "social belonging",
-    "cv" = "covid timeline",
-    "e" = "employed",
-    "a" = "age",
-    "male" = "male"),
-    exposure = "m",
-    outcome = "d")
-```
-
-
-Suppose we took out the direct link between meaning and distress
-
 
 
 ```{r, echo = TRUE}
@@ -639,6 +612,7 @@ dg3<-dagify(d ~ r + i + h + sb + male + cv + m,
 ggdag::ggdag_paths(dg3, from = "m", to = "d", text = FALSE, use_labels = "label")+ theme_dag_blank()
 
 ggdag::ggdag_status(dg3,use_labels = "label")+ theme_dag_blank()
+ggdag::ggdag_exogenous(dg3,use_labels = "label")+ theme_dag_blank()
 
 ```
 
