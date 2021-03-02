@@ -84,6 +84,59 @@ ggdag::ggdag_collider(dag0)
 ggdag::ggdag_collider(dag0)
 ```
 
+
+
+```{r}
+# aaron use
+library("ggdag")
+ar<- dagify(
+  jobsat ~ age + edu + actorP + partnerP + jobT ,
+  actorP ~  male,
+  partnerP ~ male,
+  op ~ age + edu + actorP + partnerP + jobT,
+  jobT ~ actorP + partnerP + unemploy,
+  unemploy ~ actorP + partnerP,
+  exposure =  "partnerP",
+  outcome =   "op",
+  labels = c(
+    "jobsat" = "jobsatisfaction",
+    "op" = "occupational prestige",
+    "edu"  = "education",
+    "unemploy" = "unemployment",
+    "actorP" = "actor psychopathy",
+    "partnerP" = "partner psychopathy",
+    "jobT" = "job tenure",
+     "male" = "male",
+    "age" = "age"
+  )
+) 
+dag_paths(ar)
+ggdag_adjustment_set(
+  ar,
+  text = FALSE,
+  use_labels = "label",
+  shadow = TRUE,
+  exposure =  "partnerP",
+  outcome =   "op"
+) + theme_dag_blank() + theme_dag_blank()
+
+ggdag::ggdag_collider(ar,
+                      stylized = TRUE,
+                      text = FALSE,
+                      use_labels = "label") + theme_dag_blank()
+
+
+ggdag_dseparated(ar,
+    from = "partnerP",
+    to = "op",
+    controlling_for = c( "male"),
+    collider_lines = TRUE,
+    text = FALSE,
+    use_labels = "label"
+  ) + theme_dag_blank()
+
+```
+
 ```{r}
 
 # AARONS
