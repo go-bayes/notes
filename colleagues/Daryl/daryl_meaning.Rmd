@@ -78,6 +78,31 @@ df <- readRDS("~/The\ Virtues\ Project\ Dropbox/Joseph\ Bulbulia/00Bulbulia\ Pub
 ```
 
 
+## meaning of life scale
+
+- My life has a clear sense of purpose. 
+- I have a good sense of what makes my life meaningful. 
+
+## Power
+
+- I do not have enough power or control over important parts of my life.
+- Other people have too much power or control over important parts of my life.
+
+
+## Negative emotions
+
+- When I feel negative emotions, my emotions feel out of control.
+- When I feel negative emotions, I suppress or hide my emotions.
+- When I feel negative emotions, I change the way I think to help me stay calm.
+
+
+## Gratitude
+- I have much in my life to be thankful for.
+- When I look at the world, I don’t see much to be grateful for.
+- I am grateful to a wide variety of people.
+
+## Background
+
 We are interested in understanding the relationship between Meaning of Life (meaning) and Kessler 6 distress (distress) and also of Religious Identification (religious id) and Kessler 6 distress.
 
 ## Causal Model for distress ~ meaning. 
@@ -95,6 +120,47 @@ In this model:
 
 More complicated models are possible, and others might be more realistic (see the note at the end.) However we'll start here:
 
+## Happiness 
+
+- In general I consider myself to be a very happy person
+- I think that I’m less happy than most of the people I know
+- I am very happy – I enjoy life regardless of what is going on, getting the most out of everything.
+- I am generally not very happy – I’m not depressed, but I never seem as happy as I could be.
+
+## Sense of community
+
+- I feel a sense of community with others in my local neighbourhood.
+
+## Satisfaction with life
+
+- I am satisfied with my life.
+- In most ways my life is close to ideal.
+- Self-esteem
+- On the whole am satisfied with myself.
+- Take a positive attitude toward myself.
+- Am inclined to feel that I am a failure.
+
+## Personal Wellbeing Index
+
+- Your health.
+- Your standard of living.
+- Your future security.
+- Your personal relationships.
+
+## National Wellbeing Index
+- The economic situation in New Zealand.
+- The social conditions in New Zealand.
+- Business in New Zealand.
+
+## Felt belongingness
+- Know that people in my life accept and value me.
+- Feel like an outsider.
+- Know that people around me share my attitudes and beliefs.
+
+## Perceived social support
+- There are people I can depend on to help me if I really need it.
+- There is no one I can turn to for guidance in times of stress.
+- I know there are people I can turn to when I need help.
 
 ```{r, echo = TRUE}
 library(ggdag)
