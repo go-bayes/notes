@@ -2,16 +2,23 @@
 .Rhistory
 .RData
 .Ruserdata
- *data/
- _cache/
- **/.html
- **/_files
- *DS_Store
- */.DS_Store
- */daryl_meaning_cache/
- **/.png
+*data/
+_cache/
+*.html
+**/_files
+*DS_Store
+*/.DS_Store
+*/daryl_meaning_cache/
+**/.png
 */_cache/
 .pdf
 unamed_chunk
 figs
 colleagues/**
+.png
+.html
+_files/*
+.png
+**/.png
+2021-SuzanneH-Dag-byGo-Bayes.nb.html
+aaron2.png
