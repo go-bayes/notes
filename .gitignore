@@ -9,3 +9,5 @@
  *DS_Store
  */.DS_Store
  */daryl_meaning_cache/
+ *.png
+/colleagues/**/*.png
