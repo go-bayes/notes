@@ -15,7 +15,9 @@ _cache/
 unamed_chunk
 figs
 colleagues/**
-!.Rmd
+!**.Rmd
+!/*.Rmd
+!/**.Rmd
 .png
 .html
 _files/*
