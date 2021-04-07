@@ -4,11 +4,12 @@
 .Ruserdata
  *data/
  _cache/
- *.html
+ **.html
  *_files/
  *DS_Store
  */.DS_Store
  */daryl_meaning_cache/
- *.png
-/colleagues/**/*.png
-/colleagues/*.png
+ **.png
+/colleagues/**/.png
+**_cache/
+**.pdf
