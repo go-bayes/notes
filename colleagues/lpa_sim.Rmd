@@ -1,0 +1,164 @@
+---
+title: "LPA and MLM model for TIRTA and WILL GERVAIS"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+```{r}
+
+## create data with two class (I think? need to check)
+N <- 500
+var1 <- rnorm(N)
+var2 <- rnorm(N)
+var3 <- rnorm(N, -var1, sd = 2)
+var4 <- rnorm (N, -var2 = 1.5)
+var5 <- as.numeric(rbind(c(rnorm(N*.5,-var3), rnorm(N*.5,-var4))))
+
+df <- data.frame( var1, var2, var3, var4, var5 )
+
+library("tidyverse")
+library("tidyLPA")
+
+p <- 5 # number of classes
+fit <-  df %>%
+  dplyr::select( var1, var2 , var3, var4 , var5 )%>% 
+  tidyLPA::single_imputation() %>%
+  tidyLPA::estimate_profiles( 2:p )
+
+#### which class is best? ####
+tidyLPA::get_fit( fit )
+
+tidyLPA::plot_profiles( fit , add_line = TRUE) 
+                        
+                        
+#### fit with 2 classes ####
+x <- 2
+fit2 <- df %>%
+  dplyr::select(var1, var2 , var3, var4, var5) %>%
+  tidyLPA::single_imputation() %>%
+  tidyLPA::estimate_profiles(x)
+
+#### good graph ####
+tidyLPA::plot_profiles( fit2, add_line = TRUE )
+
+#### get proportions of the sample in each class ####
+df_2 <- tidyLPA::get_data( fit2 )
+df$Class<-df_2$Class
+
+#### proportions ####
+# proportion of sample in class 1
+round(mean(df$Class == 1),3)
+
+# proportion of sample in class 2
+round(mean(df$Class == 2),3)
+
+## What if we were to select only noise?
+
+
+N <- 500
+
+# create five independent vars
+var1 <- rnorm(N)
+var2 <- rnorm(N)
+var3 <- rnorm(N)
+var4 <- rnorm(N)
+var5 <- rnorm(N)
+
+# dataframe 
+df_3 <- data.frame( var1, var2, var3, var4, var5 )
+
+# same method as above
+
+p <- 5 # number of classes
+fit_b <-  df_3 %>%
+  dplyr::select( var1, var2 , var3, var4, var5 )%>% 
+  tidyLPA::single_imputation() %>%
+  tidyLPA::estimate_profiles( 2:p )
+
+#### poor fits all around ####
+tidyLPA::get_fit( fit_b )
+
+
+tidyLPA::plot_profiles( fit_b, add_line = TRUE )
+
+
+#### Another approach Multilevel model
+
+a <-  4  # average effect of var 1
+b <- (-1) # average difference in var 2
+sigma_a <- 1 # std dev in intercepts
+sigma_b <- 0.5 # std dev in slopes
+rho <- (-0.7)  # correlation between intercepts and slopes”
+
+# vector for coefs
+Mu <- c( a , b )
+cov_ab <- sigma_a*sigma_b*rho
+
+# multi-variate errors
+Sigma <- matrix( c(sigma_a^2,cov_ab,cov_ab,sigma_b^2) , ncol=2 )
+Sigma
+
+## OPTION 2
+
+# Standard deviations
+sigmas <- c(sigma_a,sigma_b) # standard deviations”
+
+# empty variance/covariance matrix
+matrix( c(1,2,3,4) , nrow=2 , ncol=2 )
+
+# correlation matrix
+Rho <- matrix( c(1,rho,rho,1) , nrow=2 ) # correlation matrix
+
+# multi-variate errors
+Sigma <- diag(sigmas) %*% Rho %*% diag(sigmas)
+
+n_ids <- 500
+
+# simulate
+set.seed(123)
+dat <- as.data.frame(MASS::mvrnorm( n_ids , Mu , Sigma ))
+
+# names of columns
+colnames(dat) <-c("var1","var2")
+
+# create id indicator for each participant
+dat$id <- factor(rep(1:nrow(dat)))
+
+
+fit_c <-  dat %>%
+  dplyr::select( var1, var2 )%>% 
+  tidyLPA::single_imputation() %>%
+  tidyLPA::estimate_profiles( 2:5 )
+
+#### which class is best? ####
+tidyLPA::get_fit( fit_c )
+
+#### graph ####
+# We just see a correlation of intercept and slope here! 
+
+tidyLPA::plot_profiles( fit_c, add_line = TRUE ) # lol
+
+#### A better approach is arguably a multi-level model
+library(brms)
+library(sjPlot)
+m1 <- brms::brm(
+  mvbind(var1, var2) ~ 1 + (1|id), # multivariate outcome estimating within-subject correlations 
+  data = dat,
+  chains = 4,
+  cores = 8)
+
+## didn't mix well, might need to be run for longer. 
+summary(m1)
+coef(m1)
+
+library("bayesplot")
+library("tidybayes")
+
+# Which var names do we need? 
+get_variables(m1)
+
+#plot areas
+bayesplot::mcmc_areas(m1, pars = c("b_var1_Intercept", "b_var2_Intercept", "sigma_var1","sigma_var2","rescor__var1__var2"))
+```

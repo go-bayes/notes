@@ -1,0 +1,265 @@
+---
+title: "LPA for Marc"
+description: |
+author:
+  - name: Joseph Bulbulia
+    url: https://josephbulbulia.netlify.app
+    affiliation: Victoria University of Wellington
+    affiliation_url: https://www.wgtn.ac.nz
+    orcid_id: 0000-0002-5861-2056
+date: 2021-MAR-23
+output:
+  distill::distill_article:
+    self_contained: true
+    toc: false
+    code_folding: true
+    highlight: tango
+    highlight_downlit: false
+
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library("tidyverse") # data wrangling
+library("tidyLPA") # latent profile analysis
+library("patchwork") # making useful graphs 
+library("table1") # tables
+library("ggraph") # graphs
+library("correlation")
+library("report")
+library("here") # file organisation
+library("parameters") # data dimension reduction
+library("DRR") # data dimension reduct
+library("nFactors")
+library("kableExtra")
+
+```
+
+## Data processing
+
+Here, we perform a Latent Profile Analysis on a Marc's dataset 
+
+
+First we import the data and rename the columns. 
+
+```{r}
+# read data. Because the data were prepared for MPLUS, I assume that there  are no column names, so we must create these. First read, and set "col_names" to FALSE
+
+dat <-
+  as_tibble(
+    readr::read_csv(here::here("colleagues", "marc", "KDat2403.csv"), col_names = FALSE)
+    )
+
+
+# Next assign column names according to Marc's email dated March 23, 2021, at about 5pm  
+
+df <- dat %>%
+  dplyr::rename(
+    "id" = "X1",
+    "anx" = "X2",
+    "cdct" = "X3",
+    "sh" = "X4",
+    "stht" = "X5",
+    "satt" = "X6",
+    "wb" = "X7",
+    "rads" = "X8"
+  )
+
+# Vars are:
+# PNum 
+# Anx  - anxiety continuous
+# Cdct - conduct problems continuous
+# SH - self harm no or yes
+# STht  - suicidal thought no or yes
+# SAtt  - suicide attempt no or yes
+# WB - wellbeing continuous
+# radS - depression (RADS)
+```
+
+
+## PCA
+
+We can reduce features of the data and *then* apply LPA. This is experimental `r knitr::asis_output("\U1F923")`
+
+
+
+WARNING: I'm not sure it makes sense to perform an LPA on a PCA dataset, but here it goes
+
+# Obtain PCA
+```{r}
+# dataset without id variable
+ddf <- df %>%
+  dplyr::select(-id)
+
+# PCA
+set.seed(12)
+out <-
+  parameters::reduce_parameters(ddf,
+                                method = "PCA",
+                                n = "max",
+                                distance = "euclidean")
+
+# Prepare the data 
+
+# rename the columns
+out1 <-  out %>%
+  dplyr::rename(
+    wb_neg_PCA =  "rads_-0.87/stht_-0.74/sh_-0.73/wb_0.72",
+    satt_PCA = "satt_0.65",
+    cdct_PCA = "cdct_-0.84",
+    anx_PCA = "anx_0.66"
+  )
+```
+
+### LPA
+
+```{r cache = TRUE}
+## fit an LPA on the Principle Components
+fit4 <- out1 %>%
+ dplyr::select(wb_neg_PCA,
+         satt_PCA,
+         cdct_PCA,
+         anx_PCA) %>%
+  tidyLPA::single_imputation() %>%  #handle missingness
+  scale() %>%  # use standard deviation units
+  tidyLPA::estimate_profiles(3:9)
+```
+
+### Results
+
+```{r cache = TRUE, layout="l-body-outset",  fig.height=12, fig.width=12}
+# Table of fits
+tidyLPA::get_fit(fit4)
+fit4 %>%
+tidyLPA::compare_solutions(statistics = c("BIC", "Entropy"))
+```
+
+### Graph all fits
+
+```{r  cache = T, layout="l-body-outset",  fig.height=8, fig.width=12}
+tidyLPA::plot_profiles(fit4, add_line = TRUE) 
+```
+
+Inspecting the graph reveals many middling solutions. 
+
+We might prefer a 4 or 5 class solution. 
+
+Here is a 4 class solution
+
+```{r  cache = T, layout="l-body-outset",  fig.height=8, fig.width=12}
+tidyLPA::plot_profiles(fit4[[2]], add_line = TRUE) 
+```
+
+Calculate frequencies:
+
+
+```{r cache = F}
+d4 <- tidyLPA::get_data(fit4[[2]])
+d4 %>%
+  dplyr::select(Class) %>%
+  dplyr::mutate(class = as.factor(Class)) %>%
+  dplyr::group_by(class) %>%
+  dplyr::summarise(n = n()) %>%
+  dplyr::mutate(freq = n / sum(n)) %>%
+  parameters::print_html() # html table
+```
+c
+About 6 % are in the low wpPCA -> high sattPCA class. This is the same proportion as in the 3 class solution
+
+
+
+### prcr
+
+
+We can try a person centered analysis, see [prcr package webside](https://jrosen48.github.io/prcr/articles/introduction_to_prcr.html)
+
+
+First we standardise our variables
+
+
+```{r  cache = TRUE}
+library(arm)
+df2 <- df %>%
+  dplyr::mutate(
+    anx_s = as.numeric(scale(anx)),
+    cdct_s = as.numeric(scale(cdct))  ,
+    sh_s = as.numeric(scale(sh)),
+    stht_s = as.numeric(scale(stht)),
+    wb_s = as.numeric(scale(wb)),
+    satt_s = as.numeric(scale(satt)),
+    rads_s = as.numeric(scale(rads))
+  )
+```
+
+prcr analysis and plot profiles
+```{r}
+library(prcr)
+m1 <- create_profiles_cluster(df2, 
+                              anx_s, 
+                              cdct_s, 
+                              sh_s, 
+                              stht_s, 
+                              wb_s,
+                              satt_s,
+                              rads_s,
+                              n_profiles = 4)
+
+plot_profiles(m1, to_center = T)
+```
+
+
+
+## Appendix 1 Results table for your publication 
+
+
+```{r}
+get_estimates(fit4[[2]])%>%
+  print_html()
+```
+
+## Appendix 2  Material for your methods section
+
+
+### Partial correlations of all variables
+ 
+table
+```{r  cache = TRUE, layout="l-body-outset",  fig.height=8, fig.width=12}
+corr <- df %>%
+  dplyr::select(-id) %>%
+  correlation::correlation(partial = TRUE, multilevel = FALSE)
+
+
+# Partial correlation table
+corr %>%
+  print_html()
+
+# correlations graph
+corr %>%
+  plot()
+```
+
+###   Summary of variables
+
+```{r layout="l-body-outset",  fig.height=8, fig.width=12}
+skimr::skim(df, -id)
+```
+
+As evident from the histograms, there is there isn't much variation in the variables "sh", "stht", and "satt"
+
+Let's look at the frequencies. 
+
+```{r   cache = TRUE}
+table1::table1(~
+                 factor(sh) +
+                 factor(stht) +
+                 factor(satt),
+               data = df
+               )
+```
+
+6.4% of the sample are ticking 1 for suicide attempt. 
+
+
+
+
+

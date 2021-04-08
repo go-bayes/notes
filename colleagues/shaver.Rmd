@@ -1,0 +1,173 @@
+---
+title: "Shaver letter 2021"
+author: "Joseph Bulbulia"
+date: "07/04/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+
+```{r}
+library("scholar") # citations
+library("tidyverse") # wrangling
+library("ggplot2") # plots
+library("patchwork") # plots
+library("brms") # regression model
+library("splines")
+library("here")
+```
+
+
+```{r}
+# shavers google id, from google scholar
+shaver <- 'WxpOdwEAAAAJ&hl'
+
+# get profle
+# l <- get_profile(shaver)
+
+ct <- get_citation_history(shaver) %>%
+  filter(year != 2021) # to avoid bias from incomplete year
+ct
+# rough model of John's annual increase in citations
+```
+
+
+Graph
+
+```{r}
+ggplot(ct, aes(year, cites)) + geom_line() + geom_point() + theme_classic()
+
+```
+
+Model increase
+
+```{r}
+m2 <- glm(cites ~ year, data = ct, family = "poisson")
+
+perc = m2$coefficients["year"]
+
+print(sprintf('Annual increase for John Shaver %f', perc))
+
+```
+
+Better model
+
+```{r}
+# regression model for citations (non-linear)
+
+m1 <- brm(cites ~ s(year), 
+       data = ct, 
+       family = "poisson",
+       file = here::here("colleagues","shaver", "m1"))
+
+
+# one method for plotting
+plot(ggeffects::ggpredict(m1, terms = "year"), add.data = TRUE) + theme_classic()
+```
+
+
+```{r eval= FALSE, include=FALSE}
+#  longer term model 
+# plot(ggeffects::ggpredict(m1,
+#                           terms = "year[2021:2031]",
+#                           ci.lvl = 0.95))
+```
+
+Better method
+
+```{r}
+# preferred method
+
+pl<-conditional_effects(
+  m1,
+  prob = 0.9,
+  spaghetti = TRUE,
+  nsamples = 100,
+  points = TRUE
+) 
+
+
+plot(pl, plot = FALSE)[[1]] + theme_classic() + labs(title = "Annual increase for John Shaver's citations is approximately 40 percent")
+```
+
+Predicted citations
+
+```{r cache = TRUE}
+#new data
+year <- data.frame(year = seq(from = 2011, to = 2031, by = .1))
+
+# predict citations from brms model
+predicted <- data.frame(predict(
+  m1,
+  newdata = year,
+  summary = TRUE,
+  robust = TRUE,
+  probs = c(0.1, 0.9)
+))
+
+newdata <- data.frame(year, predicted)
+newdata
+```
+
+
+```{r cache = TRUE}
+#data frame
+# graph 
+
+library("ggplot2")
+
+predplot2 <-
+  ggplot2::ggplot(data = newdata, aes(x = year, y = Estimate)) + geom_line(colour = "cadetblue")  +
+  ggplot2::geom_errorbar(data = newdata, aes(ymin = Q10,
+                                             ymax = Q90),
+                         width = .1,  position = "identity") +
+  theme_classic()  +
+  xlab("Years") +
+  ylab("Predicted Citations") +
+  labs(title = "Bayesian model for John Shavers citations years 2021-2031 (90% confidence intervals)")
+
+predplot2
+# equivalent to:
+# plot(ggeffects::ggpredict(m1, terms = "year[2021:2031]", ppd = TRUE))
+```
+
+Gather all plots:
+
+```{r}
+# Citation plot
+cites1<- ggplot(ct, aes(year, cites)) +
+    geom_segment(aes(xend = year, yend = 0), size=1, color='darkgrey') +
+    geom_point(size=3, color='firebrick') + theme_classic() + labs(title = "John Shaver's citations by year")
+
+# co-author network
+coauthor_network <- get_coauthors('WxpOdwEAAAAJ&hl', n_coauthors = 7)
+co_authors <- plot_coauthors(coauthor_network)
+
+
+# predicted h index 
+pj <- predict_h_index(shaver)
+
+# plot of predicted h index 
+preditedh <-
+  ggplot(pj, aes(years_ahead, h_index)) + geom_line() + geom_point() +
+  theme(legend.position = c(.2, .8)) + theme_classic() + xlab("Years 2021-2031") + ylab("Predicted H-index") + labs(title = "John Shaver's  H-index Forcast (method: Acuna et al 2012)")
+
+library(patchwork)
+(cites1 + co_authors )  / (preditedh + predplot2) + plot_annotation(tag_levels = 'a') 
+```
+
+
+```{r}
+publications <- scholar::get_publications(shaver) 
+ifdata <- scholar::get_impactfactor(publications$journal) 
+ifdata %>% dplyr::arrange(desc(ImpactFactor) ) %>% tidyr::drop_na()
+knitr::kable(iftable)
+```
+
+
+End. 
+
+
+

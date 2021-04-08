@@ -1,0 +1,488 @@
+---
+title: "LPA for Marc"
+description: |
+author:
+  - name: Joseph Bulbulia
+    url: https://josephbulbulia.netlify.app
+    affiliation: Victoria University of Wellington
+    affiliation_url: https://www.wgtn.ac.nz
+    orcid_id: 0000-0002-5861-2056
+date: 2021-MAR-23
+output:
+  distill::distill_article:
+    self_contained: true
+    toc: false
+    code_folding: true
+    highlight: tango
+    highlight_downlit: false
+
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library("tidyverse") # data wrangling
+library("tidyLPA") # latent profile analysis
+library("patchwork") # making useful graphs 
+library("table1") # tables
+library("ggraph") # graphs
+library("correlation")
+library("report")
+library("here") # file organisation
+library("parameters") # data dimension reduction
+library("DRR") # data dimension reduct
+library("nFactors")
+```
+
+## Data processing
+
+Here, we perform a Latent Profile Analysis on a Marc's dataset 
+
+
+First we import the data and rename the columns. 
+
+```{r}
+# read data. Because the data were prepared for MPLUS, I assume that there  are no column names, so we must create these. First read, and set "col_names" to FALSE
+
+dat<-as_tibble(readr::read_csv(here::here("colleagues", "marc", "KDat2403.csv"), col_names = FALSE))
+
+
+# Next assign column names according to Marc's email dated March 23, 2021, at about 5pm  
+
+df <- dat %>%
+dplyr::rename( "id" = "X1",
+       "anx" = "X2",
+        "cdct" = "X3", 
+       "sh"= "X4",
+       "stht" = "X5",
+       "satt" = "X6",
+       "wb"= "X7",
+       "rads"= "X8" )
+```
+
+Plot relationship of variables
+
+```{r  cache = TRUE, layout="l-body-outset",  fig.height=8, fig.width=12}
+
+df %>%
+  dplyr::select(-id)%>%
+  correlation::correlation(partial = FALSE, multilevel = FALSE ) %>%
+  plot()
+```
+
+We create a simple data summary to ensure that all variables look OK. We can see that rats and wb are strongly anti-correlated, which provides a sanity check. 
+
+```{r}
+library(skimr)
+table1::table1(~ anx + cdct + sh + stht + satt + wb + rads, data = df)
+```
+
+I find it easier to see what is going on in the data by inspecting histograms of the variables:
+
+```{r layout="l-body-outset",  fig.height=8, fig.width=12}
+skimr::skim(df, -id)
+```
+
+As evident from the histograms, there is there isn't much variation in the variables "sh", "stht", and "satt"
+
+Let's look at the frequencies. We won't bother with "anx", wb" and "rads" because we can see variation in the data. 
+
+```{r  cache = TRUE, layout="l-body-outset",  fig.height=8, fig.width=12}
+sh_hist <- ggplot2::qplot(data = df, sh, geom = "histogram") + theme_classic() + 
+  labs(title = "Histogram of sh")
+stht_hist <- ggplot2::qplot(data = df, stht, geom = "histogram") + theme_classic() + 
+  labs(title = "Histogram of stht")
+satt_hist <- ggplot2::qplot(data = df, satt, geom = "histogram") + theme_classic() + 
+  labs(title = "Histogram of satt")
+
+sh_hist/stht_hist/satt_hist + plot_annotation(title= "We might want to condsider whether stht is given sufficient variation", tag_levels = "a")
+```
+
+Here a table is more informative:
+
+```{r   cache = TRUE}
+table1::table1(~
+                 factor(sh) +
+                 factor(stht) +
+                 factor(satt),
+               data = df
+               )
+```
+
+Only 6.4% of the sample are ticking 1 for satt, however that could be interesting. 
+
+
+## LPA
+
+The model with all variables will not run
+
+```{r cache = TRUE, layout="l-body-outset",  fig.height=8, fig.width=12}
+library("tidyLPA")
+p <- 5 # max number of classes
+fit <-  df %>%
+  dplyr::select( anx, 
+                 cdct , 
+                 sh, 
+                 stht , 
+                 wb,
+                 satt,
+                 rads)%>%
+  tidyLPA::single_imputation() %>%
+  tidyLPA::estimate_profiles( 2:p )
+```
+
+
+Let's try standardising all variables
+
+
+```{r  cache = TRUE}
+library(arm)
+df2 <- df %>%
+  dplyr::mutate(
+    anx_s = as.numeric(scale(anx)),
+    cdct_s = as.numeric(scale(cdct))  ,
+    sh_s = as.numeric(scale(sh)),
+    stht_s = as.numeric(scale(stht)),
+    wb_s = as.numeric(scale(wb)),
+    satt_s = as.numeric(scale(satt)),
+    rads_s = as.numeric(scale(rads))
+  )
+```
+
+
+And let's run the model on the standardised variable
+
+```{r  cache = TRUE}
+library("tidyLPA")
+p <- 7 # max number of classes
+fit0 <-  df2 %>%
+  dplyr::select(anx_s,
+                cdct_s,
+                sh_s,
+                stht_s,
+                wb_s,
+                satt_s,
+                rads_s) %>%
+  tidyLPA::single_imputation() %>%
+  tidyLPA::estimate_profiles(3:p)
+```
+
+No luck, let's remove the binary variables
+
+```{r  cache = TRUE}
+library("tidyLPA")
+p <- 7 # max number of classes
+fit <-  df2 %>%
+  dplyr::select(anx_s,
+                cdct_s,
+                wb_s,
+                rads_s) %>%
+  tidyLPA::single_imputation() %>%
+  tidyLPA::estimate_profiles(3:p)
+```
+
+
+### Results
+
+A 4-class solution looks good.
+
+
+```{r  cache = TRUE}
+tidyLPA::get_fit( fit )
+```
+
+This is evident when we graph the fits 
+
+```{r cache = TRUE, layout="l-body-outset",  fig.height=12, fig.width=12}
+tidyLPA::plot_profiles( fit , add_line = TRUE)
+```
+
+
+### Fit with 4 classes 
+
+```{r cache = TRUE, layout="l-body-outset",  fig.height=8, fig.width=12}
+tidyLPA::plot_profiles( fit [[2]] , add_line = TRUE) ## note we are counting up from three, hence `[[2]]`
+```
+
+
+### Get proportions of the sample in each class 
+
+We can obtain proportions of the sample that fit into the classes: 
+
+```{r}
+df_2 <- tidyLPA::get_data(fit[[2]]) ## note we are counting up from three, hence `[[2]]`
+df_2 %>%
+  dplyr::select(Class) %>%
+  dplyr::mutate(class = as.factor(Class)) %>%
+  dplyr::group_by(class) %>%
+  dplyr::summarise(n = n()) %>%
+  dplyr::mutate(freq = n / sum(n))
+```
+
+
+<!-- # LPA of only the problem -->
+
+<!-- It turns out that including any one or any combination of the binary variables will not run. -->
+
+<!-- ```{r  cache = TRUE, include  = FALSE} -->
+<!-- fit3 <-  df2 %>% -->
+<!--   dplyr::select(anx_s, -->
+<!--                 cdct_s, -->
+<!--                # sh_s, -->
+<!--                # stht_s, -->
+<!--                # satt_s, -->
+<!--                 wb_s, -->
+<!--                 rads_s) %>% -->
+<!--   tidyLPA::single_imputation() %>% -->
+<!--   tidyLPA::estimate_profiles(5) -->
+<!-- ``` -->
+
+<!-- What if we were to include only the binary variables?  -->
+
+<!-- The model won't run: -->
+
+<!-- ```{r  eval=FALSE} -->
+<!-- fit4 <-  df2 %>% -->
+<!--   dplyr::select(#anx_s, -->
+<!--                 #cdct_s, -->
+<!--                 sh_s, -->
+<!--                 stht_s, -->
+<!--                 satt_s, -->
+<!--                # wb_s, -->
+<!--                # rads_s -->
+<!--                ) %>% -->
+<!--   tidyLPA::single_imputation() %>% -->
+<!--   tidyLPA::estimate_profiles(5) -->
+<!-- ``` -->
+
+## An "experimental" approach
+
+An alternative approach might be to understand whether we can reduce features of the data and *then* apply LPA.`r knitr::asis_output("\U1F923")`
+
+
+### Try a PCA
+
+```{r}
+ddf <- df %>%
+  dplyr::select(-id)
+
+# PCA
+set.seed(12)
+out <-parameters::reduce_parameters(ddf, method = "PCA", n = "max", distance = "euclidean")
+head(out)
+```
+
+WARNING: I'm not sure it makes sense to perform an LPA on a PCA dataset, but here it goes
+
+### Prepare the data 
+
+```{r cache = TRUE}
+# rename the columns
+out1 <-  out %>%
+  dplyr::rename(
+    wbPCA =  "rads_-0.87/stht_-0.74/sh_-0.73/wb_0.72",
+    sattPCA = "satt_0.65",
+    cdctPCA = "cdct_-0.84",
+    anxPCA = "anx_0.66"
+  )
+```
+
+### LPA
+
+```{r cache = TRUE}
+## fit an LPA on the Principle Components
+fit4 <- out1 %>%
+ dplyr::select(wbPCA,
+         sattPCA,
+         cdctPCA,
+         anxPCA) %>%
+  tidyLPA::single_imputation() %>%
+  tidyLPA::estimate_profiles(3:6)
+```
+
+
+```{r cache = TRUE, layout="l-body-outset",  fig.height=12, fig.width=12}
+# Table of fits
+tidyLPA::get_fit( fit4 )
+```
+
+### Results
+
+A three class solution seems OK.  let's graph this one:
+
+
+```{r  cache = TRUE, layout="l-body-outset",  fig.height=8, fig.width=12}
+tidyLPA::plot_profiles( fit4, add_line = TRUE ) + 
+  ylab("PCA units") + labs(title = "LPA of PCA: no warrenties")
+```
+
+
+
+Let's graph the four class solution on its own
+
+
+```{r  cache = TRUE, layout="l-body-outset",  fig.height=8, fig.width=12}
+
+tidyLPA::plot_profiles( fit4[[2]], add_line = TRUE ) + 
+  ylab("PCA units") + labs(title = "LPA of PCA: no warrenties")
+```
+
+
+
+Calculate frequencies:
+
+
+
+
+```{r cache = TRUE}
+d5 <- tidyLPA::get_data( fit4[[2]] )
+d5%>%
+  dplyr::select(Class) %>%
+  dplyr::mutate(class = as.factor(Class))%>%
+  dplyr::group_by(class)%>%
+   dplyr::summarise(n = n()) %>%
+   dplyr::mutate(freq = n / sum(n))
+```
+
+About 6-7 % are in the low wpPCA -> high sattPCA class. This is the same proportion as in the 3 class solution  
+
+
+However, I'm not sure I would trust this approach to modelling an LPA.  This is because it relies on a latent profile of a latent variable. I don't have enough background in LPA to assess whether that isn't bat-shit crazy. 
+
+
+
+## Just the code
+
+
+```{r code_folding = FALSE, eval=FALSE}
+
+# libraries
+library("tidyLPA") # latent profile analysis
+library("here") # file organisation
+library("tidyverse") # data wrangling
+
+# import data: note -- you'd need to designate the paths by folders in your library
+# my path is : /Users/jbul176/GIT/notes/colleagues/marc/"KDat2403.csv
+# here::here() will take you to the root directory and then you specify a location from there
+
+dat<-as_tibble(readr::read_csv(here::here("colleagues", "marc", "KDat2403.csv"), col_names = FALSE))
+
+
+# Rename colums  
+df <- dat %>%
+dplyr::rename( "id" = "X1",
+       "anx" = "X2",
+        "cdct" = "X3", 
+       "sh"= "X4",
+       "stht" = "X5",
+       "satt" = "X6",
+       "wb"= "X7",
+       "rads"= "X8" )
+
+
+# LPA without the binary variables
+
+
+p <- 7 # max number of classes
+fit <-  df2 %>%
+  dplyr::select(anx_s,
+                cdct_s,
+                wb_s,
+                rads_s) %>%
+  tidyLPA::single_imputation() %>%
+  tidyLPA::estimate_profiles(3:p)
+
+
+# Get fit statistics
+
+tidyLPA::get_fit( fit )
+
+
+# Graph all results and create labels for the graph 
+
+tidyLPA::plot_profiles( fit4, add_line = TRUE ) + 
+  ylab("PCA units") + labs(title = "LPA of PCA: no warrenties")
+
+
+# Plot only the 4-class solution
+tidyLPA::plot_profiles( fit [[2]] , add_line = TRUE) ## note we are counting up from three, hence `[[2]]`
+
+# Create table for proportion of sample in classes
+df_2 <- tidyLPA::get_data(fit[[2]]) ## note we are counting up from three, hence `[[2]]`
+df_2 %>%
+  dplyr::select(Class) %>%
+  dplyr::mutate(class = as.factor(Class)) %>%
+  dplyr::group_by(class) %>%
+  dplyr::summarise(n = n()) %>%
+  dplyr::mutate(freq = n / sum(n))
+
+
+# notes: the PCA approach above is "experimental" and possibly flawed. However, it suggest an alternative approach to the problem, involving data-dimension reduction. 
+
+# To do: create better tables 
+
+```
+
+
+
+## What predicts suicide attempt?
+
+
+#### Paradoxically, 1  x SD increase in well being predicts suicide .41 greater odds of suicidal attempt.
+
+```{r}
+sjPlot::tab_model(
+  glm(as.integer(satt) ~ wb_s, data = df2, family = "binomial")
+  )
+```
+
+
+####  Suicidal thought predicts 52.17 x greater odds for suicide attempt
+
+```{r}
+sjPlot::tab_model(
+  glm(as.integer(satt) ~ stht, data = df2, family = "binomial")
+  )
+```
+
+####  1 x SD of anxiety predicts 2 x greater odds of suicide attempt
+
+
+```{r}
+sjPlot::tab_model(
+  glm(as.integer(satt) ~ anx_s, data = df2, family = "binomial")
+  )
+```
+
+
+#### Self harm predicts 28.11 times higher chance of suicide attempt!
+
+```{r}
+sjPlot::tab_model(
+  glm(as.integer(satt) ~ sh, data = df2, family = "binomial")
+  )
+```
+
+
+#### 1 sd increase in conduct problem predicts 2 x greater odds of suicide attempt
+
+```{r}
+sjPlot::tab_model(
+  glm(as.integer(satt) ~ cdct_s, data = df2, family = "binomial")
+  )
+```
+
+
+### Depression  4.78 x greater odds of suicide attempt
+
+```{r}
+sjPlot::tab_model(
+  glm(as.integer(satt) ~ rads_s, data = df2, family = "binomial")
+  )
+```
+
+
+#### To do: need a DAG and causal analysis
+
+
+
+

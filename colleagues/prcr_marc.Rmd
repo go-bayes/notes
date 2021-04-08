@@ -1,0 +1,172 @@
+---
+title: "LPA for Marc"
+description: |
+author:
+  - name: Joseph Bulbulia
+    url: https://josephbulbulia.netlify.app
+    affiliation: Victoria University of Wellington
+    affiliation_url: https://www.wgtn.ac.nz
+    orcid_id: 0000-0002-5861-2056
+date: 2021-MAR-23
+output:
+  distill::distill_article:
+    self_contained: true
+    toc: false
+    code_folding: true
+    highlight: tango
+    highlight_downlit: false
+
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library("tidyverse") # data wrangling
+library("here") # file organisation
+library("kableExtra") # tables
+library("prcr") # analysis
+library("sjlabelled") # remove labels
+library("easystats") # tables //report
+
+```
+
+## Data processing
+
+First we import the data and rename the columns. 
+
+```{r}
+# read data. Because the data were prepared for MPLUS, I assume that there  are no column names, so we must create these. First read, and set "col_names" to FALSE
+
+dat <-
+  as_tibble(
+    readr::read_csv(here::here("colleagues", "marc", "KDat2403.csv"), col_names = FALSE)
+    )
+
+
+# Next assign column names according to Marc's email dated March 23, 2021, at about 5pm  
+
+df <- dat %>%
+  dplyr::rename(
+    "id" = "X1",
+    "anx" = "X2",
+    "cdct" = "X3",
+    "sh" = "X4",
+    "stht" = "X5",
+    "satt" = "X6",
+    "wb" = "X7",
+    "rads" = "X8"
+  )
+# remove lables
+df <- sjlabelled::remove_all_labels(df)
+
+# Vars are:
+# PNum 
+# Anx  - anxiety continuous
+# Cdct - conduct problems continuous
+# SH - self harm no or yes
+# STht  - suicidal thought no or yes
+# SAtt  - suicide attempt no or yes
+# WB - wellbeing continuous
+# radS - depression (RADS)
+
+
+# standardise variables, so that differences are in standard deviation units
+
+df2 <- df %>%
+  dplyr::mutate(
+    anx_s = as.numeric(scale(anx)),
+    cdct_s = as.numeric(scale(cdct))  ,
+    sh_s = as.numeric(scale(sh)),
+    stht_s = as.numeric(scale(stht)),
+    wb_s = as.numeric(scale(wb)),
+    satt_s = as.numeric(scale(satt)),
+    rads_s = as.numeric(scale(rads))
+  )
+```
+
+## Person Centred Analysis 
+For details about Person centered analysis see: 
+
+See: https://jrosen48.github.io/prcr/
+
+
+```{r}
+# Vignette
+# Provides an easy-to-use yet adaptable set of tools to conduct person-center analysis using a two-step clustering procedure. As described in Bergman and El-Khouri (1999) <doi:10.1002/(SICI)1521-4036(199910)41:6%3C753::AID-BIMJ753%3E3.0.CO;2-K>, hierarchical clustering is performed to determine the initial partition for the subsequent k-means clustering procedure.
+
+library(prcr)
+
+m1 <- create_profiles_cluster(df2, 
+                              anx_s, 
+                              cdct_s, 
+                              sh_s, 
+                              stht_s, 
+                              wb_s,
+                              satt_s,
+                              rads_s,
+                              n_profiles = 4)
+print.prcr <- function(x){
+    cat("$clustered_processed_data\n\n")
+    print(x$clustered_processed_data)
+} 
+
+```
+
+
+## Results of a four cluster analaysis
+
+Using person-centered clustering analysis, we find that 6% of the sample can be classified into a suicide-attempt cluster (cluster 3).  The cluster that is prone to suicidal attempts is 1.5 standard deviations higher in both suicidal rumination and self-harm. Members of this cluster tend to be almost 1 standard deviation higher than average in conduct problem as well as depression. Members of this class are reliably lower in well-being when compared with the sample average. 
+
+We also detect another cluster that over 1.5 times higher in self-harm but does not attempt suicide. This cluster represents 45% of the sample. Members of this cluster are prone to suicidal rumination, and present lower in wellbeing; they present higher in depression, anxiety, and misconduct. 
+
+To infer suicidal attempt hazard among youth across New Zealand would require a combination of time-series data and stratified sample weighting. Nevertheless, this analysis reveals that both suicidal idea and self-harm is prominent among those who report attempting suicide and among those who do not, and that suicidal ideal and tendencies to self harm are correlated. 
+
+```{r layout="l-body-outset", fig.width=12, fig.height=10}
+prcr::plot_profiles(m1) + theme_minimal() + labs(title = "PC")
+```
+
+
+```{r}
+# Frequency of classes
+m1%>%
+  dplyr::select(cluster)%>%
+  dplyr::mutate(cluster = as.factor(cluster)) %>%
+  dplyr::group_by(cluster)%>%
+  dplyr::summarise(n = n())%>%
+  dplyr::mutate(freq = n / sum(n)) %>%
+  parameters::print_html() # html table
+  
+```
+
+
+
+## Appendix 1 
+
+We can write a predictive model for reported suicide attempts (yes/no)
+
+
+```{r}
+sjPlot::tab_model(
+  m2<-glm(sh ~ anx_s + cdct_s +  stht_s + wb_s + rads_s, data = df2, family = binomial))
+```
+
+We do not observe substantial multiple collinearity in the predictors:
+
+```{r}
+performance::check_collinearity(m2)
+```
+
+
+
+
+
+<!-- ## Summary -->
+
+<!-- ```{r} -->
+<!-- summary(m1) %>% -->
+<!--   kbl(caption = "Results") %>% -->
+<!--   kable_classic_2(c("striped", "hover"), full_width = TRUE)  -->
+<!-- ``` -->
+
+
+
+

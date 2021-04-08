@@ -1,0 +1,178 @@
+---
+title: "Causal assumptions for *The Einstein effect: Global evidence for scientific source credibility effects and the influence of religiosity.*"
+description: |
+author:
+  - name: Joseph Bulbulia
+    url: https://josephbulbulia.netlify.app
+    affiliation: Victoria University of Wellington
+    affiliation_url: https://www.wgtn.ac.nz
+    orcid_id: 0000-0002-5861-2056
+date: 2021-MAR-17
+output:
+  distill::distill_article:
+    self_contained: false
+    toc: false
+    code_folding: true
+    highlight: tango
+    highlight_downlit: false
+bibliography: references.bib
+---
+
+```{r setup}
+# set up
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  echo = TRUE
+)
+```
+
+```{r message = FALSE}
+# required packages
+
+if (!require(ggdag)) install.packages("ggdag")
+
+```
+
+## A causal graph
+
+Below is my attempt to work out the causal assumptions of our experimental study.
+
+From the manuscript, I believe we investigate a model in which:
+
+-   differences in credibility for gurus (vs scientists) is (potentially) affected by
+
+    -   importance of statement,
+    -   order of presentation
+    -   religion.
+
+-   religion is affected by age, SES, education, gender, and country
+
+-   SES is afffected by country, education, and age
+
+-   education is affected by country, age, and being male
+
+-   Importance of statement is a function of religion, memory and country-level factors
+
+-   memory is affected by age, education, and (perhaps) presentation order.
+
+-   **The exposure of interest is "religion"**
+
+-   **The outcome of interest is "source credibility"**
+
+We can write the model using the ggdag package in R:
+
+```{r}
+# Susan's model
+# call ggdag model
+# write relationships:
+
+library(ggdag)
+dg_1 <- ggdag::dagify(
+  b ~  im + ordr + rel + sr  + st,
+  rel ~  age + ses + edu + male + cny,
+  ses ~ cny + edu + age,
+  edu ~ cny + male + age,
+  im ~ mem + rel + cny,
+  mem ~ age + edu + ordr,
+  exposure = "rel",
+  outcome = "b",
+  labels = c(
+    "b" = "statement credibility",
+    "sr" = "source",
+    "st" = "statement",
+    "im" = "importance",
+    "mem" = "memory",
+    "s" = "source",
+    "rel" = "religious",
+    "cny" = "country",
+    "mem" = "memory",
+    "male" = "male",
+    "ordr" = "presentation order",
+    "ses" = "perceived SES",
+    "edu" = "education",
+    "age" = "age"
+   )
+)
+```
+
+Graphing this assumed model, we find a structure like this:
+
+```{r  layout="l-body-outset",  fig.height=8, fig.width=12}
+# Graph model
+p1 <-ggdag(dg_1, text = FALSE, use_labels = "label") + theme_dag_blank() + labs(title = "Proposed Model")
+p1
+```
+
+**Note** I might have misunderstood the model.
+
+Please free to play around with the code to make sure what it fits with your causal assumptions. The point is to clarify that we should probably not include all covariates in the model as "controls."
+
+## Causal test requirments?
+
+1.  It is important to close all \`back doors' between religion and source credibility beliefs.
+
+2.  It is *equally* important not open any paths between religion and source credibility beliefs (collider confounding). This latter point is under appreciated, however see: [@rohrer2018; @mcelreath2020; @pearl2019]. Note that [@rohrer2018] is very accessible.
+
+3.  We should not block any paths between religion and source credibility beliefs.
+
+Here are the potential adjustment sets that fit these criteria:
+
+```{r adjustsetDirect, layout="l-body-outset",  fig.height=8, fig.width=12}
+# find adjustment set
+p2 <-ggdag::ggdag_adjustment_set(
+  dg_1,
+  exposure = "rel",
+  outcome = "b",
+  text = FALSE,
+  use_labels  = "label"
+) +
+  theme_dag_blank() +
+  labs(title = "Adjustment set",
+  subtite = "Model for Source credibility from belief ")
+p2
+```
+
+Thus, conditional on the assummed model, we should *either* {condition on age, country and education} *or* we should condition on {country, memory, order}.
+
+## Looming colliders
+
+Consider that when we include all variables we open paths between the different indicators in the model. We should avoid a "causal salad" approach that adjusts for indicators other than those that we need for causal inference. (see chapters 4-6 of McElreath's *Statistical Rethinking* )
+
+```{r layout="l-body-outset", fig.height=8, fig.width=12}
+p3<- ggdag::ggdag_dseparated(
+  dg_1,
+  from = "rel",
+  to = "b",
+  controlling_for = c("ses","age","cny", "im","edu", "mem", "male"),
+  text = FALSE,
+  use_labels  = "label"
+)+
+  theme_dag_blank() +
+  labs(title = "Collider Confounding occurs when we `control for` a bunch of variables")
+p3
+```
+
+Here we find the lurking collider confounds.
+
+```{r echo = FALSE, layout="l-body-outset",  fig.height=8, fig.width=12}
+p4 <-ggdag_collider(dg_1,
+  text = FALSE,
+  use_labels  = "label"
+) +
+  labs(title = "Lurking Colliders")
+```
+
+## Else
+
+-   I love the term `gobbledegook`!!
+
+-   Risk of Simpson's Paradox? Unless I'm missing something, I think should leave out the "Validation using trust ratings (previously collected data)" because (I think?) the data are aggregated at the level of countries, which introduces a *Simpson's Paradox*. [^1]
+
+[^1]: Which gives rise to phenomena like this: "Interestingly, while the experimental study found that religiosity was associated with increased credibility ratings for both sources, albeit to a smaller extent for the scientist (see Figure 2c), the trust data show a positive effect of religiosity on trust for traditional healers (standardized estimate = 0.033 [0.026, 0.040]), yet a negative effect of religiosity on trust for scientists (standardized estimate = -0.011 [-0.018, -0.004])."
+
+## Packages used
+
+```{r echo = FALSE}
+report::cite_packages()
+```
