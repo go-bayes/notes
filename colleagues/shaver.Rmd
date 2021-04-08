@@ -62,6 +62,10 @@ m1 <- brm(cites ~ s(year),
        family = "poisson",
        file = here::here("colleagues","shaver", "m1"))
 
+m2 <- brm(cites ~ year, 
+       data = ct, 
+       family = "poisson",
+       file = here::here("colleagues","shaver", "m2"))
 
 # one method for plotting
 plot(ggeffects::ggpredict(m1, terms = "year"), add.data = TRUE) + theme_classic()
@@ -155,7 +159,7 @@ preditedh <-
   theme(legend.position = c(.2, .8)) + theme_classic() + xlab("Years 2021-2031") + ylab("Predicted H-index") + labs(title = "John Shaver's  H-index Forcast (method: Acuna et al 2012)")
 
 library(patchwork)
-(cites1 + co_authors )  / (preditedh + predplot2) + plot_annotation(tag_levels = 'a') 
+(cites1 + preditedh  )  / ( co_authors) + plot_annotation(tag_levels = 'a') 
 ```
 
 
