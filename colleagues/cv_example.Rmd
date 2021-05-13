@@ -1,0 +1,83 @@
+---
+title: "CV"
+runningheader: "" # only for pdf output
+subtitle: "" # only for html output
+author: ""
+date: "`r Sys.Date()`"
+output:
+  tufte::tufte_html: default
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+  tufte::tufte_book:
+    citation_package: natbib
+    latex_engine: xelatex
+bibliography: skeleton.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+library(tufte)
+# invalidate cache when the tufte version changes
+knitr::opts_chunk$set(cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+```
+
+
+
+```{r}
+library(scholar)
+library(tidyverse)
+library(rorcid)
+library(googlesheets)
+1
+my_Google_Scholar<-get_profile('82b99k8AAAAJ')
+a<-my_Google_Scholar$total_cites
+b<-my_Google_Scholar$h_index
+c<-my_Google_Scholar$i10_index
+```
+
+
+```{r}
+id <- "82b99k8AAAAJ"
+ps<-scholar::get_publications("82b99k8AAAAJ")
+  
+head(ps, 3)
+
+predict_h_index("82b99k8AAAAJ")
+ct <- get_citation_history(id)
+ggplot(ct, aes(year, cites)) + geom_line() + geom_point()
+
+```
+
+
+```{r}
+edu <- do.call("rbind",
+  rorcid::orcid_educations("0000-0002-5861-2056")$`0000-0002-5861-2056`$`affiliation-group`$summaries
+)
+edu
+edu %>%
+  detailed_entries(
+    what = `education-summary.role-title`,
+    when = glue::glue("{`education-summary.start-date.year.value`} - {`education-summary.end-date.year.value`}"),
+    with = `education-summary.organization.name`,
+    where = `education-summary.organization.address.city`
+  )
+
+
+```
+
+
+```{r}
+coauthor_network <- get_coauthors(id, n_coauthors = 7)
+
+plot_coauthors(coauthor_network)
+```
+
+
+```{r}
+coauthor_network <- get_coauthors('6W-sIEkAAAAJ&hl', n_coauthors = 10)
+
+plot_coauthors(coauthor_network)
+```
+
