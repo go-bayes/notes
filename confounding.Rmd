@@ -1,0 +1,255 @@
+---
+title: "Hidden neighbourhood effects may introduce confounding."
+description: 
+author:
+  - name: Joseph Bulbulia
+    url: https://josephbulbulia.netlify.app
+    affiliation: Victoria University of Wellington
+    affiliation_url: https://www.wgtn.ac.nz
+    orcid_id: 0000-0002-5861-2056
+date: 2021-MAY-19 
+output:
+  distill::distill_article:
+    self_contained: false
+    toc: true
+    code_folding: false
+    highlight: kate
+bibliography: references.bib
+---
+
+
+```{r code_folding = TRUE}
+# packages
+# install_rethinking
+# function for installing dependencies
+ipak <- function(pkg){
+new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE) 
+sapply(pkg, require, character.only = TRUE)
+}
+# usage
+packages <- c("coda", "plyr", "mvtnorm", "scales", "dagitty")
+ipak(packages)
+# next install rethinking
+if (!require(rethinking)) {
+  devtools::install_github("rmcelreath/rethinking")
+}
+#next install ggdag
+if (!require(ggdag)) {
+  devtools::install_github("malcolmbarrett/ggdag")
+}
+
+
+# libbraries
+library("tidyverse")
+library("ggdag")
+library("brms")
+library("rstan")
+library("rstanarm")
+library("tidybayes")
+library("bayesplot")
+library("easystats")
+# rstan options
+rstan_options(auto_write=TRUE)
+options(mc.cores=parallel::detectCores ())
+theme_set(theme_classic())
+```
+
+```{r echo = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  layout = "l-body-outset",
+  fig.width = 12,
+  fig.height = 10,
+  collapse = TRUE,
+  R.options = list(width = 60)
+)
+```
+
+
+Imagine a word in which we have the following relationships:
+
+```{r}
+library(ggdag)
+# code for creating a DAG
+ggdag_ov <- dagify(Y ~ X + M,
+                   M ~ X + U,
+                   exposure = "X",
+                   outcome = "Y")%>%
+  control_for("M")
+
+# plot the DAG
+ggdag_ov %>%
+  ggdag() + theme_dag_blank()
+```
+
+Suppose that we want to write a mediation model in which we partition out the direct effect of X -> Y and total effect of X--> Y through M.  However there is an unmeasured neighbourhood effect of U on M.  Not that neighbourhood is a collider. 
+
+
+```{r}
+# use this code
+ggdag::ggdag_collider( ggdag_ov )  + theme_dag_blank()
+```
+
+Because of this, neighbourhood effects can lead to confounding, making it appear as though the effect of X on Y is negative. 
+
+To show this, we simulate some data:
+
+```{r echo = FALSE, include = FALSE}
+set.seed(123)
+N <- 100
+b_XM <- 1 # direct effect of X on M
+b_XY <- 0 # direct effect of X on Y
+b_MY <- 1 # direct effect of M on Y
+b_U <- 2 # direct effect of U on M and Y”
+
+set.seed(1)
+
+U <- 2 * rethinking::rbern( N , 0.5 ) - 1
+X <- rnorm( N )
+M <- rnorm( N , b_XM*X + b_U*U )
+Y <- rnorm( N , b_MY*M + b_XY * X +  b_U*U )
+d <- data.frame( Y=Y, M=M, X=X , U=U )
+```
+
+
+Note that in our simulation, X has a positive effect on Y. However, M is a collider, and including M in our model makes it appear as if X is negatively related to Y, even though in our simulation there is no relationship.
+
+```{r echo = FALSE, include = FALSE}
+lm( Y ~ X + M, data = d) %>%
+  summary()
+```
+
+
+Writing the full mediation model:
+
+
+```{r}
+bmlm::mlm_path_plot(xlab = "Focal\n(X)",
+              mlab = "Mediator\n(M)",
+              ylab = "Outcome\n(Y)")
+```
+
+
+
+```{r}
+path_m <- brms::bf(M ~ X)
+path_y <- brms::bf(Y ~ X + M)
+
+m1 <- brms::brm(
+  path_m + path_y + set_rescor(FALSE),
+  data = d,
+  file = here::here("models", "mediation-counfound-simulation")
+)
+
+# output
+parameters::model_parameters(m1)
+```
+
+
+For the mediation model we may recover the indirect, direct and total effects as follow:
+
+```{r}
+# get posterior distributions
+post <- brms::posterior_samples(m1)
+
+# sum and multiply the posterior distributions to obain parameter estimates
+post2 <- post %>%
+  dplyr::transmute(
+    a = b_M_X,
+    b = b_Y_M,
+    cp = b_Y_X,
+    me = a * b,
+    c = cp + me#,
+    # pme = me / c
+  )
+```
+
+The direct effect (cp) appears to be negative. 
+
+
+```{r}
+# plot the results
+mcmc_intervals(post2) 
+```
+
+
+But recall, we simulated a direct effect coefficient of 0. This is the result of conditioning on a collider, which opens a path between X and U. 
+
+```{r}
+ggdag::ggdag_dseparated(ggdag_ov, controlling_for = "M", collider_lines = TRUE )  + theme_dag_blank()
+```
+
+
+This time, let's included the previously un-modelled effect of neighbourhoods. 
+
+
+```{r}
+path_m <- brms::bf(M ~ X )
+path_y <- brms::bf(Y ~ X + M + U)
+
+m2 <- brms::brm(
+  path_m + path_y + set_rescor(FALSE),
+  data = d,
+  file = here::here("models", "mediation-counfound-simulation-2")
+)
+
+# output
+parameters::model_parameters(m2)
+```
+
+Graphing results in a model that adjusts for neighbourhoods effecs we have
+
+```{r}
+# get posterior distributions
+post2 <- brms::posterior_samples(m2)
+
+# sum and multiply the posterior distributions to obain parameter estimates
+post2.2 <- post2 %>%
+  dplyr::transmute(
+    a = b_M_X,
+    b = b_Y_M,
+    cp = b_Y_X,
+    me = a * b,
+    c = cp + me#,
+    # pme = me / c
+  )
+
+# plot the results
+mcmc_intervals(post2.2) 
+```
+
+We recover the proper direct effect (namely 0), 
+
+Recall that in our simulation X -> M, and it is for this reason the total effect of X on Y is positive. 
+
+In short, if we are modelling relationships in which covariates are affected by neighbourhood effects, we might confound our results. 
+
+The goods news is that for models in which we are only interested in the total effect of X on Y, it is sufficient for us to condition only X.  (All backdoor paths are closed)
+
+```{r}
+# code for creating a DAG
+ggdag_ov2 <- dagify(Y ~ X + M,
+                   M ~ X + U,
+                   exposure = "X",
+                   outcome = "Y")
+
+ggdag::ggdag_adjustment_set(ggdag_ov2)
+```
+
+
+Doing so gives us X's total effect (which arises through X's effect on M).
+
+```{r}
+```{r echo = FALSE, include = FALSE}
+lm( Y ~ X, data = d) %>%
+  summary()
+```
+```
+
+
+
+
