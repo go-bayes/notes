@@ -1,0 +1,243 @@
+---
+title: "Review of Laural Keat's Memory Study"
+description: |
+author:
+  - name: Joseph Bulbulia
+    url: https://josephbulbulia.netlify.app
+    affiliation: Victoria University of Wellington
+    affiliation_url: https://www.wgtn.ac.nz
+    orcid_id: 0000-0002-5861-2056
+date: June 2, 2021
+output:
+  distill::distill_article:
+    self_contained: true
+    toc: false
+    code_folding: true
+    highlight: tango
+    highlight_downlit: false
+bibliography: references.bib
+---
+
+```{r setup, include = FALSE}
+# set up
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  echo = TRUE
+)
+```
+
+```{r message = FALSE}
+# required packages
+if (!require(ggdag)) install.packages("ggdag")
+```
+
+## A causal graph
+
+From the context of the study, I assume that Laural wants to assess whether episodic memory at time 1 affects depression at time 2.
+
+Furthermore, we assume this occurs in a setting where age, gender, self-reflectivity can also affect depression.
+
+Additionally we assume that these parameters can affect each other.
+
+For example, rumination (study 3) can affect episodic memory, and both might independently affect depression.
+
+Here, I will assume further that life events can affect depression, memory, and self-reflectivity. Bad stuff happens, it happens to me, this is hard to forget, and it causes depression, what I remember, and my prominence in story. Though I could not get it from the proposal, I assume that the team has measured bad life events. (If not, they really need to, otherwise they cannot obtain an unbiased causal estimate of how emotional memory at time 1 can affect depression at time 2.
+
+For the purposes of offering feedback I will assume the following:
+
+-   depression at time 2 is affected by depression at time 1 + episodic memory at time 1 + episodic memory at time 2 + self reflection at time 2 + self reflection at time 1 + life events at time 1 + life events at time 2 + rumination at time 1 + rumination at time 2 + gender + age
+
+-   episodic memory at time 1 is caused by rumination at time 1 + self reflection at time 1 + life events at time 1 + rumination at time 1.
+
+-   self reflection at time 1 is affected by gender + age + life event at time 1
+
+-   rumination at time 1 is affected by self-reflection at time 1 and life events at time 1
+
+-   episodic memory at time 2 is affected by episodic memory at time 1 + self_reflection at time 2 + events at time 1 + events at time 2 + (we might suppose) depression at time 1.
+
+-   rumination at time 2 is affected by rumination at time 1 + events at time 1 and events at time 2.
+
+-   Let's assume for realism that depression at time 1 can cause bad life events at time 2, and include this potential path in our causal diagramme.
+
+Note that these are my uneducated assumptions. Laural's might differ. However, whatever the assumptions are they need to be explicit. Otherwise Laural will risk compromising inference by failing to adjust for parameters or by adjusting for the wrong parameters.
+
+Graphing this assumed model, we find a structure like this:
+
+```{r  layout="l-body-outset",  fig.height=8, fig.width=12}
+# Graph model
+library(ggdag)
+dg_1<- ggdag::dagify(
+  depress_2 ~   depress_1 + em_1 + em_2 + sr_2 + sr_1 + male + age + event_1 + event_2 + rumination_1 + rumination_2,
+  em_1 ~  sr_1 + age + male + event_1 + rumination_1,
+  sr_1 ~ male + age + event_1,
+  rumination_1 ~ sr_1 + event_1, 
+  em_2 ~ em_1 + sr_2 + event_1 + event_2 + depress_1,
+  rumination_2 ~ rumination_1 + event_1 + event_2,
+  event_2 ~ depress_1, 
+  exposure = "em_1",
+  outcome = "depress_2",
+  labels = c(
+    "depress_2" = "depression t2",
+    "depress_1" = "depression t1",
+    "sr_1" = "self reflection t1",
+    "sr_2" = "self reflection t2",
+    "male" = "male",
+    "age" = "age",
+    "event_2" = "life events t2",
+    "event_1" = "life events t1",
+    "em_1" = "episodic memory t1",
+    "em_2" = "episodic memory t1",
+    "rumination_1" = "rumination t1",
+    "rumination_2" = "rumination t2"
+   )
+)
+p1 <-ggdag(dg_1, text = FALSE, use_labels = "label") + theme_dag_blank() + labs(title = "Proposed Model")
+p1
+```
+
+## What do we need to adjust for to test whether episodic memory at time 1 makes depression at time 2 more probable?
+
+1.  It is important to close all \`back doors'
+
+2.  It is *equally* important introduce any collider confounds open. This latter point is under-appreciated, however see: [@rohrer2018, @mcelreath2020, @pearl2019]. Note that [@rohrer2018] is very accessible.
+
+3.  We should not block any paths between episodic memory at time 1 and depression at time 2.
+
+The following are the potential adjustment sets that enable unbiased inference conditional on our model assumptions:
+
+```{r adjustsetDirect, layout="l-body-outset",  fig.height=8, fig.width=12}
+# find adjustment set
+p2 <-ggdag::ggdag_adjustment_set(
+  dg_1,
+  exposure = "em_1",
+  outcome = "depress_2",
+  text = FALSE,
+  use_labels  = "label"
+) +
+  theme_dag_blank() +
+  labs(title = "Adjustment set",
+  subtite = "")
+p2
+```
+
+Thus, Laural should condition on age, events at time 1, male gender, rumination at time 1 and self-reflection at time 1.
+
+Note that over-conditioning by controling for too many variable activates collider confounds that might bias inference
+
+```{r}
+ggdag_dconnected(dg_1, controlling_for = c("rumination_2", 
+                                           "event_2",
+                                           "em_2",
+                                           "sr_2",
+                                           "event_1",
+                                           "male",
+                                           "age",
+                                           "rumination_1",
+                                           "sr_1",
+                                           "depress_1"), 
+                 text = F, use_labels = "label", 
+                 collider_lines = TRUE) +
+  theme_dag_blank() + ggtitle("Do not `control for' too many variables because this introduces collider confounds")
+```
+
+Note that rumination is something Laural hopes to adjust for in study 3. A key worry I have about this adjustment is that rumination can affect memory of rumination, so rumination at T1 is measured with error. In this case, there would be no way to close the back door between episodic memory at T1 and depression at T2. I would suggest that Laural be very careful about how to assess rumination at baseline measures. Rather than spoiling inference, **it might be more sensible to start the project over.**
+
+```{r}
+library(ggdag)
+dg_2aa<- ggdag::dagify(
+  depress_2 ~   depress_1 + em_1 + em_2 + sr_2 + sr_1 + male + age + event_1 + event_2 + rumination_1 + rumination_2,
+  em_1 ~  sr_1 + age + male + event_1 + rumination_1 + U,
+  sr_1 ~ male + age + event_1,
+  rumination_1 ~ sr_1 + event_1 + em_2, 
+  em_2 ~ em_1 + sr_2 + event_1 + event_2 + depress_1 + U,
+  rumination_2 ~ rumination_1 + event_1 + event_2,
+  exposure = "em_1",
+  outcome = "depress_2",
+  latent = "U",
+  labels = c(
+    "depress_2" = "depression t2",
+    "depress_1" = "depression t1",
+    "sr_1" = "self reflection t1",
+    "sr_2" = "self reflection t2",
+    "male" = "male",
+    "age" = "age",
+    "event_2" = "life events t2",
+    "event_1" = "life events t1",
+    "em_1" = "episodic memory t1",
+    "em_2" = "episodic memory t1",
+    "rumination_1" = "rumination t1",
+    "rumination_2" = "rumination t2",
+    "U" = "memory capacity"
+   )
+)
+p2bb <-ggdag::ggdag_adjustment_set(
+  dg_2aa,
+  exposure = "em_1",
+  outcome = "depress_2",
+  text = FALSE,
+  use_labels  = "label"
+) +
+  theme_dag_blank() +
+  labs(title = "Adjustment set",
+  subtite = "")
+p2bb
+
+```
+
+## Lurking Problem
+
+There is another lurking worry. Assume there are individual differences in memory capacity and we do not assess these? If there are individual factors that cause people to differ in episodic memory -- such as latent intelligence --which affects episodic memory at time 1 and time 2. Such a lurking parameter could spoil inference. It will be important that Laural is clear about this. Again if these differences can be measured then I would suggest including measures of aptitude for episodic memory and then including these measures at baseline.
+
+```{r warning = FALSE}
+# write relationships:
+
+library(ggdag)
+dg_2<- ggdag::dagify(
+  depress_2 ~   depress_1 + em_1 + em_2 + sr_2 + sr_1 + male + age + event_1 + event_2 + rumination_1 + rumination_2,
+  em_1 ~  sr_1 + age + male + event_1 + rumination_1 + U,
+  sr_1 ~ male + age + event_1,
+  rumination_1 ~ sr_1 + event_1, 
+  em_2 ~ em_1 + sr_2 + event_1 + event_2 + U,
+  rumination_2 ~ rumination_1 + event_1 + event_2,
+  exposure = "em_1",
+  outcome = "depress_2",
+  latent = "U",
+  labels = c(
+    "depress_2" = "depression t2",
+    "depress_1" = "depression t1",
+    "sr_1" = "self reflection t1",
+    "sr_2" = "self reflection t2",
+    "male" = "male",
+    "age" = "age",
+    "event_2" = "life events t2",
+    "event_1" = "life events t1",
+    "em_1" = "episodic memory t1",
+    "em_2" = "episodic memory t1",
+    "rumination_1" = "rumination t1",
+    "rumination_2" = "rumination t2",
+    "U" = "memory capacity"
+   )
+)
+p2b <-ggdag::ggdag_adjustment_set(
+  dg_2,
+  exposure = "em_1",
+  outcome = "depress_2",
+  text = FALSE,
+  use_labels  = "label"
+) +
+  theme_dag_blank() +
+  labs(title = "Adjustment set",
+  subtite = "")
+p2b
+```
+
+## Final thought
+
+It might be worth looking at the predictors of depression recovery. Whereas episodic memory might not cause depression, selective memory might promote healing. However teasing apart processes of remembering and processes of forgetting would require special care. As far as I can tell, the current study averages across these two processes. Perhaps an additional study would attempt to tease apart these processes. The models we use for this kind of estimation are called hidden Markov models.
+
+## Packages used
+
+```{r echo = FALSE}
+report::cite_packages()
+```
