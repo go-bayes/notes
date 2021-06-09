@@ -1,5 +1,5 @@
 ---
-title: "Internalising and Externalising in Parents and Offspring: The Impact of Sex and Early Life Adversity"
+title: "Comments on `Internalising and Externalising in Parents and Offspring: The Impact of Sex and Early Life Adversity` by  Emerald O’Neill-Murchison"
 description: |
 author:
   - name: Joseph Bulbulia
@@ -7,7 +7,7 @@ author:
     affiliation: Victoria University of Wellington
     affiliation_url: https://www.wgtn.ac.nz
     orcid_id: 0000-0002-5861-2056
-date: June 2, 2021
+date: June 7, 2021
 output:
   distill::distill_article:
     self_contained: true
@@ -16,6 +16,9 @@ output:
     highlight: tango
     highlight_downlit: false
 bibliography: references.bib
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include = FALSE}
@@ -27,107 +30,795 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r message = FALSE}
+```{r message = FALSE, include = FALSE}
 # required packages
 if (!require(ggdag)) install.packages("ggdag")
+
+library("brms")
+library("rstan")
+library("rstanarm")
+library("tidybayes")
+library("bayesplot")
+library("easystats")
+library("tidyverse")
+# rstan options
+rstan_options(auto_write=TRUE)
+options(mc.cores=parallel::detectCores ())
+theme_set(theme_classic())
 ```
 
-## A causal graph
+## Overview
 
-Graphing this assumed model, we find a structure like this:
+### Aims
+
+Forensic psychologists use the term "externalising" to denote
+psychological disorders characterised by disinhibition or aggression.
+
+Forensic psychologists use the term "internalising" to denote cognitive
+and affective disorders.
+
+Developmental forensic psychologists have investigated the etiology by
+which specific behavioural and cognitive/affective disorders arise
+during childhood, how offspring are affected by parents, and whether
+there are sex differences.
+
+Emerald's thesis extends previous investigations examining the
+interrelated effects of parental pathology, early life adversity and sex
+differences on adult offspring internalising and externalising. Her
+thesis is distinctive in three ways.
+
+First, Emerald's thesis "takes focus on the overall dimensions of
+internalising and externalising as opposed to specific disorders"
+(p.18). That is, the project approaches psychological disorders using
+the conceptual frameworks of internalisation and externalisation.
+
+Second, Emerald's thesis examines the relationships between parental
+internalising and externalising, early childhood adversity (ELA), and
+sex differences in the expression of adult offspring internalising and
+externalising. Previous studies have not focussed on the interdependence
+of these parameters within the same model.
+
+Third, this project examines sex differences: specifically whether
+paternal or maternal internalising or externalising differently affects
+male and female offspring in adulthood.
+
+### Importance
+
+The study is important for the reasons that Emerald states:
+
+> Young people's exposure and experiences of parental externalising, as
+> well as ELA, can result in serious negative and lasting consequences
+> for individuals and society. It is important to gain a clearer
+> understanding of these impacts. As such, the aim of this project is to
+> gain further understanding of the relationship between parental
+> externalising and internalising and externalising as mediated by ELA;
+> that is investigating whether ELA statistically accounts for the
+> relationship between our predictor variable, parental externalising,
+> and our dependent variables, internalising and externalising in
+> offspring (p.18).
+
+### Hypotheses
+
+The project proposes three hypotheses:
+
+1.  " ELA [will] positively account for the relationship between
+    parental externalising and internalising and externalising" (p.19).
+2.  "$\dots$ there [will] be no [statistically] significant difference
+    overall in the impact of parental externalising between mothers and
+    fathers, wherein both mothers and fathers alike significantly
+    [affect] both male and female offspring with their externalising
+    behaviour" (p.19)
+3.  (a.) Maternal internalising [will have] a relatively greater effect
+    on female offspring compared with male offspring (in adulthood) in
+    both externalising and internalising and (b) Paternal externalising
+    [will have] a relatively greater effect on male offspring compared
+    with female offspring (in adulthood).
+
+The motivation for these hypotheses is grounded in previous research.
+
+### Findings
+
+Emerald reports the following results:
+
+1.  No direct association was demonstrated between maternal
+    externalising or paternal externalising and internalising or
+    externalising in offspring .
+2.  ELA was associated with maternal externalising and paternal
+    externalising in females only.
+3.  The relationship between paternal externalising and internalising in
+    male offspring was mediated by ELA, as was the relationship between
+    maternal externalising and internalising in male offspring. The
+    relationship between parental externalising and internalising in
+    females however was not mediated by ELA.
+
+## Evaluation
+
+### Evaluation of the interpretation of the results.
+
+1.  **No direct association was demonstrated between maternal
+    externalising or paternal externalising and internalising or
+    externalising in offspring.** I do not share this interpretation. I
+    note that the result comes from a mediation model that also
+    conditions on Early Life Adversity. As such, once we include ELA,
+    the parental effects drop out. This result is what we would expect
+    if causal effect of parental pathology is fully mediated by
+    childhood experiences. So far as I can tell, the conclusions of the
+    thesis are simply misstated. Before submitting the final version, I
+    would ask that Emerald and her supervisors review the results. To
+    help clarify my point, I have simulated data in Appendix 1.
+2.  **The direct internalising and externalising predicts ELA in females
+    only.** The first thing to notice here is that main effects and and
+    interactions of sex on ELA were not tested within the same model.
+    Instead, for reasons that remain unclear, Emerald appears to have
+    performed a separate analyses on females and males, which strongly
+    compromises our ability to infer sex differences. Second, the
+    finding that parental pathology is unrelated to ELA is a strong
+    indication of problems in the measurement approach. Having parents
+    who are checked out or abusive would itself appear to be a
+    dimensions of Early Life Adversity. Before submitting the final
+    version, I would ask that Emerald conduct an analysis in only one
+    model that includes male and female (See further comments below).
+3.  **The relationship between paternal externalising and internalising
+    in male offspring was mediated by ELA, as was the relationship
+    between maternal externalising and internalising in male offspring.
+    The relationship between parental externalising and internalising in
+    females however was not mediated by ELA**. This finding is
+    compromised in three ways. First, ELA is reliably related to
+    offspring outcomes except in Group 2 Males. Second, as far as I can
+    tell parental effects are fully mediated by ELA (see below) -- or at
+    least, a correct interpretation is lacking. Third, as mentioned, the
+    subgroup analyses of males and females relies on an incorrectly
+    specified model.
+
+### Clarity of purpose
+
+I found the study challenging to follow. Definitions of the key terms,
+externalisation and internalisation, do not occur until page 8. These
+terms should have been defined in the abstract and again on the first
+page of the introduction .
+
+There were many acronyms throughout - CD, ACE, ASPD, PTSD, GAD, MDD,
+OCD. The acronyms introduce heavy cognitive burdens, and many proved to
+be side-points to the main interest: Early Life Adversity (ELA). The
+thesis should be re-written without these acronyms. Indeed I would
+encourage Emerald to write out "Early Life Adversity."
+
+Before submitting a final draft, I would ask Emerald and her supervisors
+to work on the clarify of the thesis's verbal expression and
+readability.
+
+### Context for research
+
+The research topic is important, and Emerald makes a good argument for
+its importance.
+
+### Appropriate methods
+
+Worryingly, the key inference is, as far as I can make out, incorrect.
+Emerald writes: "We hypothesised ELA would positively account for the
+relationship between parental externalising and internalising and
+externalising." However, if the hypothesis were true, then including ELA
+in the model would result in the conditional independence of parental
+externalising/internalising and offspring externalising/internalising
+(after adjusting for sex differences.) So we would expect that the
+direct effect of paternal influence would drop out, \*\*as observed.\*\*
+To show this, see my simulation in Appendix 1.
+
+As such, I do not believe the following result is warranted:
+
+> "Contrary to past research which has demonstrated many times that
+> parental externalising confers a higher risk of offspring developing
+> externalising behaviour, in our study we did not find a significant
+> relationship between either maternal or paternal externalising and
+> externalising symptoms in male or female offspring (Besemer, 2014;
+> Foley et al., 2001; Furtado et al., 2006; Herndon & Iacono, 2005; Kim
+> et al., 2009; Long et al., 2018; Whitten et al., 2019). This is in
+> direct opposition to the strong links that have been drawn between
+> parental externalising and the development of substance use problems
+> in offspring, as well as behaviour difficulties and/or the engagement
+> of offending behaviour (Besemer et al., 2017; Long et al., 2018).
+> Furthermore, though there is an abundance of studies which report a
+> strong association between ELA and externalising symptoms across the
+> life course, our results did not replicate this finding in females or
+> in males (see review by Curran et al., 2018). p.47
+
+It should have been a tip off that the present study was incongruous
+with past research, and I will confess to being disappointed that
+Emerald did not systematically address her curious results. The stakes
+in this research are, after all, important.
+
+Also, as mentioned, the selection of two random groups and the running
+of two parallel analyses on the two groups is a misunderstanding of
+Pohlmann (2004). The approach is confusing, and unnecessarily reduces
+the studies power. I think Emerald was hoping to cross-validate here
+results, but this requires a different approach.
+
+Also, as mentioned, the main effects of sex and interactions of sex and
+the mediator (ELA) as well as sex and parental exposure were not
+included in the same model. Instead Emerald performed a subgroup
+analysis:
+
+> Additionally, as we were interested in the sex-of-participant effect;
+> whether males and females were impacted by maternal and paternal
+> externalising, and ELAs in similar or different ways, analysis was
+> **run by group**. This allowed us to compare the results of males and
+> females. p.19
+
+I could not find any justification for the sub-group analyses. To infer
+differences Emerald needs to include sex-differences within the same
+statistical model. And indeed on the final page, Emerald notes this (!),
+"It must be noted that this conclusion has been drawn on the basis of
+comparing the direct and indirect effects of the SEM model rather than a
+specific test of moderation." p.49.
+
+Presently, all inferences about differences among men and women are
+invalid. I would ask Emerald and her supervisors to revisit these
+inferences before Emerald lodges her thesis with the Victoria Library.
+
+### Successful outcomes
+
+The thesis, in its present form, does not appear to be successful.
+However, I am sanguine: without too much trouble, the thesis can be
+fixed.
+
+### Effective presentation
+
+The literature review is solid. The topic is well-motivated. However, I
+struggled with assessing this thesis because I found myself regularly
+confused by it's logic and clarity of expression. For this reason I do
+not judge the thesis in its present form to be particularly effective.
+However Emerald can work on its clarity of expression (see my "specific
+points to consider" below for some directions).
+
+## How to fix the several faults with the current manuscript
+
+There's much to be happy about in this thesis. The literature review is
+informative. Writing out the causal assumptions of the presumed model I
+find that the variables that were selected to assess the causal
+contributions of parental disorder on child disorder were correct (See
+Appendix 2). Good work.
+
+I believe that the thesis can be fixed with relatively little effort
+should Emerald takes the following steps:
+
+1.  Define the key theoretical terms "externalising" and "internalising"
+    in the abstract and in the opening section of the introduction.
+2.  Offer a clear theoretical justification for why the lumping strategy
+    of psychological disorders into the large categories of
+    "externalising" and "internalising" is motivated. Presently a clear
+    rational is lacking.
+3.  Do not adopt the sample splitting strategy wrongly attributed to
+    Pohlmann (2004). While splitting would be OK for the measurement
+    models, Pohlmann's advice does not apply to the inferential model.
+    The splitting of the data set is confusing: it does not offer the
+    cross-validated model that Emerald hopes for.
+4.  Do not split the samples further into females and males. To
+    investigate non-linear differences include both the main effects and
+    interactions of sex. Note: in my view, stratifying by sex would be
+    sufficient to assess the causal effects of parental disorders on
+    offspring disorders. While I do not believe a "moderated mediation"
+    analysis is motivated for causal inference it is possible that I'm
+    missing something.
+5.  Alert the audience to potential confounding from unmeasured genetic
+    influences that affect both parental and offspring behavioral and
+    cognitive/affective disorders (see Appendix 4).
+6.  Move the warnings about potential problems from recall bias to the
+    introduction. Such bias seriously compromises the study's
+    conclusions (see Appendix 5). Note that epidemiologists and medical
+    researchers do not rely on memories when assessing the etiology of
+    disease because memories are known to systematically bias results.
+    Sickness tends to distort (or improve) reflections, leading to
+    confounding measurement error.
+
+Suggestions:
+
+1.  Please spell out the acronyms. Personally, I'd suggest writing out
+    ELA as "Early Life Adversity" because this is more readable.
+
+2.  Please spell check the study and use consistent capitalisation.
+    There were errors and inconsistencies on many pages.
+
+3.  Please consider further "Specific Points to Consider".
+
+## 
+
+## Specific points to consider
+
+-   Abstract should define jargon terms "internalising" and
+    "externalising."
+-   $n = 26,728$ should be $N = 26,728$
+-   p.1, opening paragraph. Citation for claims about complex etiology
+    of psychopathology should be included there.
+-   p.3, middle of the page "... and evidence of a socialisation effect
+    was demonstrated" Is "socialisation"the same as "externalisation?"
+    Without definitions for key technical terms, your audience will be
+    lost.
+-   p.3 MDD -- acronym introduced on page 3 but it is not defined until
+    p.8 (Major Depressive Disorder).
+-   p.3 "...offspring were more likely to develop externalising symptoms
+    when residing with the affected (AUD) parent" What does AUD mean?
+    Acronym is never defined, or is buried. Again, suggest writing out
+    all acronyms to ease your readers' cognitive burden.
+-   p.3 "Additionally, having two affected parents substantially
+    increased the risk of offspring developing externalising symptoms
+    compared to offspring of one affected parent." What does
+    "externalising symptoms"mean here? How are these attributes
+    measured? Again, without the definitions your audience will be lost.
+-   p.5 Are the terms "ELA"and "ACE" acronyms. If so, whey include both.
+    If not, what are the differences? And where does "CM" fit in in?
+    Again I find myself lost in the terminology.
+-   p.18 "Vachon et al (2015a) note that few studies in this area have
+    directly tested sex as a moderator, and those that have, report
+    inconsistent results. Thus, our second aim is to add to the
+    literature by including sex as a moderator in order to gain a
+    clearer understanding of differential effects of parent and
+    offspring sex." Note that stratifying on sex does enable causal
+    inference about the role of effect modification by sex. And the
+    correct way to test for moderation is to include the main effects
+    and interactions of sex and ELA and the main effects and
+    interactions of sex and parental internalisation/externalisation.
+-   p.21 "Some data for our variables of interest were not available for
+    unknown reasons." What effort did you make in requesting this
+    information from NESARC? Detail about this effort needs to be
+    included.
+-   p.21 "In an effort to replicate our findings, as suggested by
+    Pohlmann (2004), we randomly split our sample into two subsamples of
+    13,364 participants each. These are referred to as Group One and
+    Group Two. We then estimated the model twice, comparing the
+    results." In cross validation, we split samples to *predict* outcome
+    for the samples that were not used in estimation. I'd not heard of
+    the mehod of splitting a sample and running a model twice so I
+    tracked down the Pohlmann 2004
+    [here](https://www.jstor.org/stable/pdf/27548054.pdf?refreqid=excelsior%3Ab06b63fd2f8576cc40592fc4834fb721).
+    Pohlmann 2004 offers the following advice for exploratory factor
+    analysis:
+
+> Rather than using a priori sample-size guidelines, researchers should
+> consider within-sample replication to gauge factor stability. This is
+> accomplished by randomly dividing the sample into two halves and
+> performing the same analysis on both halves. The researcher interprets
+> the factor results that occur in both subsamples and ignores results
+> that do not replicate. Result discrepancies are most likely caused by
+> sampling error and should not be communicated to the readers.
+
+Note that the recommended method is used to check the replicability of
+data reduction, presumably in much smaller samples that what you have
+here. Regarding the results presented here, differences in the results
+of the two large "groups" suggest underlying problems with the models
+and measures. I would simply run the model on the full sample and use
+standard model fit evaluation, cross-validation, and robustness checks
+to evaluate the results. What you've done here doesn't make a lot of
+sense.
+
+-   p 22. Missing data were excluded from the study, but on p.26 there
+    is an account of how the missingness in NIAA used imputation for
+    missingness in the NESARC-III. This is confusing.
+-   p.15 "Data was gathered $\dots$" APA usage is "Data were gathered
+    $\dots$"
+-   p.25 "Variables were imputed using both assignment; in which
+    relatable information is available on the same person record and
+    analysts are confident about assigning values to items missing data,
+    and allocation; in which the value for missing or inconsistent items
+    cannot be derived from the same person record and is taken from
+    other respondents with similar characteristics." Details of the
+    (single) imputation method needed. More fundamental, if missing data
+    were imputed how did you end up with missing data?
+-   p\. 26 "the datum was" should be "the data were.''
+-   p\. 26 "A detailed description of the imputation process and rates
+    can be found in the National Epidemiologic Survey on Alcohol and
+    Related Conditions-III (NESARC-III)- Data Notes (NIAAA,
+    2014)."Please include a link.
+-   p.27-28 "A new variable was computed for the final ELA category
+    measured by yes/no responses by calculating the sum of variables.
+    making up the category. The sum variable represents the number of
+    different adverse environmental situations a participant had
+    experienced, as opposed to intensity of the experienced adversity."
+    This doesn't seem quite right. The responses here when summed are
+    not counts or rates. They rather represent something like bandwidth
+    for abuse. Are there any references you can use in support of the
+    validity of indicator created through this method?
+-   p.29. "To test measurement invariance we used the R function
+    'measurementinvariance' which estimated and compared several
+    versions of constaints." Which package. Also, what is "constaints"?
+-   p.31. Structural equation model. I am curious how parental
+    externalising/internalising could effect offspring
+    externaling/internalising except through early life adversity?
+    Indeed, Your results suggest this:
+
+> While a significant direct effect did not exist between either
+> Paternal Externalising and Externalising in females, or ELA and
+> Externalising in females, results did indicate a significant total
+> effect (standardised total coefficient .403, p=.004) of Paternal
+> Externalising and ELA on Externalising in female offspring. p.38 mp.
+> 38
+
+-   p 36. Model fit CFI is .94, however, I'd thought your threshold was
+    .95? (p.29). Ditto for page 37 results. Why is no explanation given?
+
+-   Note, again, the following inference isn't correct. It belies a
+    poor understanding of how mediation works. If there is full
+    mediation the direct effects on the X$\to$Y path with drop out,
+    while X$\to$M$\to$Y - indirect effect still holding.
+
+>  We hypothesised Early Life Adversity would mediate the relationship
+> between both Paternal and Maternal Externalising and latent
+> Externalising and Internalising dimensions in offspring; that is ELA
+> would account for the relationship between Parental Externalising, and
+> Internalising and Externalising in male and female offspring. A
+> significant indirect effect (standardised indirect coefficient .084,
+> p=.001) was found between Paternal Externalising and Internalising
+> mediated by ELA in male participants (Table 7). This result was
+> replicated in Group Two males (see Appendix A, Table A12).\*\* Results
+> also demonstrated a significant indirect effect (standardised indirect
+> coefficient .103, p=.001) between Maternal Externalising and
+> Internalising mediated by ELA in male offspring which was again
+> replicated in Group Two males (Table 7, see Appendix A, Table A12).
+> While a significant direct effect did not exist between either
+> Paternal Externalising and Externalising in females, or ELA and
+> Externalising in females, results did indicate a significant total
+> effect (standardised total coefficient .403, p=.004) of Paternal
+> Externalising and ELA on Externalising in female offspring. **This
+> indicates that Paternal Externalising and ELA as a combination do have
+> a significant association with Externalising in females.** (My
+> emphasis.)
+
+
+-   p.37 Perhaps I am missing something but I do not see differences in the Robust Comparative Fit Index (CFI), the Rbust Tucker-Lewis Index (TLI) or the Robust RMSEA for the constrained and  unconstrained models.
+
+-  p.40 "No significant association between either Maternal or  Paternal Externalising and Internalising or Externalising in offspring was found in sons or daughters. As such, results do not provide support for our prediction." Again, if you remove ELA and Paternal Externalising and Internalising pop then this would suggest that Paternal effects are fully mediated by ELA. As far as I can tell from these results, you haven't actually tested the causal implications of the model you wish to test.
+
+
+-   p.47 "In this study, parental externalising was operationalised through offspring reporting symptoms: participants were given a list of behaviours/situations that would indicate antisocial behaviour, or problematic substance use and were asked whether their parents engaged in those problematic behaviours. However, an affirmative response to parental externalising did not provide us with any information regarding the intensity or seriousness of the parental externalising." Again, the study's reliance on memory opens the door to confounding.
+
+-   p.48 "Continuing this pattern of findings, our results do not demonstrate a significant association between externalising in either parent and internalising in offspring" -- however, this is *after* stratifying on ELA. And this makes perfect sense because what effect could parents have on offspring here except through ELA. Not genetic effects woudl act on parents and offspring, leading to confounding (see Appendix 4). 
+
+- The point here seems to be underrated:
+
+> This is a common issue faced in this area of research as genetic vulnerabilities and family adversity often overlap, particularly in early life, to increase risk; a phenomenon which has been termed the passive gene-environment correlation (Yan et al., 2020). By including such information in future analysis we would be able to infer not just the strength of the relationship between variables, but also more regarding the mechanisms by which they interact.
+
+If genetic variation were to cause internalisation / externalisation in both parents and in offspring such effects would confounds inference. An instrumental variable would be needed to deconfound genetic influences (See Appendix 4).
+
+p.59 It is true that sibling studies would be helpful. In addition to the points that you describes, sibling data would allow researchers to assess recall bias that is correlated with the outcomes variables.
+
+-   p.61 Final sentence:
+
+> Finally, though previous research has indicated that parental
+> externalising has lasting adverse effects on offspring across their
+> life-course, we found that these effects can be accounted for by
+> experiences of ELA. In short, experiences of ELA, rather than parental
+> externalising, appear to be the driving force behind the development
+> of internalising symptoms in offspring.
+
+However you has conditioned on a post-treatment variable. This isn't correct.
+
+## Appendix 1: Simulation to demonstrate the post-treatment confounding
+
+If the path from parental externalising/internalising (X) to offspring
+externalising/internalising (Y) were fully mediated by early life
+adversity (M), then including early life adversity in a statistical
+model would cause the estimate from parent effects to offspring outcomes
+to shrink towards zero -- as observed in Emerald's sudy. 
+
+We would then infer that parental pathology causes offspring pathology
+*because* parental pathology causes early life adversity.
+
+To see this, let's simulate some data for a fully mediated relationship:
+
+```{r}
+# M -> Y 
+# X -> M
+set.seed(123)
+n <- 1000
+X <- rnorm( n )
+M <- rnorm( n , X )
+Y <- rnorm( n , M )
+
+d_sim <- data.frame(X=X,M=M,Y=Y)
+```
+
+First, we condition only on X (parental effects), and find an effect of
+X on Y (offspring internalisation/externalisation):
+
+```{r}
+ms1 <- parameters::model_parameters(
+  lm(Y  ~ X, data = d_sim)
+)
+plot(ms1)
+ms1
+```
+
+Next, assess only the mediator, early life adversity, and we find a
+reliable association
+
+```{r}
+ms2<- parameters::model_parameters(
+  lm(Y  ~ M, data = d_sim)
+)
+plot(ms2)
+```
+
+However, when we add both X and M, we find that X is attenuated.
+
+```{r}
+ms3<- parameters::model_parameters(
+  lm(Y  ~ X + M, data = d_sim)
+)
+plot(ms3)
+```
+
+It seems as though parental influence has nothing to do with offspring
+outcomes. However, we know that parental influence causes offspring
+outcome because we've simulated the data to be that way.
+
+Note that it doesn't help to run a 'mediation' model.
+
+Mediation model
+
+```{r}
+library("brms")
+library("rstan")
+library("rstanarm")
+library("tidybayes")
+library("bayesplot")
+library("easystats")
+# rstan options
+rstan_options(auto_write=TRUE)
+options(mc.cores=parallel::detectCores ())
+theme_set(theme_classic())
+
+
+path_m <- brms::bf(M ~ X)
+path_y <- brms::bf(Y ~ X + M)
+
+m1 <- brms::brm(
+  path_m + path_y + set_rescor(FALSE),
+  data = d_sim,
+  file = here::here("models","mediation-emerald")
+)
+
+parameters::model_parameters(m1)
+```
+
+Recalling:
+
+```{r}
+bmlm::mlm_path_plot(xlab = "Parental Causes\n(X)",
+              mlab = "ELA\n(M)",
+              ylab = "Offspring Effects\n(Y)")
+```
+
+We recover the indirect, direct and total effects as follows:
+
+```{r}
+
+post <- brms::posterior_samples(m1)
+post2 <- post %>% 
+  transmute(
+    a = b_M_X  ,
+    b = b_Y_M,
+    cp =  b_Y_X,
+    me = a * b,
+    c = cp + me #,
+  #  pme = me / c
+  )
+mcmc_intervals(post2)
+```
+
+Causal inference in observational studies is tricky. The key lesson here is that we should not condition on a post-treatment variable.
+
+```{r}
+# M -> Y 
+# X -> M
+set.seed(123)
+n <- 1000
+X <- rnorm( n )
+M <- rnorm( n , X )
+sex <- rep( 0:1 , each = n/2 )
+Y <- rnorm( n , M ) * sex +  rnorm( n , M ) +  rnorm(n, sex)
+
+d_sim2 <- data.frame(X=X,M=M,Y=Y,sex)
+
+## Model
+ms4<- parameters::model_parameters(
+  lm(Y  ~ X + M*sex, data = d_sim2)
+)
+ms4
+plot(ms4) + ggtitle("Simulated model including sex differences")
+```
+
+## Appendix 2: causal graph for the proposed model
+
+The following is a directed acyclical graph (DAG) for the proposed model
 
 ```{r  layout="l-body-outset",  fig.height=8, fig.width=12}
 # Graph model
 library(ggdag)
-dg_1<- ggdag::dagify(
+dg_1 <- ggdag::dagify(
   outcome ~   sex + ela + mat_ex + mat_in + pat_ex + pat_in,
-  ela ~   sex + mat_ex + mat_in + pat_ex + pat_in, 
-  exposure = "ela",
-  outcome = "outcome"#,
-  # labels = c(
-  #   "depress_2" = "depression t2",
-  #   "depress_1" = "depression t1",
-  #   "sr_1" = "self reflection t1",
-  #   "sr_2" = "self reflection t2",
-  #   "male" = "male",
-  #   "age" = "age",
-  #   "event_2" = "life events t2",
-  #   "event_1" = "life events t1",
-  #   "em_1" = "episodic memory t1",
-  #   "em_2" = "episodic memory t1",
-  #   "rumination_1" = "rumination t1",
-  #   "rumination_2" = "rumination t2"
-  #  )
-) #%>%
-  #control_for("sex")
-# p1 <-ggdag(dg_1, text = FALSE, use_labels = "label") +
+  ela ~   sex + mat_ex + mat_in + pat_ex + pat_in,
+  exposure = "pat_ex",
+  outcome = "outcome",
+  labels = c(
+    "outcome" = "outcome",
+    "sex" = "sex",
+    "ela" = "Early Life Adversity",
+    "mat_ex" = "maternal external",
+    "mat_in" = "maternal internal",
+    "pat_ex" = "paternal external",
+    "pat_in" = "paternal internal"
+  ) )
+# ) %>%
+#   control_for("sex")
 
-p1 <-ggdag(dg_1) +theme_dag_blank() + labs(title = "Proposed Model")
+p1 <- ggdag(dg_1, text = FALSE, use_labels = "label") + labs(title = "Proposed Model") + theme_dag_blank()
 p1
 ```
 
-## Causal inference
+To obtain a valid causal inference we must:
 
-1.  It is important to close all \`back doors'
+1.  close all \`back doors'
 
-2.  It is *equally* important introduce any collider confounds open. This latter point is under-appreciated, however see: [@rohrer2018, @mcelreath2020, @pearl2019]. Note that [@rohrer2018] is very accessible.
+2.  not introduce any collider confounds [@rohrer2018, @mcelreath2020,
+    @pearl2019]
 
-3.  We should not block any paths between episodic memory at time 1 and depression at time 2.
+3.  not block any paths ELA and the Outcome
+    (internalisation/externalisation)
 
-The following are the potential adjustment sets that enable unbiased inference conditional on our model assumptions:
+To assess the covariates required for unbiased inference (conditional on
+the assumed model), we evaluate that DAG:
 
 ```{r adjustsetDirect, layout="l-body-outset",  fig.height=8, fig.width=12}
 # find adjustment set
-p2 <-ggdag::ggdag_adjustment_set(
+ggdag::ggdag_adjustment_set(
   dg_1,
   exposure = "ela",
-  outcome = "outcome" #,
-  # text = FALSE,
-  # use_labels  = "label"
+  outcome = "outcome",
+  text = FALSE,
+  use_labels  = "label"
 ) +
   theme_dag_blank() +
   labs(title = "Adjustment set",
-  subtite = "")
-p2
+  subtitle = "")
 ```
 
-Surprisingly, the model is robust to genetic influences that might affect the outcomes. 
+This is good news. All the variables in the assumed model are required
+for robust estimation, and no new variables are required. Note that we
+would need stratify on sex even if this were not the point of the study.
 
+## Appendix 3: Casual inference where ELA fully mediates the causal effects of parent pathology on offspring pathology
+
+Let's assume that the only way that parental internalisation or
+externalisation can affect offspring internalisation or externalisation
+is through early life adversity. Such a model appears to be consistent
+with the results.
+
+The assumed model is now:
 
 ```{r}
-dg_u <- ggdag::dagify(
-  outcome ~   sex + ela + mat_ex + mat_in + pat_ex + pat_in + U,
-  ela ~   sex + mat_ex + mat_in + pat_ex + pat_in, 
-  pat_ex ~ U, 
-  pat_in ~ U, 
-  mat_ex ~ U,
-  mat_in ~ U, 
+library(ggdag)
+dg_2 <- ggdag::dagify(
+  outcome ~   sex + ela,
+  ela ~   sex + mat_ex + mat_in + pat_ex + pat_in,
   exposure = "ela",
-  outcome = "outcome"#,
-  # labels = c(
-  #   "depress_2" = "depression t2",
-  #   "depress_1" = "depression t1",
-  #   "sr_1" = "self reflection t1",
-  #   "sr_2" = "self reflection t2",
-  #   "male" = "male",
-  #   "age" = "age",
-  #   "event_2" = "life events t2",
-  #   "event_1" = "life events t1",
-  #   "em_1" = "episodic memory t1",
-  #   "em_2" = "episodic memory t1",
-  #   "rumination_1" = "rumination t1",
-  #   "rumination_2" = "rumination t2"
-  #  )
-) #%>%
-  #control_for("sex")
-# p1 <-ggdag(dg_1, text = FALSE, use_labels = "label") +
+  outcome = "outcome",
+  labels = c(
+    "outcome" = "outcome",
+    "sex" = "sex",
+    "ela" = "Early Life Adversity",
+    "mat_ex" = "maternal external",
+    "mat_in" = "maternal internal",
+    "pat_ex" = "paternal external",
+    "pat_in" = "paternal internal"
+  )
+) 
 
-p2 <-ggdag(dg_u) +theme_dag_blank() + labs(title = "Proposed Model")
+p2 <- ggdag(dg_2, text = FALSE, use_labels = "label") + labs(title = "Proposed Model") + theme_dag_blank()
 p2
+```
+
+And the minimal adjustment set is now `sex`, which we must condition on
+to assess the effect of ELA on offspring externalisation or
+internalisation.
+
+In this case we cannot obtain an estimate of parental influence on adult
+offspring outcomes without introducing collider confounding.
+
+```{r}
+ggdag::ggdag_collider(
+  dg_2,
+  text = FALSE,
+  use_labels  = "label"
+) +
+  theme_dag_blank() +
+  labs(title = "Colliders bias is unavoidable in the fully mediated model",
+  subtitle = "")
+```
+
+## Appendix 4: Causal inference and genetic confounding
+
+Let's assume genetic influences on both parent and offspring
+internalising/externalising. We use "G" to denote this influence:
+
+```{r}
+dg_4<- ggdag::dagify(
+  outcome ~   sex + ela + G,
+  ela ~   sex + mat_ex + mat_in + pat_ex + pat_in + G,
+  mat_ex ~ G,
+  pat_ex ~ G, 
+  mat_in ~ G,
+  mat_ex ~ G,
+  exposure = "ela",
+  outcome = "outcome",
+  latent = "G",
+  labels = c(
+    "outcome" = "outcome",
+    "sex" = "sex",
+    "ela" = "Early Life Adversity",
+    "mat_ex" = "maternal external",
+    "mat_in" = "maternal internal",
+    "pat_ex" = "paternal external",
+    "pat_in" = "paternal internal",
+    "G" = "(unmeasured) genetic influence"
+  )
+) 
+
+
+ggdag(dg_4, text = FALSE, use_labels = "label") + labs(title = "ELA on outcome with latent genetic effects") + theme_dag_blank()
 
 
 ```
 
+In this case, there would be no way to estimate the effects of parental
+pathology on adult offspring pathology, regardless of mediation.
+
+```{r}
+ggdag::ggdag_adjustment_set(
+  dg_4,
+  text = FALSE,
+  use_labels  = "label"
+) +
+  theme_dag_blank() +
+  labs(title = "Adjustment set: ELA on outcome assuming genetic influences",
+  subtitle = "")
+```
+
+## Appendix 5: The specter of measurement error
+
+Finally, lets ignore genetic influence but assume measurement error. In
+this case, we cannot remove the confounding influences of memory.
+
+```{r}
+dg_5<- ggdag::dagify(
+  outcome ~   sex + ela,
+  ela  ~   recollection + mat_ex + pat_ex + mat_in + pat_in, 
+  recollection ~ outcome,
+  mat_ex ~ recollection,
+  pat_ex ~ recollection, 
+  mat_in ~ recollection,
+  pat_in ~ recollection, 
+  exposure = "ela",
+  outcome = "outcome",
+  latent = "recollection",
+  labels = c(
+    "outcome" = "outcome",
+    "sex" = "sex",
+    "ela" = "Early Life Adversity",
+    "mat_ex" = "maternal external",
+    "mat_in" = "maternal internal",
+    "pat_ex" = "paternal external",
+    "pat_in" = "paternal internal",
+    "recollection" = "recollection  bias"
+  )
+) 
+ggdag::ggdag_adjustment_set(
+  dg_5,
+  text = FALSE,
+  use_labels  = "label"
+) +
+  theme_dag_blank() +
+  labs(title = "Adjustment set: assume recollection bias",
+  subtitle = "")
+```
 
 ## Packages used
 
