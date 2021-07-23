@@ -146,6 +146,36 @@ p3
 ```{}
 ```
 
+
+## NOTES
+
+```{r graph1, layout="l-body-outset",  fig.height=8, fig.width=12}
+# Graph model
+library(ggdag)
+dg_1<- ggdag::dagify(
+  Depression2 ~   Memory1  + Depression1, 
+  Memory2 ~ Memory1 + Depression2,
+  exposure = "Memory1",
+  outcome = "Depression2",
+  labels = c(
+    "Depression2" = "Depression2",
+    "Memory1" = "Memory1",
+    "Memory2" = "Memory2",
+    "Depression1" = "Depression1"
+   )
+)#%>%
+  #control_for(c("Memory2"))
+
+p1 <-ggdag(dg_1, text = FALSE, use_labels = "label") + theme_dag_blank() + labs(title = "Proposed Causal Model for Externalising")
+p1
+ggdag::ggdag_collider(dg_1) + theme_dag_gray()
+
+ggdag::ggdag_adjustment_set(dg_1) + theme_dag_gray()
+
+```
+
+
+
 ## Packages used
 
 ```{r echo = FALSE}
