@@ -1,0 +1,95 @@
+---
+title: "Review of Laural Keat's Memory Study"
+description: |
+author:
+  - name: Joseph Bulbulia
+    url: https://josephbulbulia.netlify.app
+    affiliation: Victoria University of Wellington
+    affiliation_url: https://www.wgtn.ac.nz
+    orcid_id: 0000-0002-5861-2056
+date: June 2, 2021
+output:
+  distill::distill_article:
+    self_contained: true
+    toc: false
+    code_folding: true
+    highlight: tango
+    highlight_downlit: false
+bibliography: references.bib
+---
+
+```{r setup, include = FALSE}
+# set up
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  echo = TRUE
+)
+```
+
+```{r message = FALSE}
+# required packages
+if (!require(ggdag)) install.packages("ggdag")
+```
+
+```{r libs, include=FALSE}
+library("tidyverse")
+library("here")
+library("equatiomatic")
+library("lubridate")
+library("ggplot2")
+library("ggthemes") #themes
+library("ggpubr")
+library("viridis")
+library("patchwork")
+library("ggforce")
+```
+
+
+```{r data, cache = TRUE}
+#import data
+```
+
+
+
+```{r}
+mtcars$mpg
+summary(
+  lm(mpg ~ cyl ,data = mtcars)
+)
+```
+
+
+## Causal graphs
+
+Externalising
+
+```{r graph1, layout="l-body-outset",  fig.height=8, fig.width=12}
+# Graph model
+library(ggdag)
+dg_1<- ggdag::dagify(
+  Externalising ~   Early_Life_Adv  + Father_Externalising + Father_Internalising + Mother_Externalising + Mother_Internalising, 
+  Early_Life_Adv ~  Sex + Father_Externalising + Father_Internalising + Mother_Externalising + Mother_Internalising, 
+  exposure = "Early_Life_Adv",
+  outcome = "Externalising",
+  labels = c(
+    "Externalising" = "Externalising",
+    "Early_Life_Adv" = "Early_Life_Adversity",
+    "Father_Externalising" = "Father_Externalising",
+    "Father_Internalising" = "Father_Internalising",
+    "Mother_Externalising" = "Mother_Externalising",
+    "Mother_Internalising" = "Mother_Internalising",
+    "Sex" = "Sex"
+   )
+)%>%
+  control_for(c("Sex"))
+
+p1 <-ggdag(dg_1, text = FALSE, use_labels = "label") + theme_dag_blank() + labs(title = "Proposed Causal Model for Externalising")
+p1
+```
+
+Packages used
+
+```{r echo = FALSE}
+report::cite_packages()
+```
