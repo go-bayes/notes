@@ -15,26 +15,25 @@ df <- readRDS(here::here("data_raw","df"))
 dplyr::glimpse(df)
 
 # select variables that  
-
+# Relid, 
+# Hours.Religious, 
+# religion.church, 
+# BigDoms,
+# HoursCharity,
+# CharityDonate
+df$Religion.Church
 # create 
-pdf <- df %>% 
+ldf <- df %>% 
   select(Id, 
          YearMeasured, 
          years,  
          Wave, 
-         BELONG, 
-         SUPPORT, 
-         Hours.Friends,
-         Hours.Family,
-         SWB.SoC01, # neighbourhood community,
-         # SELF.ESTEEM jb to get
-         # PERFECTIONISM
-         # Emotional regulation
-         PWI, 
-         LIFESAT,
-         KESSLER6sum,
-         Hours.CompGames,
-         Hours.SocialMedia,
-         Hours.Internet)
+         Relid, 
+         Hours.Religious, 
+         Religion.Church, 
+         BigDoms,
+         HoursCharity,
+         CharityDonate)
 
+saveRDS(ldf, here::here("data_raw", "ldf"))
 

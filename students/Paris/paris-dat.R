@@ -27,9 +27,7 @@ pdf <- df %>%
          Hours.Friends,
          Hours.Family,
          SWB.SoC01, # neighbourhood community,
-        # SELF.ESTEEM jb to get
-        # PERFECTIONISM
-        # Emotional regulation
+         SELF.ESTEEM, #jb to get
          PWI, 
          LIFESAT,
          KESSLER6sum,
