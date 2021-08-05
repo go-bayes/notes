@@ -67,25 +67,31 @@ Externalising
 ```{r graph1, layout="l-body-outset",  fig.height=8, fig.width=12}
 # Graph model
 library(ggdag)
-dg_1<- ggdag::dagify(
-  Externalising ~   Early_Life_Adv  + Father_Externalising + Father_Internalising + Mother_Externalising + Mother_Internalising, 
-  Early_Life_Adv ~  Sex + Father_Externalising + Father_Internalising + Mother_Externalising + Mother_Internalising, 
-  exposure = "Early_Life_Adv",
-  outcome = "Externalising",
-  labels = c(
-    "Externalising" = "Externalising",
-    "Early_Life_Adv" = "Early_Life_Adversity",
-    "Father_Externalising" = "Father_Externalising",
-    "Father_Internalising" = "Father_Internalising",
-    "Mother_Externalising" = "Mother_Externalising",
-    "Mother_Internalising" = "Mother_Internalising",
-    "Sex" = "Sex"
-   )
-)%>%
-  control_for(c("Sex"))
+dg_1 <- ggdag::dagify(
+  anxiety ~  cohort + income + age + home + income, 
+  income ~ age + edu, 
+  exposure  = "cohort",
+  outcome = "anxiety"
+  # labels = c(
+  #   "anxiety" = "anxiety",
+  #   "Early_Life_Adv" = "Early_Life_Adversity",
+  #   "Father_Externalising" = "Father_Externalising",
+  #   "Father_Internalising" = "Father_Internalising",
+  #   "Mother_Externalising" = "Mother_Externalising",
+  #   "Mother_Internalising" = "Mother_Internalising",
+  #   "Sex" = "Sex"
+  #  )
+)
+%>%
+  control_for(c("age"))
 
-p1 <-ggdag(dg_1, text = FALSE, use_labels = "label") + theme_dag_blank() + labs(title = "Proposed Causal Model for Externalising")
+p1 <-ggdag(dg_1, text = TRUE) + 
+         #  use_labels = "label") + 
+  theme_dag_blank() + labs(title = "Proposed Causal Model for Cohort")
 p1
+
+p1%>%
+  ggdag_collider()
 ```
 
 Packages used

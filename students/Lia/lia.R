@@ -21,8 +21,10 @@ dplyr::glimpse(df)
 # BigDoms,
 # HoursCharity,
 # CharityDonate
-df$Religion.Church
+#df$Religion.Church
 # create 
+
+
 ldf <- df %>% 
   select(Id, 
          YearMeasured, 
@@ -33,7 +35,11 @@ ldf <- df %>%
          Religion.Church, 
          BigDoms,
          HoursCharity,
-         CharityDonate)
+         CharityDonate,
+         Household.INC
+         )
+
+glimpse(ldf)
 
 saveRDS(ldf, here::here("data_raw", "ldf"))
 

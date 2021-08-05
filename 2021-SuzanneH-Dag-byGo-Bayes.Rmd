@@ -100,8 +100,21 @@ Graphing this assumed model, we find a structure like this:
 
 ```{r  layout="l-body-outset",  fig.height=8, fig.width=12}
 # Graph model
-p1 <-ggdag(dg_1, text = FALSE, use_labels = "label") + theme_dag_blank() + labs(title = "Proposed Model")
-p1
+ggdag(dg_1, 
+           text = FALSE, 
+           use_labels = "label") + 
+  theme_dag_blank() + 
+  labs(title = "Proposed Model")
+
+
+ggdag_adjustment_set(
+  dg_1
+  )
+
+ggdag_collider(
+  dg_1
+  )
+
 ```
 
 **Note** I might have misunderstood the model.

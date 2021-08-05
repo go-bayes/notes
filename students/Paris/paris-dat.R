@@ -4,6 +4,7 @@
 
 # libraries 
 library("tidyverse")
+
 library("here")
 library("ggplot")
 library("naniar")
@@ -15,7 +16,7 @@ df <- readRDS(here::here("data_raw","df"))
 dplyr::glimpse(df)
 
 # select variables that  
-df$
+df$EthnicCats
 # create 
 pdf <- df %>% 
   select(Id, 
@@ -33,6 +34,16 @@ pdf <- df %>%
          KESSLER6sum,
          Hours.CompGames,
          Hours.SocialMedia,
-         Hours.Internet)
+         Hours.Internet,
+         Age,
+         Male,
+         Relid,
+         Edu,
+         Partner,
+         EthnicCats
+         )
+saveRDS(pdf, here::here("data_raw", "pdf"))
 
-
+here()
+test <- readRDS(here::here("data_raw", "pdf"))
+head(test)
