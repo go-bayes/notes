@@ -22,6 +22,7 @@ PERFECTIONISM,
 
 
 
+
 # create 
 amydf <- df %>% 
   filter(Wave == 2018 | Wave == 2019) %>%
@@ -45,7 +46,7 @@ amydf <- df %>%
          Believe.Spirit,
          Immigrant.TimeNZYears,
          SexualSatisfaction,
-         BELONG, 
+         BELONG,  
          SUPPORT, 
          Hours.Friends,
          Hours.Family,
@@ -63,10 +64,12 @@ amydf <- df %>%
          Edu,
          Partner,
          EthnicCats,
-         Urban
+         Urban, 
+         Partner,
+         ChildrenNum
   )
-saveRDS(pdf, here::here("data_raw", "amydf"))
+saveRDS(amydf, here::here("data_raw", "amydf"))
 
-here()
+ here()
 test <- readRDS(here::here("data_raw", "amydf"))
 head(test)
