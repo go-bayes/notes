@@ -8,20 +8,15 @@ library("ggplot")
 library("naniar")
 
 # read NZAVS data
-df <- readRDS(here::here("data_raw","df"))
+df <- readRDS(here::here("data","ldf.5"))
+
 
 # look at the dataframe
 dplyr::glimpse(df)
 
-ID, 
-Wave,
-YearMeasured,
-Male,
-SELF.ESTEEM,
-PERFECTIONISM,
 
 
-
+str(df$Employed
 
 # create 
 amydf <- df %>% 
@@ -31,6 +26,7 @@ amydf <- df %>%
          YearMeasured, 
          years,  
          Wave,
+         Employed,
          Household.INC,
          LIFEMEANING,
          SELF.CONTROL,
@@ -68,8 +64,4 @@ amydf <- df %>%
          Partner,
          ChildrenNum
   )
-saveRDS(amydf, here::here("data_raw", "amydf"))
-
- here()
-test <- readRDS(here::here("data_raw", "amydf"))
-head(test)
+saveRDS(amydf, here::here("data-raw", "amydf"))
