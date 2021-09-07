@@ -164,29 +164,41 @@ More complicated models are possible, and others might be more realistic (see th
 
 ```{r, echo = TRUE}
 library(ggdag)
-dg<-dagify(d ~ r + m + i + h + sb + male + cv, 
-       r ~ a + male,
-       m ~ r + e + male + a,
-       i ~ e + cv,
-       e ~ cv,
-       h ~ i + sb,
-       sb ~ r + male + cv, 
+dg<-dagify(wb2 ~ wb1 + r2 + m2 + i2 + h2 + ch2 + male + cv, 
+       r2 ~ r1 + ch1 + ch2 + male + eth,
+       m2 ~ m1 + r2 + e2 + male + eth,
+       m1 ~  r1 + e1 + male + eth,
+       i2 ~ i1 +  e2 + cv,
+       e2 ~ e1 + cv,
+       h2 ~ h1 + i1 + ch2 + eth,
+       ch2 ~ r2 + ch1 + cv + eth + male, 
+       i1  ~ eth + male + edu,
+       ch1 ~ eth + male + r1, 
        labels = c(
-    "d" = "well being",
-    "r" = "religion",
-    "m" = "meaning",
-    "i" = "income",
-    "h" = "health",
-    "sb" = "social belonging",
+    "wb1" = "well being 1",
+    "wb2" = "well being 2",
+    "r1" = "religious id 1",
+    "r2" = "religious id 2",
+    "m1" = "meaning 1",
+    "m2" = "meaning 2",
+    "i1" = "income1",
+    "i2" = "income2",
+    "h1" = "health1",
+    "h2" = "health2",
+    "ch1" = "Religious Service1",
+    "ch2" = "Religious Service2",
     "cv" = "covid timeline",
-    "e" = "employed",
-    "a" = "age",
-    "male" = "male"),
-    exposure = "m",
-    outcome = "d")
+    "e2" = "employed2",
+    "e1" = "employed1",
+    "eth" = "ethnicity",
+    "male" = "male",
+    "edu" = "education"),
+    exposure = "m2",
+    outcome = "wb2")
 
 
 ggdag::ggdag_paths(dg, text = FALSE, use_labels = "label")+ theme_dag_blank()
+ggdag::ggdag_adjustment_set(dg, text = FALSE, use_labels = "label")+ theme_dag_blank()
 
 ```
 
