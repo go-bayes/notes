@@ -162,6 +162,55 @@ More complicated models are possible, and others might be more realistic (see th
 - There is no one I can turn to for guidance in times of stress.
 - I know there are people I can turn to when I need help.
 
+
+
+## ANOTHER MODEL
+
+```{r, echo = TRUE}
+library(ggdag)
+dg<-dagify(
+       m2 ~ m1 +  ch2 +  i2 + male + eth + partner2 + age2 + edu,
+       m1 ~   ch1 + i1  + male + eth + partner1 + age1 + edu,
+       i2 ~ i1 +  e2 + cv,
+       e2 ~ e1 + male + eth + cv,
+       i1  ~ e1, 
+       ch2  ~  ch1 + cv + eth + male, 
+       i1  ~ eth + male + edu + cv,
+       ch1 ~ eth + male + cv, 
+       labels = c(
+    "age1" = "age1",
+    "age2" = "age2",
+    "partner1" = "partner1",
+    "partner2" = "partner2",
+    "m1" = "meaning 1",
+    "m2" = "meaning 2",
+    "i1" = "income1",
+    "i2" = "income2",
+    "ch1" = "Religious Service1",
+    "ch2" = "Religious Service2",
+    "cv" = "covid timeline",
+    "eth" = "ethnicity",
+    "male" = "male",
+    "edu" = "education"),
+    exposure = "ch2",
+    outcome = "m2")
+
+
+ggdag::ggdag_paths(dg, text = FALSE, use_labels = "label")+ theme_dag_blank()
+ggdag::ggdag_adjustment_set(dg, text = FALSE, use_labels = "label")+ theme_dag_blank()
+```
+
+
+
+
+
+
+
+
+
+
+## OLD STUFF
+
 ```{r, echo = TRUE}
 library(ggdag)
 dg<-dagify(wb2 ~ wb1 + r2 + m2 + i2 + h2 + ch2 + male + cv, 
@@ -207,6 +256,7 @@ Note that there are many collider confounding relationships in the assumed cause
 ```{r, echo = TRUE}
 ggdag_collider(dg, text = FALSE,use_labels = "label") + theme_dag_blank()
 ```
+
 
 However, we can obtain an an unbiased estimate for the relationship between meaning and distress by including employed, religion, and "male" or income, male and religion and covid timeline. We'll choose employed because it is measured with less error (however income would be more precise... which adjustment set to choose will depend on our interests, here the effects are so large it won't matter... )
 
