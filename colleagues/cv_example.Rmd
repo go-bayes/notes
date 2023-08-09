@@ -30,7 +30,7 @@ library(scholar)
 library(tidyverse)
 library(rorcid)
 library(googlesheets)
-1
+
 my_Google_Scholar<-get_profile('82b99k8AAAAJ')
 a<-my_Google_Scholar$total_cites
 b<-my_Google_Scholar$h_index

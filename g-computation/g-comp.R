@@ -13,8 +13,6 @@ source("https://raw.githubusercontent.com/go-bayes/templates/main/functions/funs
 imps_bind<- readRDS(here::here("mods", "imps_bind"))
 head(imps_bind)
 
-
-
 # Data for testing model priors
 # make list
 imp1 <- as.data.frame(imps_bind$imputations$imp[[1]])
@@ -28,7 +26,6 @@ imp8 <- as.data.frame(imps_bind$imputations$imp[[8]])
 imp9 <- as.data.frame(imps_bind$imputations$imp[[9]])
 imp10 <- as.data.frame(imps_bind$imputations$imp[[10]])
 
-imp1$As
 
 ameliadata <-
   list(imp1, imp2, imp3, imp4, imp5, imp6, imp7, imp8, imp9, imp10)

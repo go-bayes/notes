@@ -1,0 +1,109 @@
+Scale	short-remainder reliability	Lower 99% CI	Upper 99% CI
+50-item IPIP - Agreeableness	0.997	0.985	1
+50-item IPIP - Conscientiousness	0.997	0.971	1
+50-item IPIP - Extraversion	0.995	0.974	1
+50-item IPIP - Neuroticism/Emotionality	0.994	0.978	1
+50-item IPIP - Openness to Experience	0.751	0.7	0.799
+Active Facilitation (BIAS-TS)	0.998	0.988	1
+Active Harm (BIAS-TS)	0.999	0.993	1
+Agreeableness (Politeness facet)	0.989	0.921	1
+Approach Social Motivation	0.694	0.635	0.749
+Attributions about Income Inequality	0.748	0.713	0.779
+Avoidance Social Motivation	0.433	0.345	0.518
+Benevolent Sexism	0.794	0.739	0.846
+Body Satisfaction (Body Image States Scale)	0.808	0.782	0.831
+Brief Self-Control Scale	0.94	0.882	0.985
+Colour-Blind Ideology	0.526	0.449	0.603
+Competitive World View	0.909	0.809	0.996
+Compliance with Police	0.838	0.779	0.89
+Dangerous World View	0.982	0.891	1
+Disgust Sensitivity	0.596	0.537	0.65
+Dissipation-Rumination			
+Economic System Justification	0.531	0.473	0.583
+Emotion Regulation - Difficulties Engaging in Goal-Directed Behavior			
+Emotion Regulation - Impulse Control Difficulties	0.779	0.748	0.807
+Emotion Regulation - Lack of Emotional Awareness			
+Emotion Regulation - Lack of Emotional Clarity			
+Emotion Regulation - Limited Access to Emotion Regulation Strategies			
+Emotion Regulation - Nonacceptance of Emotional Responses			
+Emotion Regulation - Reappraisal	0.724	0.686	0.757
+Emotion Regulation - Suppression	0.82	0.785	0.851
+Environmental Efficacy	0.928	0.882	0.971
+Equality Positioning	0.999	0.99	1
+Ethnic Group Active Harm	0.999	0.994	1
+Ethnic Group Narcissism	0.997	0.98	1
+Ethnic Group Passive Facilitation	0.965	0.949	0.979
+Ethnic Group Passive Harm	1	0.997	1
+Ethnic Subgroup Respect	0.88	0.862	0.896
+Extrinsic-Personal Religious Orientation			
+Extrinsic-Social Religious Orientation			
+Forgivingness versus Vengeful Rumination	0.579	0.511	0.642
+Gender Identity Centrality	0.863	0.788	0.954
+Gender Income and Employment Opportunity	0.999	0.991	1
+Gender-Specific System Justification	0.978	0.909	1
+God Locus of Health Control	0.987	0.958	1
+Gratitude (GQ-6)	0.993	0.96	1
+Health Locus of Control	0.995	0.971	1
+HEXACO-100 Honesty-Humility	0.824	0.772	0.873
+Historical Negation	0.8	0.778	0.822
+Hostile Sexism	0.994	0.978	1
+Identification with All Humanity - Community			
+Identification with All Humanity - Humanity			
+Identification with All Humanity - Nation			
+Individual Permeability	0.293	0.213	0.367
+Institutional Trust in Police	0.985	0.958	1
+Intergroup Anxiety	0.401	0.344	0.454
+Intrinsic Religious Orientation	0.976	0.918	1
+Left-Wing Authoritarianism	0.75	0.702	0.793
+Modern Racism	0.725	0.683	0.762
+Moral Foundations - Authority			
+Moral Foundations - Fairness			
+Moral Foundations - Harm			
+Moral Foundations - Ingroup			
+Moral Foundations - Purity			
+Multicultural Attitudes	0.933	0.902	0.962
+National Character - Cultural/Bicultural Awareness	0.983	0.95	0.999
+National Character - Citizenship and Ancestry	0.983	0.95	0.999
+National Character - Liberal Democratic Values	0.996	0.981	1
+National Character - Patriotic Values	0.443	0.401	0.484
+National Character - Rugby/Sporting Culture	0.872	0.857	0.886
+National Wellbeing Index	0.648	0.606	0.686
+Nationalism	0.791	0.652	0.943
+Openness (Openness facet)	0.99	0.943	0.999
+Passive Facilitation (BIAS-TS)	0.986	0.967	0.999
+Passive Harm (BIAS-TS)	0.999	0.993	1
+Patriotism	0.995	0.973	1
+Perceived Social Support (Social Provisions Scale)	0.939	0.916	0.96
+Perfectionism Discrepancy	0.997	0.986	1
+Personal Locus of Control	0.709	0.625	0.789
+Personal Respect	0.473	0.401	0.54
+Personal Wellbeing Index	0.999	0.99	1
+Political Locus of Control/ Political Efficacy	0.777	0.665	0.878
+Presence of Meaning in Life	0.996	0.973	1
+Primary Psychopathy	0.983	0.942	0.998
+Psychological Entitlement Scale	0.923	0.869	0.972
+Quest Religious Orientation	0.856	0.745	0.951
+Race Essentialism (Lay Theory of Race Scale)	0.127	0.043	0.208
+Realistic Threat - Asian Peoples	0.802	0.755	0.845
+Realistic Threat - Maori	0.815	0.771	0.856
+Realistic Threat - NZ Europeans	0.674	0.587	0.761
+Realistic Threat - Pacific Peoples	0.799	0.75	0.843
+Religious Fundamentalism	0.997	0.985	1
+Religious Group Narcissism	0.868	0.748	0.978
+Right-Wing Authoritarianism	0.992	0.97	1
+Satisfaction with Life	0.982	0.933	1
+Science Credibility	0.789	0.757	0.817
+Self-Esteem	0.958	0.938	0.975
+Sense of Belonging (SOBI-P)	0.996	0.975	1
+Social Dominance Orientation (SDO6)	0.988	0.964	0.999
+Socially Desirable Responding - Impression Management	0.401	0.331	0.468
+Socially Desirable Responding - Self-Deceptive Enhancement			
+Subjective Health (General health perceptions subscale)	0.966	0.92	0.997
+Symbolic Exclusion	1	0.998	1
+Symbolic Threat - Asian Peoples	0.661	0.604	0.713
+Symbolic Threat - Maori	0.638	0.573	0.697
+Symbolic Threat - NZ Europeans	0.632	0.562	0.696
+Symbolic Threat - Pacific Peoples	0.602	0.544	0.656
+System Justification	0.998	0.988	1
+Tall Poppy Attitudes	0.99	0.936	1
+Trust in Science	0.828	0.799	0.853
