@@ -207,19 +207,6 @@ mutate(
   pers_a_ipip02r_reversed = 8 - pers_a_ipip02r
 ) |>
   rowwise(wave) |>
-  select(
-    -c(
-      pers_n_ipip02r,
-      pers_n_ipip03,
-      pers_c_ipip03r,
-      pers_hon_hum03r,
-      pers_narc01r,
-      pers_a_ipip01,
-      pers_a_ipip03,
-      pers_a_ipip04r,
-      pers_a_ipip02r
-    )
-  ) |>
   mutate(kessler_latent_depression =  mean(
     c(kessler_depressed, kessler_hopeless, kessler_worthless),
     na.rm = TRUE
@@ -265,11 +252,26 @@ mutate(
       na.rm = TRUE
     ))
   ) |>
+  select(
+    -c(
+      pers_n_ipip02r,
+      pers_n_ipip03,
+      pers_c_ipip03r,
+      pers_hon_hum03r,
+      pers_narc01r,
+      pers_a_ipip01,
+      pers_a_ipip03,
+      pers_a_ipip04r,
+      pers_a_ipip02r
+    )
+  ) |>
   ungroup() 
 
 
 
 here_save_arrow(dat_2, "dat_2")
+
+dat_2
 
 # check dyads by wave 10
 
@@ -506,6 +508,8 @@ n_unique(dat_final_dyadic$id)
 skimr::n_unique(dat_final_dyadic$id)
 skimr::n_unique(dat_final_dyadic$rel_num)
 
+hist( dat_2$psychopathy_scale )
+
 
 # select variables and prepare data
 dat_long  <- dat_final_dyadic %>%
@@ -709,7 +713,7 @@ dat_19 <- dat_long |>
 n_unique(dat_19$id) # 1237
 n_unique(dat_19$rel_num) #985
 
-table(dat_19$psychopathy_scale)
+hist(dat_19$psychopathy_scale)
 table(dat_19$psychopathy_scale_z)
 
 mean_exposure <- mean(dat_19$psychopathy_scale,
@@ -773,55 +777,33 @@ min_score
 # push_mods
 #
 # dev.off()
-# # check
-# dt_check_exposure <- dat_long_with_partner |> filter(wave == 1 | wave == 2)
-#
-# # makes sure all is false
-# table (is.na(dt_check_exposure$psychopathy_scale))
-#
-# table(dt_check_exposure$psychopathy_scale)
-#
-# dt_positivity_full <- dt_check_exposure |>
-#   filter(wave == 1 | wave == 2) |>
-#   select(wave, id.x, psychopathy_scale, sample_weights, coldheartedness) |>
-#   mutate(psychopathy_scale_round = round(psychopathy_scale, 0)) |>
-#   mutate(coldheartedness_round = round(coldheartedness, 0))
-#
-# dt_positivity_full
-#
-#
-# table ((dt_positivity_full$psychopathy_scale)) #
-# table ((dt_positivity_full$psychopathy_scale_round)) #
-#
-#
-# # test positivity
-# out <-
-#   msm::statetable.msm(psychopathy_scale_round, id.x, data = dt_positivity_full)
-#
-# # transition table
-# t_tab <- transition_table(out, state_names = NULL)
-# t_tab
-#
-#
-# out <-
-#   msm::statetable.msm(coldheartedness_round, id.x, data = dt_positivity_full)
-#
-# # transition table
-# t_tab <- transition_table(out, state_names = NULL)
-# t_tab
-#
-#
-# # check data
-# mice:::find.collinear(dat_joined)  # note that mice will ignore collinear data. However a better approach would be to use passive
-#
-#
-# # set baseline
-#
-# ## check missing data
-# partner_psychopathy_scale
-# # set variables for baseline exposure and outcome -------------------------
-# dat_long_with_partner <- dat_long_with_partner |>
-#   rename(id = id.x)
+# check
+dt_check_exposure <- dat_long_with_partner |> filter(wave == 1 | wave == 2)
+
+# makes sure all is false
+table (is.na(dt_check_exposure$psychopathy_scale))
+
+table(dt_check_exposure$psychopathy_scale)
+
+dt_positivity_full <- dat_long |>
+  filter(wave == 1 | wave == 2) |>
+  select(wave, id, psychopathy_scale, sample_weights) |>
+  mutate(psychopathy_scale_round = round(psychopathy_scale, 0))
+
+dt_positivity_full
+
+
+table ((dt_positivity_full$psychopathy_scale)) #
+table ((dt_positivity_full$psychopathy_scale_round)) #
+
+
+# test positivity
+out <-
+  msm::statetable.msm(psychopathy_scale_round, id, data = dt_positivity_full)
+
+# transition table
+t_tab <- transition_table(out, state_names = NULL)
+t_tab
 
 
 
@@ -890,6 +872,7 @@ colnames(dat_long)
 
 # check
 baseline_vars
+
 # check
 exposure_var
 
@@ -915,7 +898,6 @@ exposure_var
 
 
 # custom function
-
 # check data
 mice:::find.collinear(dat_long)  # note that mice will ignore collinear data. However a better approach would be to use passive
 
@@ -1688,6 +1670,7 @@ plot_group_tab_outcomes_up <- margot_plot(
   x_lim_lo = -1,
   x_lim_hi =  .5
 )
+
 plot_group_tab_outcomes_up
 dev.off()
 
