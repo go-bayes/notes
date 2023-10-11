@@ -268,10 +268,11 @@ mutate(
   ungroup() 
 
 
+push_mods
+here_save_arrow(dat_2, "dat_2-backup")
+dat_2 <- here_read_arrow("dat_2-backup")
 
-here_save_arrow(dat_2, "dat_2")
 
-dat_2
 
 # check dyads by wave 10
 
@@ -449,9 +450,9 @@ n_unique(dat_dyad$rel_num)
 # another approach for identifying dyads ----------------------------------
 
 
-# Filter the data for years 2018 and 2019 where year_measured == 1.
+# Filter the data for years 2018 and 2019 where #year_measured == 1.
 dat_18_19 <- dat_2 |> 
-  filter(wave %in% c(2018, 2019) & year_measured == 1 & !is.na(psychopathy_scale) & employed == 1)
+  filter(wave %in% c(2018, 2019) & year_measured == 1 & !is.na(psychopathy_scale))
 
 #Group by id and find the number of unique waves they are part of.
 id_count <- dat_18_19 |> 
@@ -468,18 +469,18 @@ n_unique(dat_filtered$id)
 
 # Group by rel_num and wave to find the number of individuals in each relationship for each wave.
 rel_count <- dat_filtered |> 
-  filter(wave %in% c(2018, 2019) & year_measured == 1 & !is.na(rel_num) & employed == 1) |>  # Only consider 2018 and 2019
+  filter(wave %in% c(2018, 2019) & year_measured == 1 & !is.na(rel_num)) |>  # Only consider 2018 and 2019
   group_by(rel_num, wave) |> 
   summarise(n_in_wave = n(), .groups = 'drop') 
 
 rel_count_1 <- rel_count |> 
-  filter(n_in_wave == 1)
+  filter(n_in_wave == 2)
 
 rel_count_2 <- rel_count |> 
   filter(n_in_wave == 2)
 
 nrow( rel_count_2) + nrow(rel_count_1)
-
+nrow( rel_count_2)
 
 # 
 # rel_count_compare <- dat_2 |> 
@@ -572,7 +573,10 @@ dat_long  <- dat_final_dyadic %>%
     urban,
     psychopathy_scale,
     kessler_latent_depression,
-    kessler_latent_anxiety
+    kessler_latent_anxiety,
+    coldheartedness,
+    sc_impulsivity,
+    fearless_dominance
   )  %>%
   # mutate(
   #   pers_n_ipip02r_reversed = 8 - pers_n_ipip02r,
@@ -710,8 +714,8 @@ dat_19 <- dat_long |>
   mutate(psychopathy_scale_z = scale(psychopathy_scale))
 
 
-n_unique(dat_19$id) # 1237
-n_unique(dat_19$rel_num) #985
+n_unique(dat_19$id) # 640
+n_unique(dat_19$rel_num) #320
 
 hist(dat_19$psychopathy_scale)
 table(dat_19$psychopathy_scale_z)
@@ -719,6 +723,36 @@ table(dat_19$psychopathy_scale_z)
 mean_exposure <- mean(dat_19$psychopathy_scale,
                       na.rm = TRUE)
 mean_exposure
+
+# just for interst
+max(dat_19$psychopathy_scale,
+     na.rm = TRUE)
+
+min(dat_19$psychopathy_scale,
+    na.rm = TRUE)
+
+# just for interst
+max(dat_19$coldheartedness,
+    na.rm = TRUE)
+
+min(dat_19$coldheartedness,
+    na.rm = TRUE)
+
+
+max(dat_19$fearless_dominance,
+    na.rm = TRUE)
+
+min(dat_19$fearless_dominance,
+    na.rm = TRUE)
+
+
+max(dat_19$sc_impulsivity,
+    na.rm = TRUE)
+
+min(dat_19$sc_impulsivity,
+    na.rm = TRUE)
+
+
 # just to view, do not use in function
 mean_exposure # [1] 2.716878
 
@@ -736,27 +770,27 @@ sd_exposure
 
 one_point_in_sd_units <- 1 / sd_exposure
 one_point_in_sd_units
-mean_exposure +  one_point_in_sd_units # not in bount
+0 +  one_point_in_sd_units # in bound
 
-# half a standard deviation
+# half a standard deviation if needed
 half_sd <- sd_exposure / 2
 half_sd
 
-mean_exposure + half_sd # top of scale
+one_point_in_sd_units
 
 #  increase everyone by one point, contrasted with what they would be anyway.
 #  only use this function for raw scores
 
 f_up <- function(data, trt) {
-  ifelse(data[[trt]] <= max_score - half_sd,
-         data[[trt]] + half_sd,
+  ifelse(data[[trt]] <= max_score - sd_exposure,
+         data[[trt]] + sd_exposure,
          max_score)
 }
 
 # decrease everyone by  - half_sd
 f_down <- function(data, trt) {
-  ifelse(data[[trt]] >= min_score  + half_sd,
-         data[[trt]] - half_sd,
+  ifelse(data[[trt]] >= min_score  + sd_exposure,
+         data[[trt]] - sd_exposure,
          min_score)
 }
 min_score
@@ -778,7 +812,7 @@ min_score
 #
 # dev.off()
 # check
-dt_check_exposure <- dat_long_with_partner |> filter(wave == 1 | wave == 2)
+dt_check_exposure <- dat_long|> filter(wave == 1 | wave == 2)
 
 # makes sure all is false
 table (is.na(dt_check_exposure$psychopathy_scale))
@@ -982,10 +1016,10 @@ colnames(prep_coop_all_use_1)
 
 
 # save function -- will save to your "push_mod" directory
-here_save(prep_coop_all_use_1, "prep_coop_all_use_1")
+here_save(prep_coop_all_use_1, "prep_coop_all_use_1_backup")
 
 # read function
-prep_coop_all_use_1 <- here_read("prep_coop_all_use_1")
+prep_coop_all_use_1 <- here_read("prep_coop_all_use_1_backup")
 
 colnames(prep_coop_all_use_1)
 naniar::vis_miss(prep_coop_all_use_1, warn_large_data = FALSE)
@@ -1066,12 +1100,13 @@ dev.off()
 # again check path
 push_mods
 # save
-here_save(df_clean, "df_clean")
+here_save(df_clean, "df_clean_backup")
 
 # read if needed
-df_clean <- here_read("df_clean")
+df_clean <- here_read("df_clean_backup")
 
 str(df_clean)
+nrow(df_clean)
 df_clean <- as.data.frame(df_clean)
 
 #check n
@@ -1120,7 +1155,7 @@ names_outcomes
 #  model
 A
 
-C <- c("t1_partner_not_lost")
+C <- c("t1_not_lost")
 
 #L <- list(c("L1"), c("L2"))
 W <- c(paste(names_base, collapse = ", "))
@@ -1153,8 +1188,7 @@ t2_nzsei13_z_up <- lmtp_tmle(
 
 
 t2_nzsei13_z_up
-here_save(t2_nzsei13_z_up, "t2_nzsei13_z_up")
-
+here_save(t2_nzsei13_z_up, "t2_nzsei13_z_up-backup")
 
 
 t2_nzsei13_z_down <- lmtp_tmle(
@@ -1175,8 +1209,8 @@ t2_nzsei13_z_down <- lmtp_tmle(
 
 
 t2_nzsei13_z_down
-here_save(t2_nzsei13_z_down, "t2_nzsei13_z_down")
-t2_nzsei13_z_null
+here_save(t2_nzsei13_z_down, "t2_nzsei13_z_down-backup")
+
 
 t2_nzsei13_z_null <- lmtp_tmle(
   data = df_clean,
@@ -1196,7 +1230,7 @@ t2_nzsei13_z_null <- lmtp_tmle(
 
 
 t2_nzsei13_z_null
-here_save(t2_nzsei13_z_null, "t2_nzsei13_z_null")
+here_save(t2_nzsei13_z_null, "t2_nzsei13_z_null-backup")
 
 
 # relationship satisfaction
@@ -1218,8 +1252,7 @@ t2_sat_relationship_z_up <- lmtp_tmle(
 
 
 t2_sat_relationship_z_up
-here_save(t2_sat_relationship_z_up, "t2_sat_relationship_z_up")
-
+here_save(t2_sat_relationship_z_up, "t2_sat_relationship_z_up-backup")
 
 
 t2_sat_relationship_z_down <- lmtp_tmle(
@@ -1238,10 +1271,8 @@ t2_sat_relationship_z_down <- lmtp_tmle(
   parallel = n_cores
 )
 
-
 t2_sat_relationship_z_down
-here_save(t2_sat_relationship_z_down, "t2_sat_relationship_z_down")
-
+here_save(t2_sat_relationship_z_down, "t2_sat_relationship_z_down-backup")
 
 t2_sat_relationship_z_null <- lmtp_tmle(
   data = df_clean,
@@ -1261,7 +1292,7 @@ t2_sat_relationship_z_null <- lmtp_tmle(
 
 
 t2_sat_relationship_z_null
-here_save(t2_sat_relationship_z_null, "t2_sat_relationship_z_null")
+here_save(t2_sat_relationship_z_null, "t2_sat_relationship_z_null-backup")
 
 
 # t2_conflict_in_relationship_z
@@ -1285,9 +1316,9 @@ t2_conflict_in_relationship_z_up <- lmtp_tmle(
 
 t2_conflict_in_relationship_z_up
 here_save(t2_conflict_in_relationship_z_up,
-          "t2_conflict_in_relationship_z_up")
+          "t2_conflict_in_relationship_z_up-backup")
 
-
+# 
 t2_conflict_in_relationship_z_down <- lmtp_tmle(
   data = df_clean,
   trt = A,
@@ -1307,7 +1338,7 @@ t2_conflict_in_relationship_z_down <- lmtp_tmle(
 
 t2_conflict_in_relationship_z_down
 here_save(t2_conflict_in_relationship_z_down,
-          "t2_conflict_in_relationship_z_down")
+          "t2_conflict_in_relationship_z_down-backup")
 
 
 t2_conflict_in_relationship_z_null <- lmtp_tmle(
@@ -1329,13 +1360,14 @@ t2_conflict_in_relationship_z_null <- lmtp_tmle(
 
 t2_conflict_in_relationship_z_null
 here_save(t2_conflict_in_relationship_z_null,
-          "t2_conflict_in_relationship_z_null")
+          "t2_conflict_in_relationship_z_null-backup")
 
 
 
 ## MY NZSEI
 
 #"nzsei"
+
 
 
 t2_nzsei13_z_up_my  <- lmtp_tmle(
@@ -1355,9 +1387,9 @@ t2_nzsei13_z_up_my  <- lmtp_tmle(
 )
 
 
+
 t2_nzsei13_z_up_my
-t2_nzsei13_z_up_my
-here_save(t2_nzsei13_z_up_my, "t2_nzsei13_z_up_my")
+here_save(t2_nzsei13_z_up_my, "t2_nzsei13_z_up_my-backup-backup")
 
 
 
@@ -1379,7 +1411,7 @@ t2_nzsei13_z_down_my <- lmtp_tmle(
 
 
 t2_nzsei13_z_down_my
-here_save(t2_nzsei13_z_down_my, "t2_nzsei13_z_down_my")
+here_save(t2_nzsei13_z_down_my, "t2_nzsei13_z_down_my-backup")
 
 
 t2_nzsei13_z_null_my <- lmtp_tmle(
@@ -1400,7 +1432,7 @@ t2_nzsei13_z_null_my <- lmtp_tmle(
 
 
 t2_nzsei13_z_null_my
-here_save(t2_nzsei13_z_null_my, "t2_nzsei13_z_null_my")
+here_save(t2_nzsei13_z_null_my, "t2_nzsei13_z_null_my-backup")
 
 
 
@@ -1408,13 +1440,13 @@ here_save(t2_nzsei13_z_null_my, "t2_nzsei13_z_null_my")
 # contrasts
 # nzsei
 t2_nzsei13_z_up <-
-  here_read("t2_nzsei13_z_up")
+  here_read("t2_nzsei13_z_up-backup")
 
-t2_nzsei13_z_down <-
-  here_read("t2_nzsei13_z_down")
+# t2_nzsei13_z_down <-
+#   here_read("t2_nzsei13_z_down-backup")
 
 t2_nzsei13_z_null <-
-  here_read("t2_nzsei13_z_null")
+  here_read("t2_nzsei13_z_null-backup")
 
 # first contrast
 contrast_t2_nzsei13_z_up <-
@@ -1434,7 +1466,7 @@ out_tab_contrast_t2_nzsei13_z_up <-
 
 out_tab_contrast_t2_nzsei13_z_up
 
-
+# 
 # second contrast
 contrast_t2_nzsei13_z_down <-
   lmtp_contrast(t2_nzsei13_z_down,
@@ -1456,13 +1488,13 @@ out_tab_contrast_t2_nzsei13_z_down
 
 # sat relationships
 t2_sat_relationship_z_up <-
-  here_read("t2_sat_relationship_z_up")
+  here_read("t2_sat_relationship_z_up-backup")
 
-t2_sat_relationship_z_down <-
-  here_read("t2_sat_relationship_z_down")
+# t2_sat_relationship_z_down <-
+#   here_read("t2_sat_relationship_z_down-backup")
 
 t2_sat_relationship_z_null <-
-  here_read("t2_sat_relationship_z_null")
+  here_read("t2_sat_relationship_z_null-backup")
 
 
 # first contrast
@@ -1482,8 +1514,8 @@ out_tab_contrast_t2_sat_relationship_z_up <-
                   scale = c("RD"))
 
 out_tab_contrast_t2_sat_relationship_z_up
-
-# second contrast # no change
+# 
+# # second contrast # no change
 contrast_t2_sat_relationship_z_down <-
   lmtp_contrast(t2_sat_relationship_z_down,
                 ref = t2_sat_relationship_z_null,
@@ -1505,13 +1537,13 @@ out_tab_contrast_t2_sat_relationship_z_down
 ## t2_conflict_in_relationship_z
 
 t2_conflict_in_relationship_z_up <-
-  here_read("t2_conflict_in_relationship_z_up")
+  here_read("t2_conflict_in_relationship_z_up-backup")
 
 t2_conflict_in_relationship_z_down <-
-  here_read("t2_conflict_in_relationship_z_down")
+  here_read("t2_conflict_in_relationship_z_down-backup")
 
 t2_conflict_in_relationship_z_null <-
-  here_read("t2_conflict_in_relationship_z_null")
+  here_read("t2_conflict_in_relationship_z_null-backup")
 
 
 # first contrast
@@ -1532,8 +1564,8 @@ out_tab_contrast_t2_conflict_in_relationship_z_up <-
 
 out_tab_contrast_t2_conflict_in_relationship_z_up
 
-
-# second contrast # no change
+# 
+# # second contrast # no change
 contrast_t2_conflict_in_relationship_z_down <-
   lmtp_contrast(t2_conflict_in_relationship_z_down,
                 ref = t2_conflict_in_relationship_z_null,
@@ -1559,14 +1591,17 @@ out_tab_contrast_t2_conflict_in_relationship_z_down
 # contrasts
 # nzsei
 t2_nzsei13_z_up_my <-
-  here_read("t2_nzsei13_z_up_my")
+  here_read("t2_nzsei13_z_up_my-backup")
 
 t2_nzsei13_z_down_my <-
-  here_read("t2_nzsei13_z_down_my")
+  here_read("t2_nzsei13_z_down_my-backup")
 
 t2_nzsei13_z_null_my <-
-  here_read("t2_nzsei13_z_null_my")
+  here_read("t2_nzsei13_z_null_my-backup")
+t2_nzsei13_z_up_my
+t2_nzsei13_z_down_my
 t2_nzsei13_z_null_my
+
 # first contrast
 contrast_t2_nzsei13_z_up_my <-
   lmtp_contrast(t2_nzsei13_z_up_my,
@@ -1576,12 +1611,13 @@ contrast_t2_nzsei13_z_up_my <-
 tab_contrast_t2_nzsei13_z_up_my <-
   margot_tab_lmtp(contrast_t2_nzsei13_z_up_my,
                   scale = "RD",
-                  new_name = "0bjective job success (SD)")
+                  new_name = "0bjective job success (SD)-personal change")
 
 
 out_tab_contrast_t2_nzsei13_z_up_my <-
   lmtp_evalue_tab(tab_contrast_t2_nzsei13_z_up_my,
                   scale = c("RD"))
+
 
 out_tab_contrast_t2_nzsei13_z_up_my
 
@@ -1593,15 +1629,17 @@ contrast_t2_nzsei13_z_down_my <-
                 type = "additive")
 
 tab_contrast_t2_nzsei13_z_down_my <-
-  margot_tab_lmtp(contrast_t2_nzsei13_z_up_my,
+  margot_tab_lmtp(contrast_t2_nzsei13_z_down_my,
                   scale = "RD",
-                  new_name = "Objective job success (SD)")
+                  new_name = "Objective job success (SD)- personal change")
 
 
 out_tab_contrast_t2_nzsei13_z_down_my <-
   lmtp_evalue_tab(tab_contrast_t2_nzsei13_z_down_my,
                   scale = c("RD"))
 
+
+out_tab_contrast_t2_nzsei13_z_up_my
 out_tab_contrast_t2_nzsei13_z_down_my
 
 
@@ -1612,14 +1650,16 @@ out_tab_contrast_t2_nzsei13_z_down_my
 tab_outcomes_up <- rbind(
   out_tab_contrast_t2_nzsei13_z_up,
   out_tab_contrast_t2_sat_relationship_z_up,
-  out_tab_contrast_t2_conflict_in_relationship_z_up
+  out_tab_contrast_t2_conflict_in_relationship_z_up,
+  out_tab_contrast_t2_nzsei13_z_up_my
 )
 
 
 tab_outcomes_down <- rbind(
   out_tab_contrast_t2_nzsei13_z_down,
   out_tab_contrast_t2_sat_relationship_z_down,
-  out_tab_contrast_t2_conflict_in_relationship_z_down
+  out_tab_contrast_t2_conflict_in_relationship_z_down,
+  out_tab_contrast_t2_nzsei13_z_down_my
 )
 
 
@@ -1627,15 +1667,15 @@ tab_outcomes_down <- rbind(
 group_tab_outcomes_up <- group_tab(tab_outcomes_up  , type = "RD")
 
 # save
-here_save(group_tab_outcomes_up, "group_tab_outcomes_up")
+here_save(group_tab_outcomes_up, "group_tab_outcomes_up-backup")
 
 
-# make group table
+# # make group table
 group_tab_outcomes_down <-
   group_tab(tab_outcomes_down , type = "RD")
 
 # save
-here_save(group_tab_outcomes_down, "group_tab_outcomes_down")
+here_save(group_tab_outcomes_down, "group_tab_outcomes_down-backup")
 
 
 # graph -------------------------------------------------------------------
@@ -1647,8 +1687,9 @@ here_save(group_tab_outcomes_down, "group_tab_outcomes_down")
 N <- n_unique(dat_long$id)
 N
 
-sub_title = "Shift up 1/2 sd psychopathy, N = 836"
+sub_title = "Shift up 1 x sd psychopathy if less than max response, else max response, N = 836"
 
+one_point_in_sd_units
 
 # graph health
 plot_group_tab_outcomes_up <- margot_plot(
@@ -1682,7 +1723,7 @@ ggsave(
   width = 12,
   height = 8,
   units = "in",
-  filename = "plot_group_tab_outcomes_up.png",
+  filename = "plot_group_tab_outcomes_up-backup.png",
   device = 'png',
   limitsize = FALSE,
   dpi = 600
@@ -1693,7 +1734,7 @@ dev.off()
 
 
 
-sub_title_1 = "Shift down 1/2 sd psychopathy, N = 836"
+sub_title_1 = "Shift up 1 x sd psychopathy if less than max response, else max response, N = 836"
 
 # graph health
 plot_group_tab_outcomes_down <- margot_plot(
@@ -1733,3 +1774,8 @@ ggsave(
   dpi = 600
 )
 dev.off()
+
+
+
+
+
