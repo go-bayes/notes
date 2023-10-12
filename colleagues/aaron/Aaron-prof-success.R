@@ -1687,7 +1687,7 @@ here_save(group_tab_outcomes_down, "group_tab_outcomes_down-backup")
 N <- n_unique(dat_long$id)
 N
 
-sub_title = "Shift up 1 x sd psychopathy if less than max response, else max response, N = 836"
+sub_title = "Shift up 1 x point psychopathy if less than max response, else max response, N = 836"
 
 one_point_in_sd_units
 
@@ -1734,7 +1734,7 @@ dev.off()
 
 
 
-sub_title_1 = "Shift up 1 x sd psychopathy if less than max response, else max response, N = 836"
+sub_title_1 = "Shift up 1 x point in psychopathy if less than max response, else max response, N = 836"
 
 # graph health
 plot_group_tab_outcomes_down <- margot_plot(
