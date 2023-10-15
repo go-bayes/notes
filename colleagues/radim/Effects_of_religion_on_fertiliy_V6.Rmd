@@ -1,0 +1,1791 @@
+---
+title: "The effects of religious change on subsequent reproductive behavior among U.S. adolescents"
+author: "RC"
+date: "05/10/2023"
+output:
+  html_document:
+    code_folding: show
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+# 1 Loading packages 
+```{r results='hide', message=FALSE, warning=FALSE, echo=T}
+### Loading packages
+{
+library(reshape2)
+library(tidyverse)
+library(plyr)
+#library(glmmTMB)
+library(psych)
+#library(lavaan)
+#library(Hmisc)
+library(foreign)
+library(sjPlot)
+library(naniar)
+library(effects)
+#library(QuantPsyc)
+#library(lavaanPlot)
+library(performance)
+library(ggpubr)
+library(car)
+library(rstatix)
+library(ggrepel)
+}
+
+# Define theme for all plots 
+my_theme <- theme(
+  plot.title = element_text(size = rel(1.2), face = "bold"),        
+  axis.title = element_text(size = rel(1.2)),
+  legend.title = element_text(size = rel(1.2)),
+  axis.text= element_text(size = rel(1.2)),
+  legend.text = element_text(size = rel(1.2)),
+  legend.background = element_rect(fill = "white", color = "black"),
+  legend.box = "vertical",
+  strip.text.x = element_text(size = rel(1.2))) 
+
+# Define labels for all tables 
+labels <- c(
+  "(Intercept)"                 = "Intercept",
+  "FAITH_CHANGEIncrease"        = "Increase in faith importance from 2003 to 2005",
+  "FAITH_CHANGEDecrease"        = "Decrease in faith importance from 2003 to 2005",
+  "PRAY_CHANGEIncrease"         = "Increase in prayer frequency from 2003 to 2005",
+  "PRAY_CHANGEDecrease"         = "Decrease in prayer frequency from 2003 to 2005",
+  "GROUP_RITUAL_CHANGEIncrease" = "Increase in worship frequcney from 2003 to 2005",
+  "GROUP_RITUAL_CHANGEDecrease" = "Decrease in worship frequcney from 2003 to 2005",
+  "GENDER1"                     = "Gender: Female",  
+  "AGE1"                        = "Age",
+  "RACE1"                       = "Ethnicity: White",
+  "PEDUC"                       = "Parent's education in 2003",          
+  "HH_INCOME"                   = "Household income in 2003",        
+  "kids_2013"                   = "Fertility in 2013",
+  "pregs_2013"                  = "Total number of pregnancies in 2013"
+)
+```
+
+# 2 Data preparation
+```{r results='hide', message=FALSE, warning=FALSE, echo=T}
+#@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@   
+#@@@@@@@@@@@@@@@@@@@@@@   WAVE 1 (2003)   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+{
+dt1.A <- read.csv2(here::here("data", "NSYR_1.csv"), stringsAsFactors = TRUE)
+dt1 <- dt1.A
+
+### AGE ###
+dt1$AGE1 <- dt1$AGECATS
+dt1$AGE1 [dt1$AGECATS == 888] <- NA 
+
+### GENDER ###
+dt1$GENDER1 <- dt1$TEENSEX # MALE = 0
+
+### RELIGION ###
+dt1$I_RELIGION [dt1$I_RELIGION == 1] <- "Protestant"
+dt1$I_RELIGION [dt1$I_RELIGION == 2] <- "Catholic"
+dt1$I_RELIGION [dt1$I_RELIGION == 3] <- "Other"
+dt1$I_RELIGION [dt1$I_RELIGION == 4] <- "Black protestant"
+dt1$I_RELIGION [dt1$I_RELIGION == 7] <- "Just Christian"
+dt1$I_RELIGION [dt1$I_RELIGION == 8] <- "Non-affiliated"
+dt1$I_RELIGION [is.na(dt1$I_RELIGION)] <- "Not disclosed"
+dt1$RELIGION1 <- as.factor(dt1$I_RELIGION)
+dt1$RELIGION1 <- factor(dt1$RELIGION1, levels = c("Non-affiliated","Protestant", "Black protestant", "Catholic", "Just Christian", "Other", "Not disclosed"))
+
+### RACE ###
+dt1$RACE1 <- dt1$TEENRACE
+dt1$RACE1 [dt1$TEENRACE == 1] <- "White" 
+dt1$RACE1 [dt1$TEENRACE == 2] <- "Black" 
+dt1$RACE1 [dt1$TEENRACE == 3] <- "Hispanic" 
+dt1$RACE1 [dt1$TEENRACE > 3 & dt1$TEENRACE < 777]  <- "Other" 
+dt1$RACE1 [dt1$TEENRACE >= 777]  <- "Not disclosed" # Check after merging with other waves whow many will remain
+
+### HH INCOME ###
+dt1$HH_INCOME <- dt1$PINCOME 
+dt1$HH_INCOME [dt1$HH_INCOME > 11] <- NA  # Check after merging with other waves whow many will remain
+
+  # Note that the numbers are calculated from 3370 sample interviewed in W1
+  # 1)    Less than $10K	 114
+  # 2)    $10K-$20K	       234	  
+  # 3)    $20K-$30K	       398	  
+  # 4)    $30K-$40K	       440	  
+  # 5)    $40K-$50K	       443	  
+  # 6)    $50K-$60K	       363	  
+  # 7)    $60K-$70K	       255	   
+  # 8)    $70K-$80K	       219	   
+  # 9)    $80K-$90K	       158	   
+  # 10)   $90K-$100K       136	   
+  # 11)   More than $100K	 404  
+  # 777)  Don't know	      67	    
+  # 888)  Refused	         139	
+
+
+### PARENTAL EDUCATION ###
+dt1$PEDUC <- dt1$PEDUC1 
+dt1$PEDUC [dt1$PEDUC > 3] <- NA  # Check after merging with other waves whow many will remain
+
+  # Note that the numbers are calculated from 3370 sample interviewed in W1
+  # 1)   Less than 12th grade	    284	  8.4 %
+  # 2)   Completed high school	  767	  22.8 %
+  # 3)   Beyond high school	     2314	  68.7 %
+  # 777) Don't know	                1	  0.0 %
+  # 888) Refused	                  4	  0.1 %
+
+# Who is caregiver ?
+dt1$PMOTHER[dt1$PMOTHER == 999] <- NA
+dt1$PFATHER[dt1$PFATHER == 999] <- NA
+dt1$caregiver <- coalesce(dt1$PMOTHER, dt1$PFATHER)
+dt1$caregiver1 <- dt1$caregiver 
+summary(as.factor(dt1$caregiver))
+dt1$caregiver1 [dt1$caregiver == 1] <- "Parent" 
+dt1$caregiver1 [dt1$caregiver == 2] <- "Adoptive p." 
+dt1$caregiver1 [dt1$caregiver == 3] <- "Step p." 
+dt1$caregiver1 [dt1$caregiver == 4] <- "Grandparent"
+dt1$caregiver1 [dt1$caregiver == 5] <- "Foster p."
+dt1$caregiver1 [dt1$caregiver == 6] <- "Legal guardian" 
+dt1$caregiver1 [dt1$caregiver == 7] <- "P. partner" 
+dt1$caregiver1 [dt1$caregiver == 8] <- "Other" 
+dt1$caregiver1 [dt1$caregiver == 777] <- "DK" 
+dt1$caregiver1 [dt1$caregiver == 888] <- "Refused" 
+
+### RITUAL ATTENDANCE ###
+dt1$GROUP_RITUAL <- dt1$ATTEND1
+dt1$GROUP_RITUAL [dt1$GROUP_RITUAL == 999] <- 0 # 999 = skipped becasue respondent answered never attending in previous question
+dt1$GROUP_RITUAL [dt1$GROUP_RITUAL > 6] <- NA # DK and refuse coded as NA
+dt1$GROUP_RITUAL1 <- dt1$GROUP_RITUAL + 1 # We will start the scale with 1
+table(dt1$GROUP_RITUAL1)
+
+# include variable of rituals rescaled to 1-5 for further comparision between change in faith and rituals 
+dt1$GROUP_RITUAL1_S5 <- scales::rescale(dt1$GROUP_RITUAL1, to = c(1,5))
+
+
+  
+### FAITH IMPORTANCE ###
+dt1$FAITH1 [dt1$FAITH1 > 5] <- NA # DK and refuse coded as NA
+dt1$FAITH1 <- 6 - dt1$FAITH1
+
+### Create subset ###   
+dt1 <- subset(dt1, select = c(IDS, 
+                              AGE1, GENDER1, RELIGION1, RACE1, HH_INCOME, PEDUC, caregiver1,
+                              GROUP_RITUAL1, GROUP_RITUAL1_S5, FAITH1))
+miss_var_summary(dt1)
+}
+
+#@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@       
+#@@@@@@@@@@@@@@@@@@@@@@   WAVE 2 (2005)   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+{
+dt2.A <- read.csv2(here::here("data", "NSYR_2.csv"), stringsAsFactors =T)
+dt2 <- dt2.A
+
+### RITUAL ATTENDANCE ###
+dt2$GROUP_RITUAL <- dt2$ATTENDFR
+dt2$GROUP_RITUAL [dt2$GROUP_RITUAL == 666] <- NA
+dt2$GROUP_RITUAL2 <- dt2$GROUP_RITUAL + 1
+table(dt2$GROUP_RITUAL2)
+dt2$GROUP_RITUAL2_S5 <- scales::rescale(dt2$GROUP_RITUAL2, to = c(1,5))
+
+### FAITH IMPORTANCE ###
+dt2$FAITH1 [dt2$FAITH1 > 5] <- NA
+dt2$FAITH2 <- 6 - dt2$FAITH1
+
+### LIVING WITH PARENT ### 
+# for discussion 
+dt2$LIVEPAR2<-dt2$LIVEPAR
+    
+### CREATE SUBSET ###  
+dt2 <- subset(dt2, select = c(IDS, GROUP_RITUAL2, GROUP_RITUAL2_S5, FAITH2, LIVEPAR2))
+miss_var_summary(dt2)
+}
+
+#@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@       
+#@@@@@@@@@@@@@@@@@@@@@@   WAVE 3 (2007-8)   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+{
+dt3.A <- read.csv2(here::here("data", "NSYR_3.csv"), stringsAsFactors =T)
+dt3 <- dt3.A
+
+### INTENDED FERTILITY ###
+# There are two questions on intended fertility to form a range. Where respondend indicated range, we will use the lower range
+dt3$INTEND_CHILDREN3 <- dt3$KIDWNTMN
+dt3$INTEND_CHILDREN3 [dt3$KIDWNTMN > 18] <- NA
+summary(as.factor(dt3$INTEND_CHILDREN3)) # lower range
+
+dt3 <- subset(dt3, select = c(IDS,INTEND_CHILDREN3))
+
+miss_var_summary(dt3)
+}
+
+#@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@@@@@@@@       
+#@@@@@@@@@@@@@@@@@@@@@@   WAVE 4 (2013)   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+{
+dt4.A <- read.csv2(here::here("data", "NSYR_4.csv"), stringsAsFactors =T)
+dt4 <- dt4.A
+
+### FERTILITY ###
+
+# Below, we will calculate pregnancies, births kept and abortions per year (in cumulative manner)
+
+## 1) Pregnancies --------------------
+# If has been pregnant once - question about first pregnancy
+summary(as.factor(dt4$PREG1AOUTVOME))
+dt4$PREG1AYEAR [dt4$PREG1AOUTVOME %in% c(1:7)]
+dt4$preg_1 <- ifelse(dt4$PREG1AOUTVOME  %in% c(1:7) & !is.na(dt4$PREG1AOUTVOME), dt4$PREG1AYEAR, NA)
+summary(as.factor(dt4$preg_1))
+
+# If has been pregnant twice or more - question about first pregnancy 
+summary(as.factor(dt4$PREG1BOUTCOME))
+dt4$PREG1BYEAR [dt4$PREG1BOUTCOME %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME)]
+dt4$preg_2.1 <- ifelse(dt4$PREG1BOUTCOME  %in% c(1:7)  & !is.na(dt4$PREG1BOUTCOME), dt4$PREG1BYEAR, NA)
+
+# qestions on first pregnancy are (for some reason) separated for people pregnant once and two times
+# We need to put them together 
+dt4$first_preg <- coalesce(dt4$preg_2.1, dt4$preg_1)
+
+# If has been pregnant twice or more - question about second pregnancy 
+dt4$PREG2YEAR [dt4$PREG2OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME)]
+dt4$second_preg <- ifelse(dt4$PREG2OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME), dt4$PREG2YEAR, NA)
+
+# If has been pregnant three times or more - question about third pregnancy 
+dt4$PREG3YEAR [dt4$PREG3OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME)]
+dt4$third_preg <- ifelse(dt4$PREG3OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME), dt4$PREG3YEAR, NA)
+
+# If has been pregnant four times or more - question about fourth pregnancy 
+dt4$PREG4YEAR [dt4$PREG4OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME)]
+dt4$fourth_preg <- ifelse(dt4$PREG4OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME), dt4$PREG4YEAR, NA)
+
+# If has been pregnant five times or more - question about fifth pregnancy 
+dt4$PREG5YEAR [dt4$PREG5OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME)]
+dt4$fifth_preg <- ifelse(dt4$PREG5OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME), dt4$PREG5YEAR, NA)
+
+# If has been pregnant six times or more - question about sixth pregnancy 
+dt4$PREG6YEAR [dt4$PREG6OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME)]
+dt4$sixth_preg <- ifelse(dt4$PREG6OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME), dt4$PREG6YEAR, NA)
+
+# If has been pregnant seven times or more - question about seventh pregnancy 
+dt4$PREG7YEAR [dt4$PREG7OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME)]
+dt4$seventh_preg <- ifelse(dt4$PREG7OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME), dt4$PREG7YEAR, NA)
+
+# If has been pregnant eight times or more - question about eight pregnancy 
+dt4$PREG8YEAR [dt4$PREG8OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME)]
+dt4$eighth_preg <- ifelse(dt4$PREG8OUTCOME  %in% c(1:7) & !is.na(dt4$PREG1BOUTCOME), dt4$PREG8YEAR, NA)
+
+# Here, we create dataset that marks whethr and when pregnancy 1-8 happened
+pregs <- dt4 %>% select(first_preg, second_preg, third_preg, fourth_preg, fifth_preg, sixth_preg, seventh_preg, eighth_preg)
+
+# But this dataset has coded years wo we need to recode it to actual years
+# Define the recoding key as a named vector
+key <- c("1" = NA,
+         "5" = "1998",
+         "7" = "2000",
+         "8" = "2001",
+         "9" = "2002",
+         "10" = "2003",
+         "11" = "2004",
+         "12" = "2005",
+         "13" = "2006",
+         "14" = "2007",
+         "15" = "2008",
+         "16" = "2009",
+         "17" = "2010",
+         "18" = "2011",
+         "19" = "2012",
+         "20" = "2013",
+         "21" = "2013")
+
+# We need to create dataset with cumulative pregnancies
+# Recode the variables in the dataframe using the key
+pregs_years <- pregs %>%
+  mutate(across(everything(), ~ dplyr::recode(., !!!key)))
+
+# Create four variables to store the counts
+# Specify the years of interest
+years_of_interest <- c(2003:2013)
+
+# Create an empty dataframe to store the results
+cumulative_children <- data.frame(matrix(0, nrow = nrow(pregs_years), ncol = length(years_of_interest)))
+colnames(cumulative_children) <- years_of_interest
+
+# Iterate over each row
+for (i in 1:nrow(pregs_years)) {
+  # Get the pregnancies for the current person
+  pregnancies <- pregs_years[i, ]
+  
+  # Calculate the cumulative number of children for the specified years
+  for (j in 1:length(years_of_interest)) {
+    year <- years_of_interest[j]
+    cumulative_children[i, j] <- sum(!is.na(pregnancies) & pregnancies <= year)
+  }
+}
+
+colnames(cumulative_children) <- paste("pregs", sep = "_",colnames(cumulative_children))
+
+dt4$pregs_2003 <- cumulative_children$pregs_2003
+dt4$pregs_2004 <- cumulative_children$pregs_2004
+dt4$pregs_2005 <- cumulative_children$pregs_2005
+dt4$pregs_2006 <- cumulative_children$pregs_2006
+dt4$pregs_2007 <- cumulative_children$pregs_2007
+dt4$pregs_2008 <- cumulative_children$pregs_2008
+dt4$pregs_2009 <- cumulative_children$pregs_2009
+dt4$pregs_2010 <- cumulative_children$pregs_2010
+dt4$pregs_2011 <- cumulative_children$pregs_2011
+dt4$pregs_2012 <- cumulative_children$pregs_2012
+dt4$pregs_2013 <- cumulative_children$pregs_2013
+
+
+
+## 2) Fertility (births kept) --------------------
+# The process is the same as in case of pregnancies. We just add one more assumption that the pregnancy must end with live birth kept
+# If has been pregnant once 
+summary(as.factor(dt4$PREG1AOUTVOME))
+dt4$PREG1AYEAR [dt4$PREG1AOUTVOME == 4] # 4 defines option "Live birth kept" 
+dt4$kids_1 <- ifelse(dt4$PREG1AOUTVOME == 4 & !is.na(dt4$PREG1AOUTVOME), dt4$PREG1AYEAR, NA)
+summary(as.factor(dt4$kids_1))
+
+# If has been pregnant twice or more - first pregnancy 
+summary(as.factor(dt4$PREG1BOUTCOME))
+dt4$PREG1BYEAR [dt4$PREG1BOUTCOME == 4]
+dt4$kids_2.1 <- ifelse(dt4$PREG1BOUTCOME == 4, dt4$PREG1BYEAR, NA)
+
+dt4$first_preg <- coalesce(dt4$kids_2.1, dt4$kids_1)
+
+# If has been pregnant twice or more - second pregnancy 
+dt4$PREG2YEAR [dt4$PREG2OUTCOME == 4]
+dt4$second_preg <- ifelse(dt4$PREG2OUTCOME == 4, dt4$PREG2YEAR, NA)
+
+# If has been pregnant three times or more - third pregnancy 
+dt4$PREG3YEAR [dt4$PREG3OUTCOME == 4]
+dt4$third_preg <- ifelse(dt4$PREG3OUTCOME == 4, dt4$PREG3YEAR, NA)
+
+# If has been pregnant four times or more - fourth pregnancy 
+dt4$PREG4YEAR [dt4$PREG4OUTCOME == 4]
+dt4$fourth_preg <- ifelse(dt4$PREG4OUTCOME == 4, dt4$PREG4YEAR, NA)
+
+# If has been pregnant five times or more - fifth pregnancy 
+dt4$PREG5YEAR [dt4$PREG5OUTCOME == 4]
+dt4$fifth_preg <- ifelse(dt4$PREG5OUTCOME == 4, dt4$PREG5YEAR, NA)
+
+# If has been pregnant six times or more - sixth pregnancy 
+dt4$PREG6YEAR [dt4$PREG6OUTCOME == 4]
+dt4$sixth_preg <- ifelse(dt4$PREG6OUTCOME == 4, dt4$PREG6YEAR, NA)
+
+# If has been pregnant seven times or more - seventh pregnancy 
+dt4$PREG7YEAR [dt4$PREG7OUTCOME == 4]
+dt4$seventh_preg <- ifelse(dt4$PREG7OUTCOME == 4, dt4$PREG7YEAR, NA)
+
+# If has been pregnant eight times or more - eight pregnancy 
+dt4$PREG8YEAR [dt4$PREG8OUTCOME == 4]
+dt4$eighth_preg <- ifelse(dt4$PREG8OUTCOME == 4, dt4$PREG8YEAR, NA)
+
+# Create dataset of births kept
+kids <- dt4 %>% select(first_preg, second_preg, third_preg, fourth_preg, fifth_preg, sixth_preg, seventh_preg, eighth_preg)
+
+# key and years of interest are already defined 
+
+# Recode the variables in the dataframe using the key
+kids_years <- kids %>%
+  mutate(across(everything(), ~ dplyr::recode(., !!!key)))
+
+# Create an empty dataframe to store the results
+cumulative_children <- data.frame(matrix(0, nrow = nrow(kids_years), ncol = length(years_of_interest)))
+colnames(cumulative_children) <- years_of_interest
+
+# Iterate over each row
+for (i in 1:nrow(kids_years)) {
+  # Get the pregnancies for the current person
+  pregnancies <- kids_years[i, ]
+  
+  # Calculate the cumulative number of children for the specified years
+  for (j in 1:length(years_of_interest)) {
+    year <- years_of_interest[j]
+    cumulative_children[i, j] <- sum(!is.na(pregnancies) & pregnancies <= year)
+  }
+}
+
+colnames(cumulative_children) <- paste("kids", sep = "_",colnames(cumulative_children))
+
+dt4$kids_2003 <- cumulative_children$kids_2003
+dt4$kids_2004 <- cumulative_children$kids_2004
+dt4$kids_2005 <- cumulative_children$kids_2005
+dt4$kids_2006 <- cumulative_children$kids_2006
+dt4$kids_2007 <- cumulative_children$kids_2007
+dt4$kids_2008 <- cumulative_children$kids_2008
+dt4$kids_2009 <- cumulative_children$kids_2009
+dt4$kids_2010 <- cumulative_children$kids_2010
+dt4$kids_2011 <- cumulative_children$kids_2011
+dt4$kids_2012 <- cumulative_children$kids_2012
+dt4$kids_2013 <- cumulative_children$kids_2013
+
+
+## 3) Abortions per pregnancies --------------------
+# The process is the same as in case of pregnancies. We just add one more assumption that the pregnancy must end with abortion
+# If has been pregnant once 
+summary(as.factor(dt4$PREG1AOUTVOME))
+dt4$PREG1AYEAR [dt4$PREG1AOUTVOME == 2] # 2 is option for abortion
+dt4$abortions_1 <- ifelse(dt4$PREG1AOUTVOME == 2, dt4$PREG1AYEAR, NA)
+summary(as.factor(dt4$abortions_1))
+
+# If has been pregnant twice or more - first pregnancy 
+summary(as.factor(dt4$PREG1BOUTCOME))
+dt4$PREG1BYEAR [dt4$PREG1BOUTCOME == 2]
+dt4$abortions_2.1 <- ifelse(dt4$PREG1BOUTCOME == 2, dt4$PREG1BYEAR, NA)
+
+dt4$first_preg <- coalesce(dt4$abortions_2.1, dt4$abortions_1)
+
+# If has been pregnant twice or more - second pregnancy 
+dt4$PREG2YEAR [dt4$PREG2OUTCOME == 2]
+dt4$second_preg <- ifelse(dt4$PREG2OUTCOME == 2, dt4$PREG2YEAR, NA)
+
+# If has been pregnant three times or more - third pregnancy 
+dt4$PREG3YEAR [dt4$PREG3OUTCOME == 2]
+dt4$third_preg <- ifelse(dt4$PREG3OUTCOME == 2, dt4$PREG3YEAR, NA)
+
+# If has been pregnant four times or more - fourth pregnancy 
+dt4$PREG4YEAR [dt4$PREG4OUTCOME == 2]
+dt4$fourth_preg <- ifelse(dt4$PREG4OUTCOME == 2, dt4$PREG4YEAR, NA)
+summary(as.factor(dt4$fourth_preg))
+
+# If has been pregnant five times or more - fifth pregnancy 
+dt4$PREG5YEAR [dt4$PREG5OUTCOME == 2]
+dt4$fifth_preg <- ifelse(dt4$PREG5OUTCOME == 2, dt4$PREG5YEAR, NA)
+summary(as.factor(dt4$fifth_preg))
+
+# If has been pregnant six times or more - sixth pregnancy 
+dt4$PREG6YEAR [dt4$PREG6OUTCOME == 2]
+dt4$sixth_preg <- ifelse(dt4$PREG6OUTCOME == 2, dt4$PREG6YEAR, NA)
+summary(as.factor(dt4$sixth_preg))
+
+# If has been pregnant seven times or more - seventh pregnancy 
+dt4$PREG7YEAR [dt4$PREG7OUTCOME == 2]
+dt4$seventh_preg <- ifelse(dt4$PREG7OUTCOME == 2, dt4$PREG7YEAR, NA)
+summary(as.factor(dt4$seventh_preg))
+
+# If has been pregnant eight times or more - eight pregnancy 
+dt4$PREG8YEAR [dt4$PREG8OUTCOME == 2]
+dt4$eighth_preg <- ifelse(dt4$PREG8OUTCOME == 2, dt4$PREG8YEAR, NA)
+summary(as.factor(dt4$eighth_preg))
+
+abortions <- dt4 %>% select(first_preg, second_preg, third_preg, fourth_preg, fifth_preg, sixth_preg)
+
+# key and years of interest are already defined 
+
+# Recode the variables in the dataframe using the key
+abortions_years <- abortions %>%
+  mutate(across(everything(), ~ dplyr::recode(., !!!key)))
+
+# Create an empty dataframe to store the results
+cumulative_abortions <- data.frame(matrix(0, nrow = nrow(abortions_years), ncol = length(years_of_interest)))
+colnames(cumulative_abortions) <- years_of_interest
+
+# Iterate over each row
+for (i in 1:nrow(abortions_years)) {
+  # Get the pregnancies for the current person
+  pregnancies <- abortions_years[i, ]
+  
+  # Calculate the cumulative number of children for the specified years
+  for (j in 1:length(years_of_interest)) {
+    year <- years_of_interest[j]
+    cumulative_abortions[i, j] <- sum(!is.na(pregnancies) & pregnancies <= year)
+  }
+}
+
+colnames(cumulative_abortions) <- paste("abortions", sep = "_",colnames(cumulative_abortions))
+
+dt4$abortions_2003 <- cumulative_abortions$abortions_2003
+dt4$abortions_2004 <- cumulative_abortions$abortions_2004
+dt4$abortions_2005 <- cumulative_abortions$abortions_2005
+dt4$abortions_2006 <- cumulative_abortions$abortions_2006
+dt4$abortions_2007 <- cumulative_abortions$abortions_2007
+dt4$abortions_2008 <- cumulative_abortions$abortions_2008
+dt4$abortions_2009 <- cumulative_abortions$abortions_2009
+dt4$abortions_2010 <- cumulative_abortions$abortions_2010
+dt4$abortions_2011 <- cumulative_abortions$abortions_2011
+dt4$abortions_2012 <- cumulative_abortions$abortions_2012
+dt4$abortions_2013 <- cumulative_abortions$abortions_2013
+
+# Create dummy variable for abortion 
+dt4$ab_dummy <- dt4$abortions_2013
+dt4$ab_dummy[dt4$pregs_2013 == 0] <- NA
+dt4$ab_dummy[dt4$ab_dummy > 0] <- 1
+
+### CREATE SUBSET ###
+dt4 <- dt4 %>% select (
+  IDS, 
+  pregs_2003, pregs_2004, pregs_2005, pregs_2006, pregs_2007, pregs_2008, pregs_2009, pregs_2010, pregs_2011, pregs_2012, pregs_2013,
+  kids_2003, kids_2004, kids_2005, kids_2006, kids_2007, kids_2008, kids_2009, kids_2010, kids_2011, kids_2012, kids_2013, 
+  abortions_2003, abortions_2004, abortions_2005, abortions_2006, abortions_2007, abortions_2008, abortions_2009, abortions_2010, abortions_2011, abortions_2012, abortions_2013, 
+  ab_dummy
+  )
+
+miss_var_summary(dt4)
+}
+```
+
+# 3 Creating a common dataset
+```{r results='hide', message=FALSE, warning=FALSE, echo=T}
+{
+# Add wave identifier to each wave data
+dt1$wave1 <- "W1"
+dt2$wave2 <- "W2"
+dt3$wave3 <- "W3"
+dt4$wave4 <- "W4"
+
+
+
+# Merge data using ID 
+A <- merge(dt1, dt2, by = "IDS")
+B <- merge(A, dt3, by = "IDS")
+dataset_full <- merge (B, dt4, by = "IDS")
+}
+
+nrow(dataset_full)
+
+#JB
+saveRDS(dataset_full, here::here("data", "dataset_full"))
+
+
+# Include only those who have no cumulative pregnancy in 2005
+# JB CHNGE 2005 to 2004
+dataset <- dataset_full[dataset_full$pregs_2004 == 0]
+nrow(dataset)
+
+
+## --------------------------------------------------------- ##
+# Check NAs in covariates 
+
+# Ethnicity
+summary(as.factor(dataset$RACE1))
+dataset <- dataset %>% mutate(
+  RACE1 = ifelse(RACE1 == "White", 1, 0)
+)
+# There would be not enough observation in individual subsets which prevents sucesfully running statisticalp mdoels
+# We had to collapse these categories to other
+
+# HH income
+summary(as.factor(dataset$HH_INCOME))
+median(dataset$HH_INCOME, na.rm = T)
+dataset$HH_INCOME[is.na(dataset$HH_INCOME)] <- 6
+
+# Parental education
+summary(as.factor(dataset$PEDUC))
+dataset$PEDUC[is.na(dataset$PEDUC)] <- 3
+
+# Religion
+summary(as.factor(dataset$RELIGION1))
+
+# Caregiver 
+summary(as.factor(dataset$caregiver1))
+1626/1749*100
+
+# Gender
+summary(as.factor(dataset$GENDER1))
+## --------------------------------------------------------- ##
+
+# Summary of fertility
+summary(as.factor(dataset$pregs_2013))
+summary(as.factor(dataset$pregs_2013>0))
+round(mean(dataset$pregs_2013, na.rm = T),2)
+round(sd(dataset$pregs_2013, na.rm = T),2)
+
+summary(as.factor(dataset$kids_2013))
+round(mean(dataset$kids_2013, na.rm = T),2)
+round(sd(dataset$kids_2013, na.rm = T),2)
+sum(dataset$kids_2013, na.rm = T)/sum(dataset$pregs_2013, na.rm = T)*100
+
+# % of abortions from all pregnancies
+sum(dataset$abortions_2013)/sum(dataset$pregs_2013)*100
+
+# % of people who underwent abortion 
+sum(dataset$ab_dummy, na.rm = T)/sum(dataset$pregs_2013)*100
+
+# how many people who had at least pregnancy had abortion?
+dataset$NUMPREGS_dummy <- ifelse(dataset$pregs_2013 > 0, 1, 0)
+dataset$NUMPREGS_dummy[is.na(dataset$ab_dummy)] <- NA
+sum(dataset$ab_dummy, na.rm = T)/534*100
+
+# Intedned children
+summary(as.factor(dataset$INTEND_CHILDREN3))
+sum(summary(as.factor(dataset$INTEND_CHILDREN3)))
+round(mean(dataset$INTEND_CHILDREN3, na.rm = T),2)
+round(sd(dataset$INTEND_CHILDREN3, na.rm = T),2)
+146/1749*100 # 8.35
+
+# Summary of religion
+summary(dataset$RELIGION1)
+
+# Checking missing values
+dt<-dataset %>% select(FAITH1, FAITH2, GROUP_RITUAL1, GROUP_RITUAL2, INTEND_CHILDREN3, pregs_2013, kids_2013)
+gg_miss_upset(dt)
+as.data.frame(miss_var_summary(dt))
+
+#  INTEND_CHILDREN3    146       8.35%
+#     GROUP_RITUAL1      3   0.1715266
+#            FAITH2      2   0.1143511
+#     GROUP_RITUAL2      2   0.1143511
+
+# Time series of pregnancies, fertility and abortions
+# First create dataframe with means for each variable
+pregs <- dataset %>% select(c(pregs_2003, pregs_2004, pregs_2005, pregs_2006, pregs_2007, pregs_2008, pregs_2009, pregs_2010, pregs_2011, pregs_2012, pregs_2013))
+kids <- dataset %>% select(c(kids_2003, kids_2004, kids_2005, kids_2006, kids_2007, kids_2008, kids_2009, kids_2010, kids_2011, kids_2012, kids_2013))
+abortions <- dataset %>% select(c(abortions_2003, abortions_2004, abortions_2005, abortions_2006, abortions_2007, abortions_2008, abortions_2009, abortions_2010, abortions_2011, abortions_2012, abortions_2013))
+
+# Prepare dataframe to plot
+timeseries <- data.frame(pregs = colMeans(pregs), kids = colMeans(kids), abortions = colMeans(abortions), year = c(2003:2013))
+timeseries <- melt(timeseries, id.vars = "year", measure.vars = c("pregs", "kids", "abortions"), variable.name = "type", value.name = "count")
+timeseries$year <- as.factor(timeseries$year)
+timeseries <- timeseries %>% mutate(type = ifelse(type == "pregs", "Pregnancies", 
+                                                  ifelse(type == "kids", "Fertility", "Abortions")))
+
+
+# Define shades region
+shaded_region <- data.frame(
+  xmin = factor(2003),
+  xmax = factor(2005),
+  ymin = -Inf,
+  ymax = Inf
+)
+
+# Do the plot
+timeplot <- ggplot()+
+  geom_line(data = timeseries, aes(y = count, x = year, group = type, color = type, linetype = type), linewidth = 1)+
+  labs(title = " ", x = "Year", y="Cumulative mean", color = "Variable",linetype = "Variable",group = "Variable") + 
+  scale_color_manual(values = c("#50C878", "#DAA520", "#8E4585"))+
+  my_theme+
+  guides(color = guide_legend(reverse = TRUE), linetype = guide_legend(reverse = TRUE))+
+  theme(legend.position = "top")+ 
+  geom_vline(xintercept = 5.5, linetype = "dotted", linewidth = 1)+
+  geom_rect(data = shaded_region,aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+            fill = "black",  alpha = 0.3)+
+  annotate(geom = "text", x = 2, y = 0.4, label = "Period of measured\nreligious change")+
+  annotate(geom = "text", x = 5.6, y = 0.4, label = "Measure of\nintended fertility", hjust = 0)
+
+timeplot
+#ggsave("timeplot.jpg", plot = timeplot, width = 9, height = 4, dpi = 700)
+here::here()
+# Create dummies for differetn religoins for later use 
+dataset <- dataset %>% mutate(
+  RELIGION_nonaffiliated   = ifelse(RELIGION1 == "Non-affiliated", 1, 0),
+  RELIGION_protestant      = ifelse(RELIGION1 == "Protestant", 1, 0),
+  RELIGION_blackprotestant = ifelse(RELIGION1 == "Black protestant", 1, 0),
+  RELIGION_catholic        = ifelse(RELIGION1 == "Catholic", 1, 0),
+  RELIGION_justchristian   = ifelse(RELIGION1 == "Just Christian", 1, 0),
+  RELIGION_notdisclosed    = ifelse(RELIGION1 == "Not disclosed", 1, 0),
+  RELIGION_other           = ifelse(RELIGION1 == "Other", 1, 0),
+)
+
+head(dataset)
+
+
+
+############### JB ANALYSIS ###########
+# import my utilities 
+
+library(here)
+library(tidyverse)
+
+
+# ALERT: UNCOMMENT THIS AND DOWNLOAD THE LIBRARIES FROM JB's GITHUB
+source("https://raw.githubusercontent.com/go-bayes/templates/main/functions/libs2.R")
+
+# ALERT: UNCOMMENT THIS AND DOWNLOAD THE FUNCTIONS FROM JB's GITHUB
+source("https://raw.githubusercontent.com/go-bayes/templates/main/functions/funs.R")
+
+
+# ALERT: UNCOMMENT THIS AND DOWNLOAD THE FUNCTIONS FROM JB's GITHUB
+source(
+  "https://raw.githubusercontent.com/go-bayes/templates/main/functions/experimental_funs.R"
+)
+
+# set preference for dplyr 
+conflicts_prefer(dplyr::arrange)
+conflicts_prefer(dplyr::mutate)
+
+
+# criteria 
+
+# WAVE 1 (2003)
+# WAVE 2 (2005)
+# WAVE 4 (2013) 
+
+# note above make your dataset this way
+# dataset <- dataset_full[dataset_full$pregs_2004 == 0]
+# nrow(dataset)
+
+
+
+dt <- dataset %>% 
+  dplyr::arrange(IDS) %>%  # order ideas (not essential) 
+  dplyr::filter(kids_2004 == 0) %>%  # having children might make people religious
+  janitor::clean_names() %>%  # better names
+  dplyr::mutate(any_kids_2006 = ifelse(kids_2006 > 0, 1, 0)) %>% 
+  dplyr::mutate(at_least_2_kids_2006 = ifelse(kids_2006 > 2, 1, 0)) %>% 
+  dplyr::mutate(any_kids_2013 = ifelse(kids_2013 > 0, 1, 0)) %>% 
+  dplyr::mutate(at_least_2_kids_2013 = ifelse(kids_2013 > 2, 1, 0)) %>% 
+  dplyr::mutate(
+    group_ritual1 = group_ritual1 - 1, # start at 0
+    group_ritual2 = group_ritual2 - 1,  # start at 0
+  ) %>% 
+  dplyr::mutate(any_service1 = ifelse(group_ritual1 > 0, 1, 0 )) %>% 
+  dplyr::mutate(any_service2 = ifelse(group_ritual2 > 0, 1, 0 ))
+
+
+  
+
+
+# check colnames
+colnames(dt)
+
+# check criteria
+table(dt$kids_2004)
+
+# check criteria
+table(dt$any_kids_2006)
+table(dt$at_least_2_kids_2006) # no one
+
+# check criteria
+table(dt$any_kids_2013)
+table(dt$at_least_2_kids_2013)
+
+# check exposure
+table(dt$group_ritual1)
+table(dt$group_ritual2) 
+
+# check exposure
+table(dt$group_ritual1)
+table(dt$group_ritual2) 
+
+
+
+## how many change in group ritual between 2004 and 2007
+dt_change <- dt %>% 
+  dplyr::select(ids,group_ritual1)
+
+# make longer
+dt_long <- dt_change %>%
+  pivot_longer(
+    cols = starts_with("group_ritual"), 
+    names_to = "wave", 
+    values_to = "group_ritual"
+  )
+dt_long <- dt_long %>% 
+  mutate(wave = str_extract(wave, "\\d+$"))
+
+head(dt_long)
+
+## Functions JB wrote to test positivity 
+# test positivity
+out <-
+  msm::statetable.msm(group_ritual, ids, data = dt_long)
+
+# transition table -- Note more downward movement than upward
+t_tab <- transition_table(out, state_names = NULL)
+t_tab
+
+## Do with binary
+dt_change_2 <- dt %>% 
+  dplyr::select(ids, any_service1, any_service2)
+
+# make longer
+dt_long_2 <- dt_change_2 %>%
+  pivot_longer(
+    cols = starts_with("any_service"), 
+    names_to = "wave", 
+    values_to = "any_service"
+  )
+dt_long_2 <- dt_long_2 %>% 
+  mutate(wave = str_extract(wave, "\\d+$"))
+
+head(dt_long_2)
+
+# check change
+out_2 <-
+  msm::statetable.msm(any_service, ids, data = dt_long_2)
+
+# transition table -- Note more downward movement than upward
+t_tab_2 <- transition_table(out_2, state_names = NULL)
+t_tab_2
+
+# question: what is the 2 x year effect of religious service on having any offspring 
+m_any_2006 <- glm(
+  any_kids_2006 ~ 
+    group_ritual2 +
+    group_ritual1 +
+    age1 +
+    gender1 +
+    race1 +
+    hh_income +
+    peduc,
+  family = "binomial", # outcome is not rare
+  data = dt
+)
+
+parameters::model_parameters(m_any_2006, exponentiate = TRUE)
+
+# we see increase in the rate ratio to 1.10 , but the interval crosses zero
+
+
+# Assess 2 kids or more in 2013 - stronger effect
+m_at_least_2_2013 <- glm(
+  at_least_2_kids_2013 ~ 
+    group_ritual2 +
+    group_ritual1 +
+    age1 +
+    gender1 +
+    race1 +
+    hh_income +
+    peduc,
+  family = "binomial", # outcome is not rare
+  data = dt
+)
+
+parameters::model_parameters(m_at_least_2_2013, exponentiate = TRUE)
+
+
+
+# USE BINARY 
+m_at_least_2_2013_bin <- glm(
+  at_least_2_kids_2013 ~ 
+    any_service2 +
+    any_service1 +
+    age1 +
+    gender1 +
+    race1 +
+    hh_income +
+    peduc,
+  family = "binomial", # outcome is not rare
+  data = dt
+)
+
+parameters::model_parameters(m_at_least_2_2013_bin, exponentiate = TRUE)
+
+
+
+
+# we see an increase in 1.23 fold increase in the risk ratio for having more than 1 kid in 2013, and the confidence interval does not cross zero
+
+
+# compute causal contrasts for the ATE
+
+
+#Counterfactual Simulation:
+#Use the simcf function from clarify to run counterfactual simulations.
+library(clarify)
+conflicts_prefer(clarify::sim)
+set.seed(12345)
+
+dt$group_ritual2
+
+# Simulate coefficients from a multivariate normal distribution
+sim_coefs <- sim(m_at_least_2_2013)
+sim_est <- sim_setx(sim_coefs, x = list(group_ritual2 = 0:6),
+                    verbose = FALSE)
+sim_est
+
+# We use clarify to compute predictions and first differences at set and typical values of the predictors, 
+#Plot of predicted values across value of treat (in probabilities)
+plot(sim_est)
+
+
+## try the binary exposure
+
+sim_est_bin <- sim(m_at_least_2_2013_bin)
+sim_est <- sim_ame(sim_est_bin, var = "any_service2", subset = any_service2 == 1,
+                   contrast = "RR", verbose = TRUE)
+sim_est
+
+summary(sim_est, null = c(`RR` = 1))
+
+# we can see that although the effect is unreliable, the density is very strongly on the positive side of zero 
+plot(sim_est)
+
+
+```
+
+# 4 The effects of religiosity change on number of intended and actual children
+## 4.1 Importance of faith
+```{r results='hide', message=FALSE, warning=FALSE, echo=T}
+# Separate datasets and create variable for change in faith
+dataset$FAITH_CHANGE <- NA
+dataset$FAITH_CHANGE [dataset$FAITH1 < 3] <- "F1 < 3"
+dataset$FAITH_CHANGE [dataset$FAITH2 >= 3 & dataset$FAITH_CHANGE == "F1 < 3"] <- "Increase"
+
+dataset$FAITH_CHANGE [dataset$FAITH1 >= 3] <- "F1 >= 3"
+dataset$FAITH_CHANGE [dataset$FAITH2 < 3 & dataset$FAITH_CHANGE == "F1 >= 3"] <- "Decrease"
+
+dataset$FAITH_CHANGE [dataset$FAITH_CHANGE == "F1 >= 3"] <- "Stably high"
+dataset$FAITH_CHANGE [dataset$FAITH_CHANGE == "F1 < 3"] <- "Stably low"
+
+dataset$FAITH_CHANGE <- as.factor(dataset$FAITH_CHANGE)
+
+dataset$FAITH_CHANGE[is.na(dataset$FAITH1)] <- NA
+dataset$FAITH_CHANGE[is.na(dataset$FAITH2)] <- NA
+sum(is.na(dataset$FAITH_CHANGE))
+
+data_F_low <- dataset [dataset$FAITH1 < 3,]
+data_F_high <- dataset [dataset$FAITH1 >= 3,]
+
+nrow(data_F_low)
+table(data_F_low$FAITH_CHANGE)
+
+nrow(data_F_high)
+sum(table(data_F_high$FAITH_CHANGE))
+
+data_F_low$FAITH_CHANGE <- factor(data_F_low$FAITH_CHANGE, levels = c("Stably low", "Increase", "Stably high", "Decrease"))
+data_F_high$FAITH_CHANGE <- factor(data_F_high$FAITH_CHANGE, levels = c("Stably low", "Increase", "Stably high", "Decrease"))
+
+
+#################### Increase in faith importance ########################################
+summary(faith_increase_pregs <- glmmTMB(pregs_2013 ~ FAITH_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              (1|RELIGION1), 
+                            data = data_F_low, 
+                            family = "nbinom2"))
+
+summary(faith_increase_birthskept <- glmmTMB(kids_2013 ~ FAITH_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              (1|RELIGION1), 
+                            data = data_F_low, 
+                            family = "nbinom2"))
+
+summary(faith_increase_abortions <- glmmTMB(ab_dummy ~ FAITH_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              pregs_2013 +
+                              (1|RELIGION1), 
+                            data = data_F_low, 
+                            family = "binomial"))
+
+# Check ratio of observed and predicted zeores
+check_zeroinflation(faith_increase_pregs)
+check_zeroinflation(faith_increase_birthskept)
+
+# Check vif
+vif.model <- lm(kids_2013 ~ FAITH_CHANGE + GENDER1 + AGE1 + RACE1 + PEDUC + HH_INCOME, data = data_F_low)
+car::vif(vif.model)
+
+# Calculate predicted values and draw a plot 
+effs.pregs <- as.data.frame(allEffects(faith_increase_pregs))$FAITH_CHANGE
+effs.birthskept <- as.data.frame(allEffects(faith_increase_birthskept))$FAITH_CHANGE
+effs.abortions <- as.data.frame(allEffects(faith_increase_abortions))$FAITH_CHANGE
+
+round(effs.birthskept$fit[1]-effs.birthskept$fit[2],2)
+
+effs <- rbind(effs.pregs, effs.birthskept, effs.abortions)
+effs$model <- c("Pregnancies","Pregnancies",  
+                "Fertility", "Fertility",
+                "Prob. of abortion", "Prob. of abortion")
+
+effs$FAITH_CHANGE <- factor(effs$FAITH_CHANGE, levels = c("Stably low", "Increase", NA))
+
+effs$model <- factor(effs$model, levels = c("Pregnancies", "Fertility", "Prob. of abortion"))
+
+increase_faith_plots <- ggplot()+
+  geom_bar(data = effs, aes(y = fit, x = FAITH_CHANGE, color = FAITH_CHANGE, fill = FAITH_CHANGE), stat="identity", alpha = 0.5)+
+  geom_errorbar(data = effs,aes(x = FAITH_CHANGE, ymin=lower, ymax=upper, color = FAITH_CHANGE), width=0.1, linewidth = 1)+
+  scale_y_continuous(limits = c(0,1),breaks = seq(0,1, by = 0.2)) +
+  labs(title = " ", x = "", y="") + 
+  scale_fill_manual(values = c("black", "steelblue"))+
+  scale_color_manual(values = c("black", "steelblue"))+
+  facet_wrap(~model, ncol = 4)+
+  my_theme
+
+########## Analysis of individual religions ######
+table(data_F_low$RELIGION1)
+data_F_low$religion_dummy <- as.character(data_F_low$RELIGION1)
+data_F_low$religion_dummy [data_F_low$religion_dummy == "Other"] <- "Non-institutionalized religion"
+data_F_low$religion_dummy [data_F_low$religion_dummy == "Just Christian"] <- "Non-institutionalized religion"
+
+data_F_low$religion_dummy [data_F_low$religion_dummy == "Not disclosed"] <- NA
+#data_F_low$religion_dummy [data_F_low$religion_dummy != "Non-affiliated"] <- "Non-affiliated"
+
+data_F_low$religion_dummy [data_F_low$religion_dummy == "Protestant" ] <- "Institutionalized religion"
+data_F_low$religion_dummy [data_F_low$religion_dummy == "Black protestant" ] <- "Institutionalized religion"
+data_F_low$religion_dummy [data_F_low$religion_dummy == "Catholic" ] <- "Institutionalized religion"
+table(data_F_low$religion_dummy)
+
+sum(data_F_low$kids_2013[data_F_low$religion_dummy == "Institutionalized religion"], na.rm = T)
+sum(data_F_low$kids_2013[data_F_low$religion_dummy == "Non-institutionalized religion"], na.rm = T)
+sum(data_F_low$kids_2013[data_F_low$religion_dummy == "Non-affiliated"], na.rm = T)
+
+# does not make sense since we have low numbers
+
+#################### Decrease in faith importance ########################################
+summary(faith_decrease_pregs <- glmmTMB(pregs_2013 ~ FAITH_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              (1|RELIGION1), 
+                            data = data_F_high, 
+                            family = "nbinom2"))
+
+summary(faith_decrease_birthskept <- glmmTMB(kids_2013 ~ FAITH_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              (1|RELIGION1), 
+                            data = data_F_high, 
+                            family = "nbinom2"))
+
+summary(faith_decrease_abortions <- glmmTMB(ab_dummy ~ FAITH_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              pregs_2013 +
+                              (1|RELIGION1), 
+                            data = data_F_high, 
+                            family = "binomial"))
+
+# Check ratio of observed and predicted zeores
+check_zeroinflation(faith_decrease_pregs)
+check_zeroinflation(faith_decrease_birthskept)
+
+# Check vif
+vif.model <- lm(pregs_2013 ~ FAITH_CHANGE + GENDER1 + AGE1 + RACE1 + PEDUC + HH_INCOME, data = data_F_low)
+car::vif(vif.model)
+
+# Calculate predicted values and draw a plot 
+effs.pregs <- as.data.frame(allEffects(faith_decrease_pregs))$FAITH_CHANGE
+effs.birthskept <- as.data.frame(allEffects(faith_decrease_birthskept))$FAITH_CHANGE
+effs.abortions <- as.data.frame(allEffects(faith_decrease_abortions))$FAITH_CHANGE
+
+effs <- rbind(effs.pregs, effs.birthskept, effs.abortions)
+effs$model <- c("Pregnancies","Pregnancies",  
+                "Fertility", "Fertility",
+                "Prob. of abortion", "Prob. of abortion")
+
+effs$FAITH_CHANGE <- factor(effs$FAITH_CHANGE, levels = c("Stably high", "Decrease", NA))
+
+effs$model <- factor(effs$model, levels = c("Pregnancies", "Fertility", "Prob. of abortion"))
+
+decrease_faith_plots <- ggplot()+
+  geom_bar(data = effs, aes(y = fit, x = FAITH_CHANGE, color = FAITH_CHANGE, fill = FAITH_CHANGE), stat="identity", alpha = 0.5)+
+  geom_errorbar(data = effs,aes(x = FAITH_CHANGE, ymin=lower, ymax=upper, color = FAITH_CHANGE), width=0.1, size = 1)+
+  scale_y_continuous(limits = c(0,1),breaks = seq(0,1, by = 0.2)) +
+  labs(title = " ", x = "", y="") + 
+  scale_fill_manual(values = c("black", "indianred"))+
+  scale_color_manual(values = c("black", "indianred"))+
+  facet_wrap(~model, ncol = 4)+
+  my_theme
+
+# Common plot
+faith_plots <- ggpubr::ggarrange(increase_faith_plots, decrease_faith_plots, 
+                            ncol =1, nrow = 2, legend = "none")
+faith_plots <- annotate_figure(faith_plots,
+                         bottom = text_grob("Change in importance of faith between 2003 and 2005", 
+                                            color = "black", size = 16))
+
+faith_plots
+
+ggsave("faith_plots.jpg", plot = faith_plots, width = 8, height = 8, dpi = 700)
+
+# Common Tables 
+tab_model(faith_increase_pregs, faith_increase_birthskept, faith_increase_abortions,
+          faith_decrease_pregs, faith_decrease_birthskept, faith_decrease_abortions,
+          collapse.ci = T,
+          p.style = "stars",
+          pred.labels = labels,
+          dv.labels = c("Pregnancies", "Fertility", "Prob. of abortion",
+                        "Pregnancies", "Fertility", "Prob. of abortion"),
+          ci.hyphen = ", ",
+          title = "Table S1. The effects of faith importance change on fertility-related measures",
+          file = "Table_S1_faith_effects.html")
+
+tab_model(faith_increase_pregs, faith_increase_birthskept, faith_increase_abortions,
+          faith_decrease_pregs, faith_decrease_birthskept, faith_decrease_abortions,
+          collapse.ci = T,
+          p.style = "numeric",
+          pred.labels = labels,
+          dv.labels = c("Pregnancies", "Fertility", "Prob. of abortion",
+                        "Pregnancies", "Fertility", "Prob. of abortion"),
+          ci.hyphen = ", ",
+          title = "Table S1. The effects of faith importance change on fertility-related measures",
+          file = "Table_S1_faith_effects_withPs.html")
+```
+
+## 4.2 Service attendance
+```{r results='hide', message=FALSE, warning=FALSE, echo=T}
+# Separate datasets and create variable for change in attendance
+dataset$GROUP_RITUAL_CHANGE <- NA
+dataset$GROUP_RITUAL_CHANGE [dataset$GROUP_RITUAL1 < 4] <- "F1 < 4"
+dataset$GROUP_RITUAL_CHANGE [dataset$GROUP_RITUAL2 >= 4 & dataset$GROUP_RITUAL_CHANGE == "F1 < 4"] <- "Increase"
+
+dataset$GROUP_RITUAL_CHANGE [dataset$GROUP_RITUAL1 >= 4] <- "F1 >= 4"
+dataset$GROUP_RITUAL_CHANGE [dataset$GROUP_RITUAL2 < 4 & dataset$GROUP_RITUAL_CHANGE == "F1 >= 4"] <- "Decrease"
+
+dataset$GROUP_RITUAL_CHANGE [dataset$GROUP_RITUAL_CHANGE == "F1 >= 4"] <- "Stably high"
+dataset$GROUP_RITUAL_CHANGE [dataset$GROUP_RITUAL_CHANGE == "F1 < 4"] <- "Stably low"
+
+dataset$GROUP_RITUAL_CHANGE <- as.factor(dataset$GROUP_RITUAL_CHANGE)
+
+dataset$GROUP_RITUAL_CHANGE[is.na(dataset$GROUP_RITUAL1)] <- NA
+dataset$GROUP_RITUAL_CHANGE[is.na(dataset$GROUP_RITUAL2)] <- NA
+sum(is.na(dataset$GROUP_RITUAL_CHANGE))
+
+data_R_low <- dataset [dataset$GROUP_RITUAL1 < 4,]
+data_R_high <- dataset [dataset$GROUP_RITUAL1 >= 4,]
+
+nrow(data_R_low)
+table(data_R_low$GROUP_RITUAL_CHANGE)
+
+nrow(data_R_high)
+table(data_R_high$GROUP_RITUAL_CHANGE)
+
+data_R_low$GROUP_RITUAL_CHANGE <- factor(data_R_low$GROUP_RITUAL_CHANGE, levels = c("Stably low", "Increase", "Stably high", "Decrease"))
+data_R_high$GROUP_RITUAL_CHANGE <- factor(data_R_high$GROUP_RITUAL_CHANGE, levels = c("Stably low", "Increase", "Stably high", "Decrease"))
+
+round(mean(data_R_low$GROUP_RITUAL1_S5[data_R_low$GROUP_RITUAL_CHANGE == "Increase"], na.rm = T),2)
+round(mean(data_R_low$GROUP_RITUAL2_S5[data_R_low$GROUP_RITUAL_CHANGE == "Increase"], na.rm = T),2)
+round(mean(data_R_low$FAITH1[data_R_low$GROUP_RITUAL_CHANGE == "Increase"], na.rm = T),2)
+round(mean(data_R_low$FAITH2[data_R_low$GROUP_RITUAL_CHANGE == "Increase"], na.rm = T),2)
+
+
+#################### Increase ########################################
+summary(ritual_increase_pregs <- glmmTMB(pregs_2013 ~ GROUP_RITUAL_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              (1|RELIGION1), 
+                            data = data_R_low, 
+                            family = "nbinom2"))
+
+summary(ritual_increase_birthskept <- glmmTMB(kids_2013 ~ GROUP_RITUAL_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              (1|RELIGION1), 
+                            data = data_R_low, 
+                            family = "nbinom2"))
+
+summary(ritual_increase_abortions <- glmmTMB(ab_dummy ~ GROUP_RITUAL_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              pregs_2013 +
+                              (1|RELIGION1), 
+                            data = data_R_low, 
+                            family = "binomial"))
+
+# Check ratio of observed vs predicted zeroes 
+check_zeroinflation(ritual_increase_pregs)
+check_zeroinflation(ritual_increase_birthskept)
+
+# Check vif
+vif.model <- lm(pregs_2013 ~ GROUP_RITUAL_CHANGE + GENDER1 + AGE1 + RACE1 + PEDUC + HH_INCOME, data = data_R_low)
+car::vif(vif.model)
+
+# Calculate predicted values and draw a plot 
+effs.pregs <- as.data.frame(allEffects(ritual_increase_pregs))$GROUP_RITUAL_CHANGE
+effs.birthskept <- as.data.frame(allEffects(ritual_increase_birthskept))$GROUP_RITUAL_CHANGE
+effs.abortions <- as.data.frame(allEffects(ritual_increase_abortions))$GROUP_RITUAL_CHANGE
+
+round(effs.birthskept$fit[1]-effs.birthskept$fit[2],2)
+round(effs.abortions$fit[1],2)
+round(effs.abortions$fit[2],2)
+mean(dataset$kids_2013, na.rm = T)
+
+effs <- rbind(effs.pregs, effs.birthskept, effs.abortions)
+effs$model <- c("Pregnancies","Pregnancies",  
+                "Fertility", "Fertility",
+                "Prob. of abortion", "Prob. of abortion")
+
+effs$GROUP_RITUAL_CHANGE <- factor(effs$GROUP_RITUAL_CHANGE, levels = c("Stably low", "Increase", NA))
+
+
+effs$model <- factor(effs$model, levels = c("Pregnancies", 
+                                            "Fertility", 
+                                            "Prob. of abortion"))
+
+increase_ritual_plots <- ggplot()+
+  geom_bar(data = effs, aes(y = fit, x = GROUP_RITUAL_CHANGE, color = GROUP_RITUAL_CHANGE, fill = GROUP_RITUAL_CHANGE), stat="identity", alpha = 0.5)+
+  geom_errorbar(data = effs,aes(x = GROUP_RITUAL_CHANGE, ymin=lower, ymax=upper, color = GROUP_RITUAL_CHANGE), width=0.1, size = 1)+
+  scale_y_continuous(limits = c(0,1.2),breaks = seq(0,1.2, by = 0.3)) +
+  scale_fill_manual(values = c("black", "steelblue"))+
+  scale_color_manual(values = c("black", "steelblue"))+
+  labs(title = " ", x = "", y="") + 
+  facet_wrap(~model, ncol = 4)+
+  my_theme
+
+
+
+#################### Decrease ########################################
+summary(ritual_decrease_pregs <- glmmTMB(pregs_2013 ~ GROUP_RITUAL_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              (1|RELIGION1), 
+                            data = data_R_high, 
+                            family = "nbinom2"))
+
+summary(ritual_decrease_birthskept <- glmmTMB(kids_2013 ~ GROUP_RITUAL_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              (1|RELIGION1), 
+                            data = data_R_high, 
+                            family = "nbinom2"))
+
+summary(ritual_decrease_abortions <- glmmTMB(ab_dummy ~ GROUP_RITUAL_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME + 
+                              pregs_2013 +
+                              (1|RELIGION1), 
+                            data = data_R_high, 
+                            family = "binomial"))
+
+# Check ratio of observed vs predicted zeroes 
+check_zeroinflation(ritual_decrease_pregs)
+check_zeroinflation(ritual_decrease_birthskept)
+
+# Check vif
+vif.model <- lm(kids_2013 ~ GROUP_RITUAL_CHANGE + GENDER1 + AGE1 + RACE1 + PEDUC + HH_INCOME, data = data_R_high)
+car::vif(vif.model)
+
+# Calculate predicted values and draw a plot 
+effs.pregs <- as.data.frame(allEffects(ritual_decrease_pregs))$GROUP_RITUAL_CHANGE
+effs.abortions <- as.data.frame(allEffects(ritual_decrease_abortions))$GROUP_RITUAL_CHANGE
+effs.birthskept <- as.data.frame(allEffects(ritual_decrease_birthskept))$GROUP_RITUAL_CHANGE
+
+effs <- rbind(effs.pregs, effs.birthskept, effs.abortions)
+effs$model <- c("Pregnancies","Pregnancies",  
+                "Fertility", "Fertility",
+                "Prob. of abortion", "Prob. of abortion")
+
+effs$GROUP_RITUAL_CHANGE <- factor(effs$GROUP_RITUAL_CHANGE, levels = c("Stably high", "Decrease", NA))
+
+effs$model <- factor(effs$model, levels = c("Pregnancies", "Fertility", "Prob. of abortion"))
+
+decrease_ritual_plots <- ggplot()+
+  geom_bar(data = effs, aes(y = fit, x = GROUP_RITUAL_CHANGE, color = GROUP_RITUAL_CHANGE, fill = GROUP_RITUAL_CHANGE), stat="identity", alpha = 0.5)+
+  geom_errorbar(data = effs,aes(x = GROUP_RITUAL_CHANGE, ymin=lower, ymax=upper, color = GROUP_RITUAL_CHANGE), width=0.1, size = 1)+
+  scale_y_continuous(limits = c(0,1.2),breaks = seq(0,1.2, by = 0.3)) +
+  scale_color_manual(values = c("black", "indianred"))+
+  scale_fill_manual(values = c("black", "indianred"))+
+  labs(title = " ", x = "", y="") + 
+  facet_wrap(~model, ncol = 4)+
+  my_theme
+
+# Common plot
+ritual_plots <- ggpubr::ggarrange(increase_ritual_plots, decrease_ritual_plots, 
+                            ncol =1, nrow = 2, legend = "none")
+ritual_plots <- annotate_figure(ritual_plots,
+                         bottom = text_grob("Change in attendance frequency between 2003 and 2005", 
+                                            color = "black", size = 16))
+
+ritual_plots
+
+ggsave("ritual_plots.jpg", plot = ritual_plots, width = 8, height = 8, dpi = 700)
+
+# Common table
+tab_model(ritual_increase_pregs, ritual_increase_birthskept, ritual_increase_abortions,
+          ritual_decrease_pregs, ritual_decrease_birthskept, ritual_decrease_abortions,
+          collapse.ci = T,
+          p.style = "stars",
+          pred.labels = labels,
+          dv.labels = c("Pregnancies", "Fertility", "Prob. of abortion",
+                        "Pregnancies", "Fertility", "Prob. of abortion"),
+          ci.hyphen = ", ",
+          title = "Table S2. The effects of attendace frquency change on fertility-related measures",
+          file = "Table_S2_ritual_effects.html")
+
+tab_model(ritual_increase_pregs, ritual_increase_birthskept, ritual_increase_abortions,
+          ritual_decrease_pregs, ritual_decrease_birthskept, ritual_decrease_abortions,
+          collapse.ci = T,
+          p.style = "numeric",
+          pred.labels = labels,
+          dv.labels = c("Pregnancies", "Fertility", "Prob. of abortion",
+                        "Pregnancies", "Fertility", "Prob. of abortion"),
+          ci.hyphen = ", ",
+          title = "Table S2. The effects of attendace frquency change on fertility-related measures",
+          file = "Table_S2_ritual_effects_withPs.html")
+```
+
+# 5 Summary of results
+```{r results='hide', message=FALSE, warning=FALSE, echo=T}
+table_effects <- rbind(
+get_model_data(faith_increase_pregs, "est")[1,c(1,2,5,6,9,11)],
+get_model_data(faith_increase_birthskept, "est")[1,c(1,2,5,6,9,11)],
+get_model_data(faith_increase_abortions, "est")[1,c(1,2,5,6,9,11)],
+
+get_model_data(faith_decrease_pregs,  "est")[1,c(1,2,5,6,9,11)],
+get_model_data(faith_decrease_birthskept, "est")[1,c(1,2,5,6,9,11)],
+get_model_data(faith_decrease_abortions, "est")[1,c(1,2,5,6,9,11)],
+  
+get_model_data(ritual_increase_pregs,  "est")[1,c(1,2,5,6,9,11)],
+get_model_data(ritual_increase_birthskept,  "est")[1,c(1,2,5,6,9,11)],
+get_model_data(ritual_increase_abortions, "est")[1,c(1,2,5,6,9,11)],
+         
+get_model_data(ritual_decrease_pregs,  "est")[1,c(1,2,5,6,9,11)],
+get_model_data(ritual_decrease_birthskept,  "est")[1,c(1,2,5,6,9,11)],
+get_model_data(ritual_decrease_abortions, "est")[1,c(1,2,5,6,9,11)]
+)
+
+# ------------------------------------------------------------------------------------------------ #
+
+table <- table_effects %>% mutate(
+  model = rep(c("Pregnancies", "Fertility", "Pr. of abortion"),4),
+  estimate = paste(round(estimate, 2),p.stars)
+) %>% select(model, estimate)
+
+table <- cbind(table[c(1:6),], table[c(7:12),])
+table <- table[c(1,2,4)]
+
+colnames(table) <- c("Outcome", "Faith", "Attendance")
+table <- t(table)
+write.csv(table, "table.csv")
+
+# ------------------------------------------------------------------------------------------------ #
+
+fig_effects <- table_effects %>% mutate(
+  outcome = rep(c("Pregnancies (IRR)", "Fertility (IRR)", "Prob. of abortion (OR)"),4),
+  relig = c(rep("Faith",6), rep("Attendance",6)),
+  change = rep(c(rep("Increase",3), rep("Decrease",3)), 2) 
+)
+
+fig_effects$outcome <- factor(fig_effects$outcome, levels = c("Pregnancies (IRR)", "Fertility (IRR)", "Prob. of abortion (OR)"))
+
+regressions <- ggplot()+
+  geom_point(data = fig_effects, aes(y = estimate, x = relig, color = change, shape = change), size = 3, position = position_dodge(0.3))+
+  geom_errorbar(data = fig_effects,aes(x = relig, ymin=conf.low, ymax=conf.high, color = change), width=0, size = 1, position = position_dodge(0.3))+
+  #scale_y_continuous(limits = c(0,1),breaks = seq(0,1, by = 0.2)) +
+  scale_shape_manual(values = c(15,16))+
+  scale_color_manual(values = c("indianred", "steelblue"))+
+  geom_hline(yintercept=1, linetype="dashed")+
+  labs(y = "", x = "", shape = "Religious change from 2003 to 2005", color = "Religious change from 2003 to 2005") + 
+  coord_flip()+
+  facet_wrap(~outcome, ncol = 4)+
+  my_theme+
+  theme(legend.position = "top")+
+  guides(color = guide_legend(reverse = TRUE), shape = guide_legend(reverse = TRUE))
+
+regressions
+
+
+# ------------------------------------------------------------------------------------------------ #
+
+# Plot that shows timeseries of cumulative fertility for those who increased and stay low on collective attendance and faith importance
+
+kids_F <- data_R_low %>% select(c(kids_2003, kids_2004, kids_2005, kids_2006, kids_2007, kids_2008, kids_2009, kids_2010, kids_2011, kids_2012, kids_2013, FAITH_CHANGE))
+
+kids_F_low <- kids_F[kids_F$FAITH_CHANGE == "Stably low" & !is.na(kids_F$FAITH_CHANGE),]
+kids_F_increase <- kids_F[kids_F$FAITH_CHANGE == "Increase" & !is.na(kids_F$FAITH_CHANGE),]
+
+kids_F_low <- kids_F_low %>% select(-FAITH_CHANGE)
+kids_F_increase <-kids_F_increase %>% select(-FAITH_CHANGE)
+
+kids_F_low <- data.frame(kids = colMeans(kids_F_low), year = c(2003:2013))
+kids_F_increase <- data.frame(kids = colMeans(kids_F_increase), year = c(2003:2013))
+
+kids_F_low$increase <- "Stably low"
+kids_F_increase$increase <- "Increase"
+
+timeseries_F <- rbind(kids_F_low, kids_F_increase)
+timeseries_F$year <- as.factor(timeseries_F$year)
+
+
+# ------------- 
+
+kids_R <- data_R_low %>% select(c(kids_2003, kids_2004, kids_2005, kids_2006, kids_2007, kids_2008, kids_2009, kids_2010, kids_2011, kids_2012, kids_2013, GROUP_RITUAL_CHANGE))
+
+kids_R_low <- kids_R[kids_R$GROUP_RITUAL_CHANGE == "Stably low" & !is.na(kids_R$GROUP_RITUAL_CHANGE),]
+kids_R_increase <- kids_R[kids_R$GROUP_RITUAL_CHANGE == "Increase" & !is.na(kids_R$GROUP_RITUAL_CHANGE),]
+
+kids_R_low <- kids_R_low %>% select(-GROUP_RITUAL_CHANGE)
+kids_R_increase <-kids_R_increase %>% select(-GROUP_RITUAL_CHANGE)
+
+kids_R_low <- data.frame(kids = colMeans(kids_R_low), year = c(2003:2013))
+kids_R_increase <- data.frame(kids = colMeans(kids_R_increase), year = c(2003:2013))
+
+kids_R_low$increase <- "Stably low"
+kids_R_increase$increase <- "Increase"
+
+timeseries_R <- rbind(kids_R_low, kids_R_increase)
+timeseries_R$year <- as.factor(timeseries_R$year)
+
+# ------------- 
+
+timeseries_F$rel <- "Importance of faith"
+timeseries_R$rel <- "Collective worship attendance"
+
+timeseries_all <- rbind(timeseries_R, timeseries_F)
+timeseries_all$rel <- as.factor(timeseries_all$rel)
+timeseries_all$rel <- factor(timeseries_all$rel, levels = c("Importance of faith", "Collective worship attendance"))
+
+timeplot1 <- ggplot()+
+  geom_line(data = timeseries_all, aes(y = kids, x = year, group = increase, color = increase, linetype = increase), linewidth = 1)+
+  labs(title = " ", x = "Year", y="Cumulative mean fertility", color = "Religious change from 2003 to 2005",linetype = "Religious change from 2003 to 2005",group = "Religious change from 2003 to 2005") + 
+  scale_color_manual(values = c( "steelblue", "black"))+
+  scale_x_discrete(labels = c("2003", "", "2005", "", "2007", "", "2009", "", "2011", "", "2013"))+
+  my_theme+
+  facet_wrap(~rel, ncol = 2)+
+  geom_rect(data = shaded_region, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+  fill = "black", alpha = 0.3)+
+  theme(legend.position = "top")+
+  annotate(geom = "text", x = 1.1, y = 0.35, label = "Period of\nmeasured\nreligious\nchange", size = 3.5, hjust = 0)
+
+timeplot1
+
+summary_plot <- ggarrange(regressions, timeplot1, ncol = 1, heights = c(1,1.7))
+
+ggsave("summary_plot.jpg", plot = summary_plot, width = 9, height = 7, dpi = 700)
+
+# ------------------------------------------------------------------------------------------------ #
+
+faith_low <- dataset[dataset$FAITH_CHANGE == "Stably low",]
+faith_inc <- dataset[dataset$FAITH_CHANGE == "Increase",]
+faith_high <- dataset[dataset$FAITH_CHANGE == "Stably high",]
+faith_dec <- dataset[dataset$FAITH_CHANGE == "Decrease",]
+
+rit_low <- dataset[dataset$GROUP_RITUAL_CHANGE == "Stably low",]
+rit_inc <- dataset[dataset$GROUP_RITUAL_CHANGE == "Increase",]
+rit_high <- dataset[dataset$GROUP_RITUAL_CHANGE == "Stably high",]
+rit_dec <- dataset[dataset$GROUP_RITUAL_CHANGE == "Decrease",]
+
+nrow(faith_low)
+nrow(faith_inc)
+nrow(faith_high)
+nrow(faith_dec)
+
+nrow(rit_low)
+nrow(rit_inc)
+nrow(rit_high)
+nrow(rit_dec)
+
+
+
+# Create a function to calculate the mean and standard deviation or mean based on variable type
+calc_stats <- function(data, var) {
+  if (all(data[[var]] %in% c(0, 1), na.rm = TRUE)) {
+    # For binary variables with values 0 and 1, calculate only mean
+    mean_val <- sprintf("%.2f", round(mean(data[[var]], na.rm = TRUE), 2))
+    return(mean_val)
+  } else {
+    # For non-binary variables or others, calculate mean and standard deviation
+    non_na_vals <- data[[var]][!is.na(data[[var]])]
+    if (length(unique(non_na_vals)) > 2) {
+      mean_val <- sprintf("%.2f", round(mean(non_na_vals), 2))
+      sd_val <- sprintf("%.2f", round(sd(non_na_vals), 2))
+      return(paste(mean_val, " (", sd_val, ")", sep = ""))
+    } else {
+      mean_val <- sprintf("%.2f", round(mean(non_na_vals), 2))
+      return(mean_val)
+    }
+  }
+}
+
+# Create a function to generate the summary for each variable
+generate_summary <- function(data, variables) {
+  result <- character(length(variables))
+  for (i in seq_along(variables)) {
+    result[i] <- calc_stats(data, variables[i])
+  }
+  return(result)
+}
+
+# List of variables for summary
+summary_vars <- c(
+  "pregs_2013", "kids_2013",  "ab_dummy", 
+  "GROUP_RITUAL1_S5", "GROUP_RITUAL2_S5", "FAITH1", "FAITH2", 
+  "GENDER1", "AGE1", "RACE1", "PEDUC", "HH_INCOME", 
+  "RELIGION_nonaffiliated", "RELIGION_protestant", "RELIGION_blackprotestant", 
+  "RELIGION_catholic", "RELIGION_justchristian", "RELIGION_notdisclosed", "RELIGION_other"
+)
+
+summary_names <- c(
+  "Pregnancies", "Fertility",  "Abortions", 
+  "Service attendance (W1)", "Service attendance (W2)", "Faith importance (W1)", "Faith importance (W2)", 
+  "Women", "Age (W1)", "White ethnicity (W1)", "Parental education (W1)", "Household income (W1)", 
+  "Non-affiliated", "Protestants", "Black Protestants", 
+  "Catholics", "'Just' Christians", "Not disclosed", "Other"
+)
+
+sumtab <- rbind(
+data.frame(
+  variable = summary_names,
+  low = generate_summary(rit_low, summary_vars),
+  inc = generate_summary(rit_inc, summary_vars),
+  high = generate_summary(rit_high, summary_vars),
+  dec = generate_summary(rit_dec, summary_vars)
+),
+
+data.frame(
+  variable = summary_names,
+  low = generate_summary(faith_low, summary_vars),
+  inc = generate_summary(faith_inc, summary_vars),
+  high = generate_summary(faith_high, summary_vars),
+  dec = generate_summary(faith_dec, summary_vars)
+))
+sumtab
+write.csv(sumtab, "sumtab_auto.csv")
+
+# the algoritm did not calculate SD for some variables bcs it assumed it is binnary - but it is not binary it only inlcded two values in the give category 
+round(sd(faith_low$FAITH1, na.rm = T),2)
+round(sd(faith_low$FAITH2, na.rm = T),2)
+round(sd(faith_inc$FAITH1, na.rm = T),2)
+round(sd(faith_dec$FAITH2, na.rm = T),2)
+
+# ----------------------------------------------------------------------------------------- #
+# How many people underwent changes in both?
+
+dataset <- dataset %>% mutate(
+  ULTIMATE_INCREASE = ifelse(GROUP_RITUAL_CHANGE == "Increase" & FAITH_CHANGE == "Increase", 1, 0),
+  ULTIMATE_DECREASE = ifelse(GROUP_RITUAL_CHANGE == "Decrease" & FAITH_CHANGE == "Decrease", 1, 0),
+)
+
+table(dataset$ULTIMATE_INCREASE) 
+table(dataset$ULTIMATE_DECREASE)
+```
+
+# 6 Exploratory analyses
+## 6.1 Institutionalized VS non-institutionalized religions
+```{r results='hide', message=FALSE, warning=FALSE, echo=T}
+## Additional analysis of institutionalized relgiions vs non-institutionalized religions
+# Categorize religions to two categories
+table(data_R_low$RELIGION1)
+data_R_low$religion_dummy <- as.character(data_R_low$RELIGION1)
+data_R_low$religion_dummy [data_R_low$religion_dummy == "Other"] <- NA
+data_R_low$religion_dummy [data_R_low$religion_dummy == "Just Christian"] <- "No"
+
+data_R_low$religion_dummy [data_R_low$religion_dummy == "Not disclosed"] <- NA
+data_R_low$religion_dummy [data_R_low$religion_dummy == "Non-affiliated"] <- "No"
+
+data_R_low$religion_dummy [data_R_low$religion_dummy == "Protestant" ] <- "Yes"
+data_R_low$religion_dummy [data_R_low$religion_dummy == "Black protestant" ] <- "Yes"
+data_R_low$religion_dummy [data_R_low$religion_dummy == "Catholic" ] <- "Yes"
+table(data_R_low$religion_dummy)
+
+table(data_R_low$religion_dummy[data_R_low$GROUP_RITUAL_CHANGE == "Stably low"])
+table(data_R_low$religion_dummy[data_R_low$GROUP_RITUAL_CHANGE == "Increase"])
+
+data_R_low$religion_dummy <- factor(data_R_low$religion_dummy, levels = c("Yes", "No"))
+
+# Interaction model 
+summary(ritual_religions <- glmmTMB(kids_2013 ~ GROUP_RITUAL_CHANGE*religion_dummy + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME, 
+                            data = data_R_low, 
+                            family = "nbinom2"))
+
+summary(ritual_religions1 <- glmmTMB(kids_2013 ~ GROUP_RITUAL_CHANGE + 
+                              GENDER1 + 
+                              AGE1 + 
+                              RACE1 + 
+                              PEDUC + 
+                              HH_INCOME, 
+                            data = data_R_low[data_R_low$religion_dummy == "No",], 
+                            family = "nbinom2"))
+tab_model(ritual_religions1)
+
+# Check ratio of observed vs predicted zeroes 
+check_zeroinflation(ritual_religions)
+
+# Check vif
+vif.model <- lm(kids_2013 ~ GROUP_RITUAL_CHANGE*religion_dummy + GENDER1 + AGE1 + RACE1 + PEDUC + HH_INCOME, data = data_R_low)
+car::vif(vif.model)
+
+# Calculate predicted values and draw a plot 
+effs.int <- as.data.frame(allEffects(ritual_religions))$`GROUP_RITUAL_CHANGE:religion_dummy`
+
+relig_plot <- ggplot()+
+  geom_bar(data = effs.int, aes(y = fit, x = GROUP_RITUAL_CHANGE, color = religion_dummy, fill = religion_dummy), stat="identity", alpha = 0.5, position = position_dodge(0.5), width = 0.4)+
+  geom_line(data = effs.int, aes(y = fit, x = GROUP_RITUAL_CHANGE, color = religion_dummy,group = religion_dummy, linetype = religion_dummy), position = position_dodge(0.5), size = 1)+
+  geom_errorbar(data = effs.int,aes(x = GROUP_RITUAL_CHANGE, ymin=lower, ymax=upper, color = religion_dummy), width=0.1, size = 1, position = position_dodge(0.5), show.legend = F)+
+  scale_y_continuous(limits = c(0, 1))+
+  scale_color_manual(values = c("#800080", "#FFA500"))+
+  scale_fill_manual(values = c("#800080", "#FFA500"))+
+  labs(title = " ", x = "Change in worship frequency between 2003 and 2005", y="Fertility in 2013", color = "Identifiying with\ninstitutionalized\nreligion in 2003", fill = "Identifiying with\ninstitutionalized\nreligion in 2003", linetype = "Identifiying with\ninstitutionalized\nreligion in 2003") + 
+  my_theme 
+
+relig_plot
+
+ggsave("relig_plot.jpg", plot = relig_plot, width = 7, height = 4, dpi = 700)
+
+# Table for additiona analysis
+tab_model(ritual_religions,
+          collapse.ci = T,
+          p.style = "stars",
+          pred.labels = labels,
+          dv.labels = c("Fertility"),
+          ci.hyphen = ", ",
+          title = "Table S3. The effects of attendace frequency change on fertility-related measures among affiliated and non-affiliated respondents.",
+          file = "Table_S3_int.html")
+
+tab_model(ritual_religions,
+          collapse.ci = T,
+          p.style = "numeric",
+          pred.labels = labels,
+          dv.labels = c("Fertility"),
+          ci.hyphen = ", ",
+          title = "Table S3. The effects of attendace frequency change on fertility-related measures",
+          file = "Table_S3_int_withPs.html")
+```
+
+## 6.2 Mediation analysis
+```{r results='hide', message=FALSE, warning=FALSE, echo=T}
+# 1) Does intended number of kids correlate with actual?
+summary(as.factor(dataset$INTEND_CHILDREN3))
+sum(summary(as.factor(dataset$INTEND_CHILDREN3)))
+
+
+summary(model_int_real_simple <- glmmTMB(kids_2013 ~ INTEND_CHILDREN3, 
+                                  data = dataset, family = "nbinom2"))
+
+summary(model_int_real <- glmmTMB(kids_2013 ~ INTEND_CHILDREN3 + 
+                                    GENDER1 + 
+                                    AGE1 + 
+                                    RACE1 + 
+                                    PEDUC + 
+                                    HH_INCOME +
+                                    (1|RELIGION1), 
+                                  data = dataset, family = "nbinom2"))
+
+summary(model_int_real_NO1 <- glmmTMB(kids_2013 ~ INTEND_CHILDREN3 + 
+                                    GENDER1 + 
+                                    AGE1 + 
+                                    RACE1 + 
+                                    PEDUC + 
+                                    HH_INCOME +
+                                    (1|RELIGION1), 
+                                  data = dataset[dataset$INTEND_CHILDREN3 < 7,], family = "nbinom2"))
+
+summary(model_int_real_NO2 <- glmmTMB(kids_2013 ~ INTEND_CHILDREN3 + 
+                                    GENDER1 + 
+                                    AGE1 + 
+                                    RACE1 + 
+                                    PEDUC + 
+                                    HH_INCOME +
+                                    (1|RELIGION1), 
+                                  data = dataset[dataset$INTEND_CHILDREN3 < 4,], family = "nbinom2"))
+
+# Check zero inflation
+check_zeroinflation(model_int_real)
+
+# plot
+effs <- as.data.frame(allEffects(model_int_real, xlevels = 100))$INTEND_CHILDREN3
+if.f.plot <- ggplot()+
+  #geom_jitter(data = dataset, aes(x = INTEND_CHILDREN3, y = kids_2013), alpha = 0.1)+
+  geom_line(data = effs, aes(y = fit, x = INTEND_CHILDREN3), color = "black", linewidth = 1)+
+  geom_ribbon(data = effs,aes(x = INTEND_CHILDREN3, ymin=lower, ymax=upper), alpha=0.4, color = "black", linetype = "solid")+
+  scale_x_continuous(limits = c(0,12),breaks = seq(0,12, by = 2)) +
+  labs(title = "", x = "Intended fertility (2007/8)", y="Fertility (2013)") + 
+  my_theme
+
+if.f.plot
+
+ggsave("infer_fer_cor.jpg", plot = if.f.plot, width = 5, height = 5, dpi = 700)
+
+# table
+tab_model(model_int_real, model_int_real_NO1, model_int_real_NO2,
+          collapse.ci = T,
+          show.p = T,
+          p.style = "numeric",
+          ci.hyphen = ", ",
+          pred.labels = c(
+            "Intercept","Intended fertility in 2007/8","Female","Age",
+            "White ethnicity","Household income in 2003","Parent's education in 2003"
+            ),
+          dv.labels = c("1", "2", "3"),
+          file = "indendedfertility_fertilityWithPs.html",
+          string.est = "IRR"
+          )
+
+tab_model(model_int_real, model_int_real_NO1, model_int_real_NO2,
+          collapse.ci = T,
+          show.p = T,
+          p.style = "stars",
+          ci.hyphen = ", ",
+          pred.labels = c(
+            "Intercept","Intended fertility in 2007/8","Female","Age",
+            "White ethnicity","Household income in 2003","Parent's education in 2003"
+            ),
+          dv.labels = c("1", "2", "3"),
+          file = "indendedfertility_fertility.html",
+          string.est = "IRR"
+          )
+
+# Yes, lets go to the mediation analysis 
+
+#############    FAITHG MEDIATION  ########################################################################
+data_F_low$FAITH_CHANGE.num <- as.character(data_F_low$FAITH_CHANGE)
+table(data_F_low$FAITH_CHANGE.num)
+data_F_low$FAITH_CHANGE.num[data_F_low$FAITH_CHANGE.num == "Increase"] <- 1
+data_F_low$FAITH_CHANGE.num[data_F_low$FAITH_CHANGE.num == "Stably low"] <- 0
+data_F_low$FAITH_CHANGE.num <- as.numeric(data_F_low$FAITH_CHANGE.num)
+data_F_low$RELIGION1.num <- as.numeric(data_F_low$RELIGION1)
+
+SEM_FAITH2 <- '
+# Mediator + direct effect:
+kids_2013 ~ b*INTEND_CHILDREN3 + c*FAITH_CHANGE.num + GENDER1 + AGE1 + RACE1 + PEDUC + HH_INCOME 
+
+# Effect of IV on mediator:
+INTEND_CHILDREN3 ~ a*FAITH_CHANGE.num + GENDER1 + AGE1 + RACE1 + PEDUC + HH_INCOME
+
+indirect := a*b
+direct   := c 
+total    := c + (a*b)
+'
+
+FIT_SEM_FAITH2 <- sem(model = SEM_FAITH2, data = data_F_low, estimator = "MLR", cluster = "RELIGION1.num")
+parameterEstimates(FIT_SEM_FAITH2)
+lavaanPlot::lavaanPlot(model = FIT_SEM_FAITH2, coefs = TRUE, covs = F, stars = c("regress"), stand = F)
+
+#############    RITUAL MEDIATION  ########################################################################
+data_R_low$GROUP_RITUAL_CHANGE.num <- as.character(data_R_low$GROUP_RITUAL_CHANGE)
+table(data_R_low$GROUP_RITUAL_CHANGE.num)
+data_R_low$GROUP_RITUAL_CHANGE.num[data_R_low$GROUP_RITUAL_CHANGE.num == "Increase"] <- 1
+data_R_low$GROUP_RITUAL_CHANGE.num[data_R_low$GROUP_RITUAL_CHANGE.num == "Stably low"] <- 0
+data_R_low$GROUP_RITUAL_CHANGE.num <- as.numeric(data_R_low$GROUP_RITUAL_CHANGE.num)
+data_R_low$RELIGION1.num <- as.numeric(data_R_low$RELIGION1)
+
+SEM_RITUAL2 <- '
+# Mediator + direct effect:
+kids_2013 ~ b*INTEND_CHILDREN3 + c*GROUP_RITUAL_CHANGE.num + GENDER1 + AGE1 + RACE1 + PEDUC + HH_INCOME 
+
+# Effect of IV on mediator:
+INTEND_CHILDREN3 ~ a*GROUP_RITUAL_CHANGE.num + GENDER1 + AGE1 + RACE1 + PEDUC + HH_INCOME
+
+indirect := a*b
+direct   := c 
+total    := c + (a*b)
+'
+
+FIT_SEM_RITUAL2 <- sem(model = SEM_RITUAL2, data = data_R_low, estimator = "MLR", cluster = "RELIGION1.num")
+parameterEstimates(FIT_SEM_RITUAL2)
+lavaanPlot::lavaanPlot(model = FIT_SEM_RITUAL2, coefs = TRUE, covs = F, stars = c("regress"), stand = F)
+```
+
+
+
+

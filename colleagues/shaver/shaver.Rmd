@@ -5,6 +5,8 @@ date: "07/04/2021"
 output:
   html_document: default
   pdf_document: default
+editor_options: 
+  chunk_output_type: console
 ---
 
 
@@ -28,7 +30,7 @@ shaver <- 'WxpOdwEAAAAJ&hl'
 # l <- get_profile(shaver)
 
 ct <- get_citation_history(shaver) %>%
-  filter(year != 2021) # to avoid bias from incomplete year
+  filter(year != 2023) # to avoid bias from incomplete year
 ct
 # rough model of John's annual increase in citations
 ```
@@ -38,7 +40,6 @@ Graph
 
 ```{r}
 ggplot(ct, aes(year, cites)) + geom_line() + geom_point() + theme_classic()
-
 ```
 
 Model increase
@@ -68,7 +69,7 @@ m2 <- brm(cites ~ year,
        file = here::here("colleagues","shaver", "m2"))
 
 # one method for plotting
-plot(ggeffects::ggpredict(m1, terms = "year"), add.data = TRUE) + theme_classic()
+plot(ggeffects::ggpredict(m2, terms = "year"), add.data = TRUE) + theme_classic()
 ```
 
 
@@ -85,10 +86,10 @@ Better method
 # preferred method
 
 pl<-conditional_effects(
-  m1,
+  m2,
   prob = 0.9,
   spaghetti = TRUE,
-  nsamples = 100,
+  ndraws = 100,
   points = TRUE
 ) 
 
@@ -100,11 +101,11 @@ Predicted citations
 
 ```{r cache = TRUE}
 #new data
-year <- data.frame(year = seq(from = 2011, to = 2031, by = .1))
+year <- data.frame(year = seq(from = 2014, to = 2028, by = .1))
 
 # predict citations from brms model
 predicted <- data.frame(predict(
-  m1,
+  m2,
   newdata = year,
   summary = TRUE,
   robust = TRUE,
@@ -130,7 +131,7 @@ predplot2 <-
   theme_classic()  +
   xlab("Years") +
   ylab("Predicted Citations") +
-  labs(title = "Bayesian model for John Shavers citations years 2021-2031 (90% confidence intervals)")
+  labs(title = "Bayesian model for John Shavers annual citations years 2014-2031\n(90% confidence intervals)")
 
 predplot2
 # equivalent to:
@@ -142,29 +143,79 @@ Gather all plots:
 ```{r}
 # Citation plot
 cites1<- ggplot(ct, aes(year, cites)) +
-    geom_segment(aes(xend = year, yend = 0), size=1, color='darkgrey') +
-    geom_point(size=3, color='firebrick') + theme_classic() + labs(title = "John Shaver's citations by year")
+    geom_segment(aes(xend = year, yend = 0), linewidth=1, color='darkgrey') +
+    geom_point(size=3, color='firebrick') + theme_classic() + labs(title = "John Shaver's new citation counts by year")
 
 # co-author network
 coauthor_network <- get_coauthors('WxpOdwEAAAAJ&hl', n_coauthors = 7)
 co_authors <- plot_coauthors(coauthor_network)
 
-
+h <- get_profile(id)
+h
+predict_h_index
 # predicted h index 
-pj <- predict_h_index(shaver)
+pj <- predict_h_index(shaver, journals = NULL)
+pj 
 
-# plot of predicted h index 
+
+
+j <- get_num_distinct_journals(shaver)
+j
+h <- get_profile(shaver)
+n <- get_num_articles(shaver)
+
+predict_h_index
+
+h
+
+    id <- tidy_id(shaver)
+    n <- get_num_articles(id)
+    h <- get_profile(id)
+    if (is.na(h)) 
+        return(NA)
+    h <- h$h_index
+    y <- as.numeric(format(Sys.Date(), "%Y")) - get_oldest_article(id)
+    j <- get_num_distinct_journals(id)
+  
+        q <- get_num_top_journals(id)
+    
+
+    coefs <- c(1, 0.76, 0.373, 0.967, -0.069, 0.018, 0.033, 2, 
+        1.413, 0.781, 0.936, -0.132, 0.018, 0.064, 3, 2.227, 
+        1.105, 0.903, -0.193, 0.027, 0.096, 4, 3.196, 1.386, 
+        0.871, -0.274, 0.039, 0.145, 5, 3.997, 1.578, 0.858, 
+        -0.345, 0.063, 0.198, 6, 4.752, 1.671, 0.817, -0.377, 
+        0.117, 0.282, 7, 5.741, 1.761, 0.761, -0.42, 0.17, 0.394, 
+        8, 6.531, 1.796, 0.669, -0.42, 0.252, 0.508, 9, 7.482, 
+        1.653, 0.561, -0.415, 0.383, 0.629, 10, 8.734, 1.326, 
+        0.478, -0.411, 0.522, 0.823)
+    coefs.m <- matrix(coefs, nrow = 10, byrow = TRUE)
+    coefs <- coefs.m[, -1]
+    vals <- c(1, sqrt(n), h, y, j, q)
+    h.pred <- coefs %*% vals
+    h.vals <- c(h, h.pred)
+
+  pj  <- data.frame(years_ahead = c(0:10), h_index = h.vals)
+
+  # predicted h index
+pj
+# plot of predicted h index
 preditedh <-
   ggplot(pj, aes(years_ahead, h_index)) + geom_line() + geom_point() +
-  theme(legend.position = c(.2, .8)) + theme_classic() + xlab("Years 2021-2031") + ylab("Predicted H-index") + labs(title = "John Shaver's  H-index Forcast (method: Acuna et al 2012)")
+  theme(legend.position = c(.2, .8)) + theme_classic() + xlab("Years 2024-2034") + ylab("Predicted H-index") + labs(title = "John Shaver's  H-index Forcast (method: Acuna et al 2012)")
 
+preditedh
 library(patchwork)
-(cites1 + preditedh  )  / ( co_authors) + plot_annotation(tag_levels = 'a') 
+shaver_network <- (cites1 +preditedh)  / (co_authors) + plot_annotation(tag_levels = 'a') 
+
+
 ```
 
 
 ```{r}
 publications <- scholar::get_publications(shaver) 
+publications
+
 ifdata <- scholar::get_impactfactor(publications$journal) 
 ifdata %>% dplyr::arrange(desc(ImpactFactor) ) %>% tidyr::drop_na()
 knitr::kable(iftable)
