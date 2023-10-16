@@ -20,10 +20,10 @@ library("haven") # read SPSS files
 # note import files as tab delimited in to R as data frames
 
 # read omega data (old)
-omega <- read_delim(here::here("colleagues","chris-g-s", "Omega.txt"), delim = "\t", locale = locale(encoding = "UTF-8"))
-omega <- read_delim(here::here("colleagues","chris-g-s", "Omega.txt"), delim = "\t", locale = locale(encoding = "UTF-8"))
-head(omega)
-nrow(omega)
+# omega <- read_delim(here::here("colleagues","chris-g-s", "Omega.txt"), delim = "\t", locale = locale(encoding = "UTF-8"))
+# omega <- read_delim(here::here("colleagues","chris-g-s", "Omega.txt"), delim = "\t", locale = locale(encoding = "UTF-8"))
+# head(omega)
+# nrow(omega)
 # read spss data 
 omega_2 <- haven::read_sav(here::here("colleagues","chris-g-s", "Figure_Bifactor_Model.sav"))
 omega_2 <- haven::zap_formats(omega_2)
@@ -70,7 +70,7 @@ graph_scale <- ggplot(data = omega_cleaned, aes(x = ratio_reliable_variance, y =
        x = "Ratio Reliable Variance",
        y = "Scale") +
   theme(legend.position = "bottom",
-        axis.text.y = element_text(colour = colour_vector)) 
+        axis.text.y = element_text(colour = colour_vector))
 
 # show plot
 graph_scale
@@ -78,6 +78,23 @@ graph_scale
 # show plot
 graph_scale
 
+
+# generate ggplot
+graph_scale_2 <- ggplot(data = omega_cleaned, aes(x = ratio_reliable_variance, y = scale)) +
+  geom_point(size = 0.5) +
+  geom_errorbarh(aes(xmin = low_ci, xmax = up_ci)) +
+  theme_classic() +
+  labs(title = "NZAVS Scale Ratio Reliable Variance",
+       x = "Ratio Reliable Variance",
+       y = "Scale") +
+  scale_y_continuous(limits = c(0,1)) +
+  theme(legend.position = "bottom")
+
+# show plot
+graph_scale_2
+
+# show plot
+graph_scale
 
 # save graph
 ggsave(
