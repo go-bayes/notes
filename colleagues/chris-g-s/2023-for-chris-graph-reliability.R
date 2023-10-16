@@ -17,7 +17,6 @@ library("readr")
 # read omega data
 omega <- read_delim(here::here("colleagues","chris-g-s", "Omega.txt"), delim = "\t", locale = locale(encoding = "UTF-8"))
 
-
 # check
 head(omega)
 
