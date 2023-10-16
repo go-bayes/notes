@@ -53,13 +53,27 @@ library(ggplot2)
 omega_cleaned <- omega_cleaned %>% 
   mutate(is_missing = ifelse(is.na(ratio_reliable_variance) | is.na(low_ci) | is.na(up_ci), 1, 0))
 
+
+# chcek missing
+head(omega_cleaned)
+
+table(is.na(omega_cleaned$ratio_reliable_variance))
+
+sum(is.na(omega_cleaned$ratio_reliable_variance))
+
+sum(is.na(omega_cleaned$ratio_reliable_variance)) +  sum(!is.na(omega_cleaned$ratio_reliable_variance))
+
+
+
+# highlight missing 
 colour_vector <- setNames(omega_cleaned$is_missing, omega_cleaned$scale)
 colour_vector[colour_vector == 1] <- "red"
 colour_vector[colour_vector == 0] <- "black"
 
-head(omega_cleaned)
 
-
+# 48/108
+# 60 + 48
+# sum(is.na(omega_cleaned$ratio_reliable_variance))/(sum(is.na(omega_cleaned$ratio_reliable_variance)) + sum(!is.na(omega_cleaned$ratio_reliable_variance)))
 
 # generate ggplot
 graph_scale <- ggplot(data = omega_cleaned, aes(x = ratio_reliable_variance, y = scale)) +
@@ -82,30 +96,43 @@ graph_scale
 # generate ggplot
 graph_scale_2 <- ggplot(data = omega_cleaned, aes(x = ratio_reliable_variance, y = scale)) +
   geom_point(size = 0.5) +
-  geom_errorbarh(aes(xmin = low_ci, xmax = up_ci)) +
+  geom_errorbar(aes(xmin = low_ci, xmax = up_ci)) +
   theme_classic() +
   labs(title = "NZAVS Scale Ratio Reliable Variance",
        x = "Ratio Reliable Variance",
        y = "Scale") +
-  scale_y_continuous(limits = c(0,1)) +
+  scale_x_continuous(expand = c(0,0), limits = c(0,1)) +
   theme(legend.position = "bottom")
 
 # show plot
 graph_scale_2
 
 # show plot
-graph_scale
+graph_scale_2
 
 # save graph
+ggsave(
+  graph_scale_2,
+  path = here::here(here::here("figs" , "chris")),
+  width = 10,
+  height = 15,
+  units = "in",
+  filename = "v2_nzavs_scale_ratio_reliabilty_graph.jpg",
+  device = 'jpeg',
+  limitsize = FALSE,
+  dpi = 600
+)
+here::here()
 ggsave(
   graph_scale,
   path = here::here(here::here("figs" , "chris")),
   width = 10,
   height = 15,
   units = "in",
-  filename = "nzavs_scale_ratio_reliabilty_graph.jpg",
+  filename = "v1_nzavs_scale_ratio_reliabilty_graph.jpg",
   device = 'jpeg',
   limitsize = FALSE,
-  dpi = 600
+  dpi = 300
 )
-p
+
+graph_scale
