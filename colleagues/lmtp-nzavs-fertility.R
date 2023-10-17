@@ -57,13 +57,11 @@ nzavs_exposure <- "religion_church"
 
 # define exposures --------------------------------------------------------
 # define exposure
-A <- "t1_religion_church"
+A <- "religion_church_binary"
 
 
 # set exposure variable, can be both the continuous and the coarsened, if needed
-exposure_var = c("religion_church",
-                 "religion_church_round",
-                 "religion_church_four",
+exposure_var = c("religion_church_binary",
                  "not_lost") #
 
 
@@ -280,6 +278,7 @@ dat_prep_table_2 <- dat_prep_table_2 |>
 
 # fairly rare outcome
 table(dat_prep_table_2$child_first)
+table(dat_prep_table_2$child_new)
 
 
 # code for new child within the past two years
@@ -707,7 +706,7 @@ dat_long <- dat_prep_2 %>%
                   (wave == 2020)) |>  # Eligibility criteria  Observed in 2018/2019 & Outcomes in 2020 or 2021
   group_by(id) |>
   ## MAKE SURE YOU HAVE ELIGIBILITY CRITERIA
-  dplyr::mutate(meets_criteria_baseline = ifelse(year_measured == 1 &
+  dplyr::mutate(meets_criteria_baseline = ifelse(age < 50 & year_measured == 1 &
                                                    !is.na(!!sym(nzavs_exposure)), 1, 0)) |>  # using R lang
   filter((wave == 2018 & year_measured == 1) |
            (wave == 2019 & year_measured == 1) |
@@ -775,11 +774,19 @@ mutate(
 
 table(dat_long$time)
 table(dat_long$wave)
+table(dat_long$child_new)
+hist( (dat_long$age) )
+
+
+df_test <- dat_long |> 
+  filter(wave == 2021) |> 
+  filter(child_first == 1) 
+
+table(dat_long$child_first, dat_long$religion_religious)
 
 
 N <- n_unique(dat_long$id)
 N
-
 
 # factors
 #
@@ -867,9 +874,9 @@ hist(dt_19$Church_Attendance_Grouped)
 # generate bar plot
 graph_density_of_exposure <-
   coloured_histogram(dt_19,
-                     col_name = "Church_Attendance_Grouped",
+                     col_name = "religion_church_binary",
                      scale_min = 0,
-                     scale_max  = 4)
+                     scale_max  = 1)
 
 graph_density_of_exposure
 
@@ -910,7 +917,7 @@ dt_positivity_full <- dat_long |>
   select(wave,
          id,
          religion_church_four,
-         religion_church_round)
+         religion_church_binary)
 dt_positivity_full
 
 # no need for the rounded variable
@@ -921,7 +928,7 @@ table (is.na(dt_positivity_full$sample_weights)) #
 
 # test positivity
 out <-
-  msm::statetable.msm(religion_church_round, id, data = dt_positivity_full)
+  msm::statetable.msm(religion_church_binary, id, data = dt_positivity_full)
 
 # transition table
 t_tab <- transition_table(out, state_names = NULL)
@@ -1007,7 +1014,7 @@ baseline_vars = c(
   # I want people to know that I am an important person of high status, I am an ordinary person who is no better than others. , I wouldn’t want people to treat me as though I were superior to them. I think that I am entitled to more respect than the average person is.
   # "religion_religious", # Do you identify with a religion and/or spiritual group?
   # "religion_identification_level", #How important is your religion to how you see yourself?"  # note this is not a great measure of virtue, virtue is a mean between extremes.
-  "religion_church_round",
+#  "religion_church_round",
   # "religion_religious", #
   # "religion_spiritual_identification",
   # "religion_identification_level",
@@ -1017,6 +1024,7 @@ baseline_vars = c(
   #  "religion_scripture_binary",
   #"religion_believe_god",
   #"religion_believe_spirit",
+ "religion_church_binary",
   "sample_weights",
   "alert_level_combined_lead"
 )
@@ -1052,23 +1060,24 @@ prep_coop_all <- margot_wide_impute_baseline(
   outcome_vars = outcome_vars
 )
 
+exposure_var
 
-table(is.na(prep_coop_all$t2_lead_new_child_past_2_waves))
-table(is.na(prep_coop_all$t2_lead_first_child_past_2_waves))
+
+
 
 # remove baseline lead variable
 
-
-
-# check mi model
+# 
+# 
+# # check mi model
 # outlist <-
-#   row.names(prep_coop_all)[prep_coop_all$outflux < 0.5]
+#   row.names(imputed_data)[imputed_data$outflux < 0.5]
 # length(outlist)
-#
-# # checks. We do not impute with weights: area of current research
-# head(prep_coop_all$loggedEvents, 10)
-
-push_mods
+# #
+# # # checks. We do not impute with weights: area of current research
+# head(imputed_data$loggedEvents, 10)
+# 
+# push_mods
 
 naniar::vis_miss(prep_coop_all, warn_large_data = FALSE)
 dev.off()
@@ -1133,12 +1142,12 @@ df_clean <- df_wide_censored %>%
   dplyr::mutate(
     across(
       where(is.numeric) &
-        !t0_religion_church_four &
-        !t0_religion_church_round &
-        !t0_religion_church &
-        !t0_religion_church_four &
+        !t0_religion_church_binary &
+      #  !t0_religion_church_round &
+      #  !t0_religion_church &
+       # !t0_religion_church_four &
         !t0_sample_weights &
-        !t1_religion_church_four &
+        !t1_religion_church_binary&
         !t0_not_lost &
         !t1_not_lost &
         !t2_child_first &
@@ -1154,12 +1163,8 @@ df_clean <- df_wide_censored %>%
     t0_sample_weights,
     #  t1_permeability_individual, # make sure to change for each study
     # t0_religion_identification_level,
-    t0_religion_church_four,
-    t0_religion_church_round,
-    t0_religion_church,
-    t1_religion_church_four,
-    t1_religion_church_round,
-    t1_religion_church,
+    t0_religion_church_binary,
+    t1_religion_church_binary,
     t1_not_lost,
     t2_child_new,
     t2_child_first,
@@ -1193,17 +1198,38 @@ N
 
 colnames(df_clean)
 # get names
-names_base <-
+names_base_child_first <-
   df_clean |> select(
     starts_with("t0"),
     -t0_child_new_z,
     -t0_child_first_z,
-    -t0_religion_church_four,
-    -t0_religion_church_round,
-    -t0_not_lost
+    -t0_not_lost,
+    -t0_sample_weights,
+    -t0_sample_origin,
+    -t0_children_num_z,
+    -t0_hours_children_log_z,
+    -t0_hours_exercise_log_z,
+    -t0_hours_housework_log_z
   ) |> colnames()
 
-names_base
+names_base_child_new <-
+  df_clean |> select(
+    starts_with("t0"),
+    -t0_child_new_z,
+    -t0_child_first_z,
+    -t0_not_lost,
+    -t0_sample_weights,
+    -t0_sample_origin,
+    -t0_hours_exercise_log_z,
+    -t0_hours_housework_log_z
+  ) |> colnames()
+
+
+
+
+names_base_child_first
+names_base_child_new
+str(df_clean$t0_sample_origin)
 
 names_outcomes <-
   df_clean |> select(starts_with("t2")) |> colnames()
@@ -1217,9 +1243,9 @@ colnames(df_clean)
 #### SET VARIABLE NAMES: Customise for each outcomewide model
 #  model
 df_clean
-A <- "t1_religion_church_four"
-A_1 <- "t1_religion_church_round"
-A_2 <- "t1_religion_church_round"
+
+
+A <- "t1_religion_church_binary"
 
 
 
@@ -1228,7 +1254,7 @@ C <- c("t1_not_lost")
 
 #L <- list(c("L1"), c("L2"))
 W <- c(paste(names_base, collapse = ", "))
-
+W
 # check
 print(W)
 
@@ -1239,40 +1265,20 @@ df_clean_test <- df_clean |>
   slice_head(n = 2000)
 
 
-# create baselines
-names_base_A <-
-  df_clean |> select(
-    starts_with("t0"),
-    -t0_child_new_z,
-    -t0_child_first_z,
-    -t0_religion_church,
-    -t0_religion_church_round,
-    -t0_not_lost
-  ) |> colnames()
+# test
+model_parameters(
+  glm(
+    t2_child_new ~ t1_religion_church_binary + t0_religion_church_binary + t0_children_num_z + t0_age_z + t0_male_z + t0_hours_children_log_z + t0_children_num_z, data = df_clean, 
+    family = "binomial"), exponentiate = TRUE
+)
 
-names_base_A
+model_parameters(
+  glm(
+    t2_child_first ~ t1_religion_church_binary + t0_religion_church_binary + t0_children_num_z + t0_age_z + t0_male_z, data = df_clean, 
+    family = "binomial"), exponentiate = TRUE
+)
 
-names_base_A_1 <-
-  df_clean |> select(
-    starts_with("t0"),
-    -t0_child_new_z,
-    -t0_child_first_z,
-    -t0_religion_church_four,
-    -t0_religion_church,
-    -t0_not_lost
-  ) |> colnames()
-names_base_A_1
 
-names_base_A_2 <-
-  df_clean |> select(
-    starts_with("t0"),
-    -t0_child_new_z,
-    -t0_child_first_z,
-    -t0_religion_church_four,
-    -t0_religion_church_round,
-    -t0_not_lost
-  ) |> colnames()
-names_base_A_2
 
 
 ## Tests using less data
@@ -1390,8 +1396,8 @@ names_base_A_2
 # test_diff
 #
 
-
-
+N
+names_base_child_first
 
 # second test intervention -------------------------------------------------
 
@@ -1403,77 +1409,16 @@ names_base_A_2
 # first test intervention -------------------------------------------------
 
 ## USE A_1
-names_base_A_1
-A_1
+A
 
-t2_child_first_f_A_1 <- lmtp_tmle(
+#TEST
+t2_child_first_static_binary_on <- lmtp_tmle(
   data = df_clean,
-  trt = A_1,
-  baseline = names_base_A_1,
+  trt = A,
+  baseline = names_base_child_first,
   outcome = "t2_child_first",
   cens = C,
-  shift = f,
-  mtp = TRUE,
-  folds = 5,
-  # trim = 0.99, # if needed
-  # time_vary = NULL,
-  outcome_type = "binomial",
-  #  id = "id",
-  weights = df_clean$t0_sample_weights,
-  learners_trt = sl_lib,
-  learners_outcome = sl_lib,
-  parallel = n_cores
-)
-
-
-
-# check model
-t2_child_first_f_A_1
-
-# save
-here_save(t2_child_first_f_A_1, "t2_child_first_f_A_1")
-
-
-
-
-t2_child_first_f_1_A_1 <- lmtp_tmle(
-  data = df_clean,
-  trt = A_1,
-  baseline = names_base_A_1,
-  outcome = "t2_child_first",
-  cens = C,
-  shift = f_1,
-  mtp = TRUE,
-  folds = 5,
-  # trim = 0.99, # if needed
-  # time_vary = NULL,
-  outcome_type = "binomial",
-  #  id = "id",
-  weights = df_clean$t0_sample_weights,
-  learners_trt = sl_lib,
-  learners_outcome = sl_lib,
-  parallel = n_cores
-)
-
-
-
-# check model
-t2_child_first_f_1_A
-
-# save
-here_save(t2_child_first_f_1_A, "t2_child_first_f_1_A")
-
-
-
-
-# null
-t2_child_first_null_A_1 <- lmtp_tmle(
-  data = df_clean,
-  trt = A_1,
-  baseline = names_base_A_1,
-  outcome = "t2_child_first",
-  cens = C,
-  shift = NULL,
+  shift = static_binary_on,
   mtp = FALSE,
   folds = 5,
   # trim = 0.99, # if needed
@@ -1489,85 +1434,18 @@ t2_child_first_null_A_1 <- lmtp_tmle(
 
 
 # check model
-t2_child_first_null_A_1
+t2_child_first_static_binary_on
 
 # save
-here_save(t2_child_first_null_A_1, "t2_child_first_null_A_1")
+here_save(t2_child_first_static_binary_on, "t2_child_first_static_binary_on")
 
-
-
-
-# new child ---------------------------------------------------------------
-
-
-
-t2_child_new_f_A_1 <- lmtp_tmle(
+t2_child_first_static_binary_off <- lmtp_tmle(
   data = df_clean,
-  trt = A_1,
-  baseline = names_base_A_1,
-  outcome = "t2_child_new",
+  trt = A,
+  baseline = names_base_child_first,
+  outcome = "t2_child_first",
   cens = C,
-  shift = f,
-  mtp = TRUE,
-  folds = 5,
-  # trim = 0.99, # if needed
-  # time_vary = NULL,
-  outcome_type = "binomial",
-  #  id = "id",
-  weights = df_clean$t0_sample_weights,
-  learners_trt = sl_lib,
-  learners_outcome = sl_lib,
-  parallel = n_cores
-)
-
-
-
-
-# check model
-t2_child_new_f_A_1
-
-# save
-here_save(t2_child_new_f_A_1, "t2_child_new_f_A_1")
-
-
-
-
-t2_child_new_f_1_A_1 <- lmtp_tmle(
-  data = df_clean,
-  trt = A_1,
-  baseline = names_base_A_1,
-  outcome = "t2_child_new",
-  cens = C,
-  shift = f_1,
-  mtp = TRUE,
-  folds = 5,
-  # trim = 0.99, # if needed
-  # time_vary = NULL,
-  outcome_type = "binomial",
-  #  id = "id",
-  weights = df_clean$t0_sample_weights,
-  learners_trt = sl_lib,
-  learners_outcome = sl_lib,
-  parallel = n_cores
-)
-
-
-
-# check model
-t2_child_new_f_1_A_1
-
-# save
-here_save(t2_child_new_f_1_A_1, "t2_child_new_f_1_A_1")
-
-
-
-t2_child_new_null_A_1 <- lmtp_tmle(
-  data = df_clean,
-  trt = A_1,
-  baseline = names_base_A_1,
-  outcome = "t2_child_new",
-  cens = C,
-  shift = NULL,
+  shift = static_binary_off,
   mtp = FALSE,
   folds = 5,
   # trim = 0.99, # if needed
@@ -1581,66 +1459,135 @@ t2_child_new_null_A_1 <- lmtp_tmle(
 )
 
 
+
 # check model
-t2_child_new_null_A_1
+t2_child_first_static_binary_off
 
 # save
-here_save(t2_child_new_null_A_1, "t2_child_new_null_A")
+here_save(t2_child_first_static_binary_off, "t2_child_first_static_binary_off")
+
+
+# not reliable
+lmtp_contrast(t2_child_first_static_binary_on,
+              ref = t2_child_first_static_binary_off,
+              type = "rr")
+
+
+t2_child_new_static_binary_on <- lmtp_tmle(
+  data = df_clean,
+  trt = A,
+  baseline = names_base_child_new,
+  outcome = "t2_child_new",
+  cens = C,
+  shift = static_binary_on,
+  mtp = FALSE,
+  folds = 5,
+  # trim = 0.99, # if needed
+  # time_vary = NULL,
+  outcome_type = "binomial",
+  #  id = "id",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
+
+
+# check model
+t2_child_new_static_binary_on
+
+# save
+here_save(t2_child_new_static_binary_on, "t2_child_new_static_binary_on")
+
+
+t2_child_new_static_binary_off <- lmtp_tmle(
+  data = df_clean,
+  trt = A,
+  baseline = names_base_child_new,
+  outcome = "t2_child_new",
+  cens = C,
+  shift = static_binary_off,
+  mtp = FALSE,
+  folds = 2,
+  # trim = 0.99, # if needed
+  # time_vary = NULL,
+  outcome_type = "binomial",
+  #  id = "id",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
+
+
+# check model
+t2_child_new_static_binary_off
+
+# save
+here_save(t2_child_new_static_binary_off, "t2_child_new_static_binary_off")
+
+
+lmtp_contrast(t2_child_new_static_binary_on,
+              ref = t2_child_new_static_binary_off,
+              type = "rr")
+
 
 
 
 # Contrast: child first -----------------------------------------------------
 
 
-t2_child_first_f_A_1 <- here_read("t2_child_first_f_A_1")
-t2_child_new_f_1_A_1 <- here_read("t2_child_new_f_1_A_1")
-t2_child_new_null_A_1 <-
-  here_read("t2_child_new_null_A_1")
+t2_child_new_static_binary_on <- here_read("t2_child_new_static_binary_on")
+t2_child_new_static_binary_off <- here_read("t2_child_new_static_binary_off")
+t2_child_first_static_binary_on <- here_read("t2_child_first_static_binary_on")
+t2_child_first_static_binary_off <- here_read("t2_child_first_static_binary_off")
 
 
 
 # contrast both
-contrast_t2_child_new_both <-
-  lmtp_contrast(t2_child_first_f_A_1,
-                ref = t2_child_new_null_A_1,
+contrast_t2_child_new <-
+  lmtp_contrast(t2_child_new_static_binary_on,
+                ref = t2_child_new_static_binary_off,
                 type = "rr")
 
 
-tab_contrast_t2_child_new_both <-
-  margot_tab_lmtp(contrast_t2_child_new_both,
+tab_contrast_t2_child_new <-
+  margot_tab_lmtp(contrast_t2_child_new,
                   scale = "RR",
                   new_name = "New Child")
 
-tab_contrast_t2_child_new_both
+tab_contrast_t2_child_new
 
 
-out_tab_contrast_t2_child_new_both <-
-  lmtp_evalue_tab(tab_contrast_t2_child_new_both,
+out_tab_contrast_t2_child_new<-
+  lmtp_evalue_tab(tab_contrast_t2_child_new,
                   scale = c("RR"))
 
-out_tab_contrast_t2_child_new_both
+out_tab_contrast_t2_child_new
 
 
 # contrast down null
-contrast_t2_child_new_down_null <-
-  lmtp_contrast(t2_child_new_f_A_1,
-                ref = t2_child_new_null_A_1,
+contrast_t2_child_first <-
+  lmtp_contrast(t2_child_first_static_binary_on,
+                ref = t2_child_first_static_binary_off,
                 type = "rr")
 
 
-tab_contrast_t2_child_new_down_null <-
-  margot_tab_lmtp(contrast_t2_child_new_down_null,
+tab_contrast_t2_child_first <-
+  margot_tab_lmtp(contrast_t2_child_first,
                   scale = "RR",
                   new_name = "New Child")
 
-tab_contrast_t2_child_new_down_null
+tab_contrast_t2_child_first
 
 
-out_tab_contrast_t2_child_new_down_null <-
-  lmtp_evalue_tab(tab_contrast_t2_child_new_down_null,
+out_tab_contrast_t2_child_first <-
+  lmtp_evalue_tab(tab_contrast_t2_child_first,
                   scale = c("RR"))
 
-out_tab_contrast_t2_child_new_down_null
+out_tab_contrast_t2_child_first
 
 
 
