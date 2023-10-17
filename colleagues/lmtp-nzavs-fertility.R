@@ -1,5 +1,14 @@
 
 
+
+
+
+
+
+
+
+
+
 # preliminaries -----------------------------------------------------------
 
 
@@ -60,7 +69,10 @@ A <- "t1_religion_church"
 
 
 # set exposure variable, can be both the continuous and the coarsened, if needed
-exposure_var = c("religion_church", "religion_church_round", "religion_church_four",  "not_lost") #
+exposure_var = c("religion_church",
+                 "religion_church_round",
+                 "religion_church_four",
+                 "not_lost") #
 
 
 # define shift functions --------------------------------------------------
@@ -76,7 +88,7 @@ exposure_var = c("religion_church", "religion_church_round", "religion_church_fo
 #   ifelse(data[[trt]] >= min_score + one_point_in_sd_units, data[[trt]] - one_point_in_sd_units,  min_score)
 # }
 
-# set all to minimum 
+# set all to minimum
 f <- function(data, trt) {
   ifelse(data[[trt]] > 0, 0,  data[[trt]])
 }
@@ -224,7 +236,7 @@ library(tidyr)
 
 
 
-# handle 'ever_had_child' 
+# handle 'ever_had_child'
 dat_prep_1 <- dat %>%
   arrange(id, wave) |>
   group_by(id) |>
@@ -235,12 +247,12 @@ dat_prep_1 <- dat %>%
       !is.na(children_num) ~ 0,
     # reports as 0
     TRUE ~ NA_real_  # NA otherwise
-  )) |>  
+  )) |>
   ungroup()
 
 # check
-dat_prep_1 |> 
-  select(id, wave, year_measured, children_num,  ever_had_child) |> 
+dat_prep_1 |>
+  select(id, wave, year_measured, children_num,  ever_had_child) |>
   print(n = 200)
 
 
@@ -249,14 +261,21 @@ dat_prep_1 |>
 dat_prep_2 <- dat_prep_1 %>%
   arrange(id, wave) %>%
   group_by(id) %>%
-  mutate(child_first = ifelse( lag(ever_had_child) == 0 & ever_had_child == 1, 1, 0)) |> 
-  mutate(child_new = ifelse( lag(children_num)  <  children_num, 1, 0)) |> 
+  mutate(child_first = ifelse(lag(ever_had_child) == 0 &
+                                ever_had_child == 1, 1, 0)) |>
+  mutate(child_new = ifelse(lag(children_num)  <  children_num, 1, 0)) |>
   ungroup()
 
 
 # check
-dat_prep_table_2 <- dat_prep_2 |> 
-  select(id, wave, year_measured, children_num,  child_new, ever_had_child, child_first) 
+dat_prep_table_2 <- dat_prep_2 |>
+  select(id,
+         wave,
+         year_measured,
+         children_num,
+         child_new,
+         ever_had_child,
+         child_first)
 
 table(dat_prep_table_2$child_first)
 table(dat_prep_table_2$child_new)
@@ -264,8 +283,8 @@ table(dat_prep_table_2$child_new)
 
 # new children in 2020
 
-dat_prep_table_2 <- dat_prep_table |> 
-  filter(wave == 2021, year_measured == 1) 
+dat_prep_table_2 <- dat_prep_table |>
+  filter(wave == 2021, year_measured == 1)
 
 # fairly rare outcome
 table(dat_prep_table_2$child_first)
@@ -273,17 +292,17 @@ table(dat_prep_table_2$child_first)
 
 # code for new child within the past two years
 # create columns for first child and new child within past 2 waves
-dat_prep_3 <- dat_prep_2 |> 
-  arrange(id, wave) |> 
-  group_by(id)|> 
-  arrange(wave) |> 
+dat_prep_3 <- dat_prep_2 |>
+  arrange(id, wave) |>
+  group_by(id) |>
+  arrange(wave) |>
   mutate(
-    child_first_past_2_waves = ifelse(
-      (lag(child_first, 1) == 1 | child_first == 1),
-      1,
-      0
-    ),
-    child_new_past_2_waves = (lag(child_new, 1) == 1 | child_new == 1),
+    child_first_past_2_waves = ifelse((lag(child_first, 1) == 1 |
+                                         child_first == 1),
+                                      1,
+                                      0),
+    child_new_past_2_waves = (lag(child_new, 1) == 1 |
+                                child_new == 1),
     1,
     0
   ) %>%
@@ -291,8 +310,8 @@ dat_prep_3 <- dat_prep_2 |>
 
 
 
-dat_prep_table_3 <- dat_prep_3 |> 
-  filter(wave == 2021) 
+dat_prep_table_3 <- dat_prep_3 |>
+  filter(wave == 2021)
 
 # note better outcomes
 table(dat_prep_table_3$child_first_past_2_waves)
@@ -305,18 +324,19 @@ table(dat_prep_table_3$child_new_past_2_waves)
 ## DO THIS LATER -- USE A SURVIVAL ANALYSIS
 
 # note create a lead variable to keep data tidy
-dat_prep_4 <- dat_prep_3 |> 
-  arrange(id, wave) |> 
-  group_by(id)|> 
+dat_prep_4 <- dat_prep_3 |>
+  arrange(id, wave) |>
+  group_by(id) |>
   mutate(
     lead_child_first_past_2_waves = lead(child_first_past_2_waves),
-    lead_child_new_past_2_waves = lead(child_new_past_2_waves) )|> 
+    lead_child_new_past_2_waves = lead(child_new_past_2_waves)
+  ) |>
   ungroup()
 
 
 # check -- we do this to get the 2 year ferility from wave 2020
-dat_prep_table_4 <- dat_prep_4 |> 
-  filter(wave == 2020) 
+dat_prep_table_4 <- dat_prep_4 |>
+  filter(wave == 2020)
 
 table(dat_prep_table_4$lead_child_first_past_2_waves)
 table(dat_prep_table_4$lead_child_new_past_2_waves)
@@ -661,7 +681,7 @@ dat_long <- dat_prep_4 %>%
     "hours_friends",
     "hours_family",
     "alert_level_combined_lead",
-    "child_first", 
+    "child_first",
     "child_new"
     #"lead_child_first_past_2_waves",  Do later
     #"lead_child_new_past_2_waves"#  Do later
@@ -682,11 +702,11 @@ dat_long <- dat_prep_4 %>%
     ifelse(total_siblings > 7, 7, total_siblings), 0
   ))) |>
   mutate(religion_prayer_binary = ifelse(religion_prayer > 0, 1, 0)) |>
-  mutate(religion_church_binary = ifelse(religion_church > 0, 1, 0))  |> 
+  mutate(religion_church_binary = ifelse(religion_church > 0, 1, 0))  |>
   mutate(
     religion_church_f = ifelse(religion_church >= 4, 4, religion_church),
     religion_church_f = round(religion_church_f, 0)
-  ) |> 
+  ) |>
   mutate(religion_church_f = factor(religion_church_f, ordered = TRUE)) |>
   mutate(religion_scripture_binary = ifelse(religion_scripture > 0, 1, 0)) |>
   mutate(religion_church_round = round(ifelse(religion_church >= 8, 8, religion_church), 0)) |>
@@ -735,12 +755,12 @@ dat_long <- dat_prep_4 %>%
     hours_housework_log = log(hours_housework + 1),
     hours_exercise_log = log(hours_exercise + 1)
   ) |>
-  dplyr::mutate(religion_church_four = as.numeric( religion_church_f)-1) |> 
+  dplyr::mutate(religion_church_four = as.numeric(religion_church_f) - 1) |>
   dplyr::rename(sample_weights = w_gend_age_euro) |>
   dplyr::mutate(sample_origin = as.factor(sample_origin_names_combined)) |>  #shorter name
   arrange(id, wave) |>
   droplevels() |>
-  select(-h_18,-k_18,-h_19,-k_19) |>
+  select(-h_18, -k_18, -h_19, -k_19) |>
   droplevels() |>
   ungroup() %>%
   mutate(time = as.numeric(wave) - 1) |>
@@ -895,7 +915,7 @@ dev.off()
 # check
 
 dt_check_exposure <-
-  dat_long |>   filter(wave == 2018 | wave == 2019) 
+  dat_long |>   filter(wave == 2018 | wave == 2019)
 
 # makes sure all is false
 table (is.na(dt_check_exposure$Church_Attendance_Grouped))
@@ -1004,8 +1024,8 @@ baseline_vars = c(
   # "religion_identification_level", #How important is your religion to how you see yourself?"  # note this is not a great measure of virtue, virtue is a mean between extremes.
   "religion_church_round",
   # "religion_religious", #
- # "religion_spiritual_identification",
- # "religion_identification_level",
+  # "religion_spiritual_identification",
+  # "religion_identification_level",
   #  "religion_religious",
   #  "religion_church_binary",
   #  "religion_prayer_binary",
@@ -1025,16 +1045,14 @@ baseline_vars
 exposure_var
 
 # outcomes
-outcome_vars = c(
-  "child_first",
-  "child_new"
-)
+outcome_vars = c("child_first",
+                 "child_new")
 # impute baseline data (we use censoring for the outcomes)
 #colnames(dat_long)
 # function imputes only baseline not outcome
 
 # rename(new_child_past_2_waves_2021 =  "lead_new_child_past_2_waves",
-#        first_child_past_2_waves_2021 = "lead_first_child_past_2_waves") |> 
+#        first_child_past_2_waves_2021 = "lead_first_child_past_2_waves") |>
 
 # make data wide and impute baseline missing values -----------------------
 baseline_vars
@@ -1053,7 +1071,7 @@ prep_coop_all <- margot_wide_impute_baseline(
 table(is.na(prep_coop_all$t2_lead_new_child_past_2_waves))
 table(is.na(prep_coop_all$t2_lead_first_child_past_2_waves))
 
-# remove baseline lead variable 
+# remove baseline lead variable
 
 
 
@@ -1107,13 +1125,10 @@ str(prep_coop_all$t0_education_level_coarsen)
 
 df_wide_censored <-
   prep_coop_all |>
-  mutate(
-    t0_eth_cat = as.factor(t0_eth_cat)#,
-  #  t0_smoker_binary = as.integer(ifelse(t0_smoker > 0, 1, 0)),
-   # t2_smoker_binary = as.integer(ifelse(t2_smoker > 0, 1, 0))
-  ) |>
+  mutate(t0_eth_cat = as.factor(t0_eth_cat)) |>
   relocate("t0_not_lost", .before = starts_with("t1_"))  %>%
   relocate("t1_not_lost", .before = starts_with("t2_"))
+
 #check
 head(df_wide_censored)
 dim(df_wide_censored)
@@ -1138,9 +1153,6 @@ df_clean <- df_wide_censored %>%
         !t0_religion_church &
         !t0_religion_church_four &
         !t0_sample_weights &
-        #        !t0_smoker_binary &
-        !t1_religion_church_round &
-        !t1_religion_church &
         !t1_religion_church_four &
         !t0_not_lost &
         !t1_not_lost &
@@ -1166,8 +1178,7 @@ df_clean <- df_wide_censored %>%
     t1_not_lost,
     t2_child_new,
     t2_child_first,
-    ends_with("_z"
-    )
+    ends_with("_z")
   ) |>
   relocate(starts_with("t0_"), .before = starts_with("t1_"))  %>%
   relocate(starts_with("t2_"), .after = starts_with("t1_"))  %>%
@@ -1186,25 +1197,25 @@ push_mods
 # save
 here_save(df_clean, "df_clean")
 
-# read if needed
-# df_clean <- here_read("df_clean")
-
-
-# FOR MODELS ALREADY RUN -- WHEN WE WANT THE EXTREME VALUES
-df_clean <- readRDS(here::here(push_mods_original,"df_clean"))
-
 
 str(df_clean)
 df_clean <- as.data.frame(df_clean)
 
 #check n
 N <- nrow(df_clean)
-N 
+N
 
 colnames(df_clean)
 # get names
 names_base <-
-  df_clean |> select(starts_with("t0"),-t0_child_new_z,-t0_child_first_z, -t0_religion_church_four, -t0_religion_church_round, -t0_not_lost) |> colnames()
+  df_clean |> select(
+    starts_with("t0"),
+    -t0_child_new_z,
+    -t0_child_first_z,
+    -t0_religion_church_four,
+    -t0_religion_church_round,
+    -t0_not_lost
+  ) |> colnames()
 
 names_base
 
@@ -1220,9 +1231,9 @@ colnames(df_clean)
 #### SET VARIABLE NAMES: Customise for each outcomewide model
 #  model
 df_clean
-A <-"t1_religion_church_four"
-A_1 <-"t1_religion_church_round"
-A_2 <-"t1_religion_church_round"
+A <- "t1_religion_church_four"
+A_1 <- "t1_religion_church_round"
+A_2 <- "t1_religion_church_round"
 
 
 
@@ -1245,23 +1256,44 @@ df_clean_test <- df_clean |>
 
 # create baselines
 names_base_A <-
-  df_clean |> select(starts_with("t0"),-t0_child_new_z,-t0_child_first_z, -t0_religion_church, -t0_religion_church_round, -t0_not_lost) |> colnames()
+  df_clean |> select(
+    starts_with("t0"),
+    -t0_child_new_z,
+    -t0_child_first_z,
+    -t0_religion_church,
+    -t0_religion_church_round,
+    -t0_not_lost
+  ) |> colnames()
 
 names_base_A
 
 names_base_A_1 <-
-  df_clean |> select(starts_with("t0"),-t0_child_new_z,-t0_child_first_z, -t0_religion_church_four, -t0_religion_church, -t0_not_lost) |> colnames()
+  df_clean |> select(
+    starts_with("t0"),
+    -t0_child_new_z,
+    -t0_child_first_z,
+    -t0_religion_church_four,
+    -t0_religion_church,
+    -t0_not_lost
+  ) |> colnames()
 names_base_A_1
 
 names_base_A_2 <-
-  df_clean |> select(starts_with("t0"),-t0_child_new_z,-t0_child_first_z, -t0_religion_church_four, -t0_religion_church_round, -t0_not_lost) |> colnames()
+  df_clean |> select(
+    starts_with("t0"),
+    -t0_child_new_z,
+    -t0_child_first_z,
+    -t0_religion_church_four,
+    -t0_religion_church_round,
+    -t0_not_lost
+  ) |> colnames()
 names_base_A_2
 
 
 ## Tests using less data
 
-# 
-# 
+#
+#
 # test_timing_info_f_A <- system.time({
 #   test_t2_child_first_f_A <- lmtp_tmle(
 #     data = df_clean_test,
@@ -1282,17 +1314,17 @@ names_base_A_2
 #     parallel = n_cores
 #   )
 # })
-# 
-# 
+#
+#
 # test_t2_child_first_f_A
 # here_save(test_t2_child_first_f_A, "test_t2_child_first_f_A")
 # test_t2_child_first_f_A <- here_read("test_t2_child_first_f_A")
-# 
-# 
-# 
-# # user  system elapsed 
-# # 5.466   0.621 275.792 
-# 
+#
+#
+#
+# # user  system elapsed
+# # 5.466   0.621 275.792
+#
 # test_timing_info_f_A_1 <- system.time({
 #   test_t2_child_first_f_A_1 <- lmtp_tmle(
 #     data = df_clean_test,
@@ -1313,18 +1345,18 @@ names_base_A_2
 #     parallel = n_cores
 #   )
 # })
-# 
-# 
+#
+#
 # test_t2_child_first_f_A_1
 # here_save(test_t2_child_first_f_A, "test_t2_child_first_f_A_1")
 # test_t2_child_first_f_A_1 <- here_read("test_t2_child_first_f_A_1")
-# 
-# 
+#
+#
 # print(paste("Time taken: ", round(test_timing_info_f_A_1['elapsed'], 2), " seconds"))
-# 
-# 
-# 
-# 
+#
+#
+#
+#
 # test_timing_info_f_A_2 <- system.time({
 #   test_t2_child_first_f_A_2 <- lmtp_tmle(
 #     data = df_clean_test,
@@ -1345,15 +1377,15 @@ names_base_A_2
 #     parallel = n_cores
 #   )
 # })
-# 
+#
 # warnings()
 # test_t2_child_first_f_A_2
 # here_save(test_t2_child_first_f_A_2, "test_t2_child_first_f_A_2")
-# 
+#
 # print(paste("Time taken: ", round(test_timing_info_f_A['elapsed'], 2), " seconds"))
-# 
-# 
-# 
+#
+#
+#
 
 
 
@@ -1364,14 +1396,14 @@ names_base_A_2
 # > print(paste("Time taken: ", round(test_timing_info_f_A['elapsed'], 2), " seconds"))
 # [1] "Time taken:  275.79  seconds"
 
-
-test_diff <-
-  lmtp_contrast(test_t2_child_first_f_A_1,
-                ref = test_t2_child_first_f_A_2,
-                type = "rr")
-
-test_diff
-
+#
+# test_diff <-
+#   lmtp_contrast(test_t2_child_first_f_A_1,
+#                 ref = test_t2_child_first_f_A_2,
+#                 type = "rr")
+#
+# test_diff
+#
 
 
 
@@ -1386,28 +1418,27 @@ test_diff
 # first test intervention -------------------------------------------------
 
 ## USE A_1
+names_base_A_1
+A_1
 
-
-time_f <- system.time({
-  t2_child_first_f_A_1<- lmtp_tmle(
-    data = df_clean,
-    trt = A_1,
-    baseline = names_base_A_1,
-    outcome = "t2_child_first",
-    cens = C,
-    shift = f,
-    mtp = TRUE,
-    folds = 5,
-    # trim = 0.99, # if needed
-    # time_vary = NULL,
-    outcome_type = "binomial",
-    #  id = "id",
-    weights = df_clean$t0_sample_weights,
-    learners_trt = sl_lib,
-    learners_outcome = sl_lib,
-    parallel = n_cores
-  )
-})
+t2_child_first_f_A_1 <- lmtp_tmle(
+  data = df_clean,
+  trt = A_1,
+  baseline = names_base_A_1,
+  outcome = "t2_child_first",
+  cens = C,
+  shift = f,
+  mtp = TRUE,
+  folds = 5,
+  # trim = 0.99, # if needed
+  # time_vary = NULL,
+  outcome_type = "binomial",
+  #  id = "id",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
 
 
 
@@ -1417,33 +1448,28 @@ t2_child_first_f_A_1
 # save
 here_save(t2_child_first_f_A_1, "t2_child_first_f_A_1")
 
-# check time
-print(paste("Time taken: ", round(time_f['elapsed'], 2), " seconds"))
 
 
 
+t2_child_first_f_1_A_1 <- lmtp_tmle(
+  data = df_clean,
+  trt = A_1,
+  baseline = names_base_A_1,
+  outcome = "t2_child_first",
+  cens = C,
+  shift = f_1,
+  mtp = TRUE,
+  folds = 5,
+  # trim = 0.99, # if needed
+  # time_vary = NULL,
+  outcome_type = "binomial",
+  #  id = "id",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
 
-
-time_f_1 <- system.time({
-  t2_child_first_f_1_A_1<- lmtp_tmle(
-    data = df_clean,
-    trt = A_1,
-    baseline = names_base_A_1,
-    outcome = "t2_child_first",
-    cens = C,
-    shift = f_1,
-    mtp = TRUE,
-    folds = 5,
-    # trim = 0.99, # if needed
-    # time_vary = NULL,
-    outcome_type = "binomial",
-    #  id = "id",
-    weights = df_clean$t0_sample_weights,
-    learners_trt = sl_lib,
-    learners_outcome = sl_lib,
-    parallel = n_cores
-  )
-})
 
 
 # check model
@@ -1452,33 +1478,29 @@ t2_child_first_f_1_A
 # save
 here_save(t2_child_first_f_1_A, "t2_child_first_f_1_A")
 
-# check time
-print(paste("Time taken: ", round(time_f_1['elapsed'], 2), " seconds"))
 
 
 
 # null
+t2_child_first_null_A_1 <- lmtp_tmle(
+  data = df_clean,
+  trt = A_1,
+  baseline = names_base_A_1,
+  outcome = "t2_child_first",
+  cens = C,
+  shift = NULL,
+  mtp = FALSE,
+  folds = 5,
+  # trim = 0.99, # if needed
+  # time_vary = NULL,
+  outcome_type = "binomial",
+  #  id = "id",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
 
-time_null  <- system.time({
-  t2_child_first_null_A_1 <- lmtp_tmle(
-    data = df_clean,
-    trt = A_1,
-    baseline = names_base_A_1,
-    outcome = "t2_child_first",
-    cens = C,
-    shift = NULL,
-    mtp = FALSE,
-    folds = 5,
-    # trim = 0.99, # if needed
-    # time_vary = NULL,
-    outcome_type = "binomial",
-    #  id = "id",
-    weights = df_clean$t0_sample_weights,
-    learners_trt = sl_lib,
-    learners_outcome = sl_lib,
-    parallel = n_cores
-  )
-})
 
 
 # check model
@@ -1487,7 +1509,6 @@ t2_child_first_null_A_1
 # save
 here_save(t2_child_first_null_A_1, "t2_child_first_null_A_1")
 
-print(paste("Time taken: ", round(time_null['elapsed'], 2), " seconds"))
 
 
 
@@ -1495,26 +1516,25 @@ print(paste("Time taken: ", round(time_null['elapsed'], 2), " seconds"))
 
 
 
-timing_info_t2_child_new_f_A_1 <- system.time({
-  t2_child_new_f_A_1 <- lmtp_tmle(
-    data = df_clean,
-    trt = A_1,
-    baseline = names_base_A_1,
-    outcome = "t2_child_new",
-    cens = C,
-    shift = f,
-    mtp = TRUE,
-    folds = 5,
-    # trim = 0.99, # if needed
-    # time_vary = NULL,
-    outcome_type = "binomial",
-    #  id = "id",
-    weights = df_clean$t0_sample_weights,
-    learners_trt = sl_lib,
-    learners_outcome = sl_lib,
-    parallel = n_cores
-  )
-})
+t2_child_new_f_A_1 <- lmtp_tmle(
+  data = df_clean,
+  trt = A_1,
+  baseline = names_base_A_1,
+  outcome = "t2_child_new",
+  cens = C,
+  shift = f,
+  mtp = TRUE,
+  folds = 5,
+  # trim = 0.99, # if needed
+  # time_vary = NULL,
+  outcome_type = "binomial",
+  #  id = "id",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
 
 
 
@@ -1524,30 +1544,28 @@ t2_child_new_f_A_1
 # save
 here_save(t2_child_new_f_A_1, "t2_child_new_f_A_1")
 
-# check time
-print(paste("Time taken: ", round(timing_info_t2_child_new_f_A_1['elapsed'], 2), " seconds"))
 
 
-timing_info_t2_child_new_f_1_A_1 <- system.time({
-  t2_child_new_f_1_A_1 <- lmtp_tmle(
-    data = df_clean,
-    trt = A_1,
-    baseline = names_base_A_1,
-    outcome = "t2_child_new",
-    cens = C,
-    shift = f_1,
-    mtp = TRUE,
-    folds = 5,
-    # trim = 0.99, # if needed
-    # time_vary = NULL,
-    outcome_type = "binomial",
-    #  id = "id",
-    weights = df_clean$t0_sample_weights,
-    learners_trt = sl_lib,
-    learners_outcome = sl_lib,
-    parallel = n_cores
-  )
-})
+
+t2_child_new_f_1_A_1 <- lmtp_tmle(
+  data = df_clean,
+  trt = A_1,
+  baseline = names_base_A_1,
+  outcome = "t2_child_new",
+  cens = C,
+  shift = f_1,
+  mtp = TRUE,
+  folds = 5,
+  # trim = 0.99, # if needed
+  # time_vary = NULL,
+  outcome_type = "binomial",
+  #  id = "id",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
 
 
 # check model
@@ -1556,31 +1574,26 @@ t2_child_new_f_1_A_1
 # save
 here_save(t2_child_new_f_1_A_1, "t2_child_new_f_1_A_1")
 
-# check time
-print(paste("Time taken: ", round(timing_info_t2_child_new_f_1_A['elapsed'], 2), " seconds"))
 
 
-
-timing_info_t2_child_new_null_A_1 <- system.time({
-  t2_child_new_null_A_1 <- lmtp_tmle(
-    data = df_clean,
-    trt = A_1,
-    baseline = names_base_A_1,
-    outcome = "t2_child_new",
-    cens = C,
-    shift = NULL,
-    mtp = FALSE,
-    folds = 5,
-    # trim = 0.99, # if needed
-    # time_vary = NULL,
-    outcome_type = "binomial",
-    #  id = "id",
-    weights = df_clean$t0_sample_weights,
-    learners_trt = sl_lib,
-    learners_outcome = sl_lib,
-    parallel = n_cores
-  )
-})
+t2_child_new_null_A_1 <- lmtp_tmle(
+  data = df_clean,
+  trt = A_1,
+  baseline = names_base_A_1,
+  outcome = "t2_child_new",
+  cens = C,
+  shift = NULL,
+  mtp = FALSE,
+  folds = 5,
+  # trim = 0.99, # if needed
+  # time_vary = NULL,
+  outcome_type = "binomial",
+  #  id = "id",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
 
 
 # check model
@@ -1589,7 +1602,6 @@ t2_child_new_null_A_1
 # save
 here_save(t2_child_new_null_A_1, "t2_child_new_null_A")
 
-print(paste("Time taken: ", round(timing_info_t2_child_new_null_A_1['elapsed'], 2), " seconds"))
 
 
 # Contrast: child first -----------------------------------------------------
@@ -1603,7 +1615,6 @@ t2_child_new_null_A_1 <-
 
 
 # contrast both
-# contrast down null
 contrast_t2_child_new_both <-
   lmtp_contrast(t2_child_first_f_A_1,
                 ref = t2_child_new_null_A_1,
@@ -1618,7 +1629,7 @@ tab_contrast_t2_child_new_both <-
 tab_contrast_t2_child_new_both
 
 
-out_tab_contrast_t2_child_new_both<-
+out_tab_contrast_t2_child_new_both <-
   lmtp_evalue_tab(tab_contrast_t2_child_new_both,
                   scale = c("RR"))
 
@@ -1640,7 +1651,7 @@ tab_contrast_t2_child_new_down_null <-
 tab_contrast_t2_child_new_down_null
 
 
-out_tab_contrast_t2_child_new_down_null<-
+out_tab_contrast_t2_child_new_down_null <-
   lmtp_evalue_tab(tab_contrast_t2_child_new_down_null,
                   scale = c("RR"))
 
@@ -1677,7 +1688,7 @@ tab_contrast_t2_child_new_both <-
 tab_contrast_t2_child_new_both
 
 
-out_tab_contrast_t2_child_new_both<-
+out_tab_contrast_t2_child_new_both <-
   lmtp_evalue_tab(tab_contrast_t2_child_new_both,
                   scale = c("RR"))
 
@@ -1699,7 +1710,7 @@ tab_contrast_t2_child_new_down_null <-
 tab_contrast_t2_child_new_down_null
 
 
-out_tab_contrast_t2_child_new_down_null<-
+out_tab_contrast_t2_child_new_down_null <-
   lmtp_evalue_tab(tab_contrast_t2_child_new_down_null,
                   scale = c("RR"))
 
@@ -1723,10 +1734,8 @@ tab_contrast_t2_child_new_up_null <-
 tab_contrast_t2_child_new_up_null
 
 
-out_tab_contrast_t2_child_new_up_null<-
+out_tab_contrast_t2_child_new_up_null <-
   lmtp_evalue_tab(tab_contrast_t2_child_new_up_null,
                   scale = c("RR"))
 
-out_tab_contrast_t2_child_new_down_null
-
-
+out_tab_contrast_t2_child_new_up_null
