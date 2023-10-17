@@ -1,13 +1,5 @@
 
-
-
-
-
-
-
-
-
-
+# fertility
 
 # preliminaries -----------------------------------------------------------
 
@@ -283,7 +275,7 @@ table(dat_prep_table_2$child_new)
 
 # new children in 2020
 
-dat_prep_table_2 <- dat_prep_table |>
+dat_prep_table_2 <- dat_prep_table_2 |>
   filter(wave == 2021, year_measured == 1)
 
 # fairly rare outcome
@@ -292,59 +284,52 @@ table(dat_prep_table_2$child_first)
 
 # code for new child within the past two years
 # create columns for first child and new child within past 2 waves
-dat_prep_3 <- dat_prep_2 |>
-  arrange(id, wave) |>
-  group_by(id) |>
-  arrange(wave) |>
-  mutate(
-    child_first_past_2_waves = ifelse((lag(child_first, 1) == 1 |
-                                         child_first == 1),
-                                      1,
-                                      0),
-    child_new_past_2_waves = (lag(child_new, 1) == 1 |
-                                child_new == 1),
-    1,
-    0
-  ) %>%
-  ungroup()
+#dat_prep_3 <- dat_prep_2 |>
+#   arrange(id, wave) |>
+#   group_by(id) |>
+#   arrange(wave) |>
+#   mutate(
+#     child_first_past_2_waves = ifelse((lag(child_first, 1) == 1 |
+#                                          child_first == 1),
+#                                       1,
+#                                       0),
+#     child_new_past_2_waves = (lag(child_new, 1) == 1 |
+#                                 child_new == 1),
+#     1,
+#     0
+#   ) %>%
+#   ungroup()
+# 
+# 
+# dat_prep_table_3 <- dat_prep_3 |>
+#   filter(wave == 2021)
+# 
+# 
+# 
+# 
+# ## DO THIS LATER -- USE A SURVIVAL ANALYSIS
+# 
+# # note create a lead variable to keep data tidy
+# dat_prep_4 <- dat_prep_3 |>
+#   arrange(id, wave) |>
+#   group_by(id) |>
+#   mutate(
+#     lead_child_first_past_2_waves = lead(child_first_past_2_waves),
+#     lead_child_new_past_2_waves = lead(child_new_past_2_waves)
+#   ) |>
+#   ungroup()
 
 
-
-dat_prep_table_3 <- dat_prep_3 |>
-  filter(wave == 2021)
-
-# note better outcomes
-table(dat_prep_table_3$child_first_past_2_waves)
-
-# better outcomes
-table(dat_prep_table_3$child_new_past_2_waves)
-
-
-
-## DO THIS LATER -- USE A SURVIVAL ANALYSIS
-
-# note create a lead variable to keep data tidy
-dat_prep_4 <- dat_prep_3 |>
-  arrange(id, wave) |>
-  group_by(id) |>
-  mutate(
-    lead_child_first_past_2_waves = lead(child_first_past_2_waves),
-    lead_child_new_past_2_waves = lead(child_new_past_2_waves)
-  ) |>
-  ungroup()
-
-
-# check -- we do this to get the 2 year ferility from wave 2020
-dat_prep_table_4 <- dat_prep_4 |>
-  filter(wave == 2020)
-
-table(dat_prep_table_4$lead_child_first_past_2_waves)
-table(dat_prep_table_4$lead_child_new_past_2_waves)
-
+# # check -- we do this to get the 2 year ferility from wave 2020
+# dat_prep_table_4 <- dat_prep_4 |>
+#   filter(wave == 2020)
+# 
+# table(dat_prep_table_4$lead_child_first_past_2_waves)
+# table(dat_prep_table_4$lead_child_new_past_2_waves)
 
 
 # handle loss to follow-up
-dat_long <- dat_prep_4 %>%
+dat_long <- dat_prep_2 %>%
   mutate(forgiveness = 8 - vengeful_rumin) |> # reverse score veng rumination
   rowwise(wave) |>
   mutate(power_no_control_composite = mean(c(
@@ -1196,6 +1181,7 @@ dev.off()
 push_mods
 # save
 here_save(df_clean, "df_clean")
+df_clean <- here_read("df_clean")
 
 
 str(df_clean)
@@ -1245,7 +1231,6 @@ W <- c(paste(names_base, collapse = ", "))
 
 # check
 print(W)
-
 
 f
 f_1
