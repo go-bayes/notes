@@ -1,5 +1,5 @@
 # sept 13 2023
-# science/ speech
+# science/ speech. Part 2 
 # joseph bulbulia : joseph.bulbulia@gmail.com
 
 
@@ -48,20 +48,11 @@ push_mods
 
 # set exposure here
 nzavs_exposure <-
-  "trust_science_high_confidence_scientific_community"
+  "modesty"
 
 # define exposure
 A <-
-  "t1_trust_science_high_confidence_scientific_community"
-
-A_1 <- "t1_free_speech"
-
-# define exposure
-A_z <-
-  "t1_trust_science_high_confidence_scientific_community_z"
-
-A_1_z  <- "t1_free_speech_z"
-
+  "t1_modesty_z"
 
 
 # define shift function (if any one is average make them average, otherwise leave alone)
@@ -119,7 +110,7 @@ listWrappers()
 
 n_unique(dat$id)
 
-
+nzavs_exposure
 
 # import data and wrangle-------------------------------------------------
 
@@ -502,8 +493,7 @@ dat_long  <- dat |>
   group_by(id) |>
   ## MAKE SURE YOU HAVE ELIGIBILITY CRITERIA
   dplyr::mutate(meets_criteria_baseline = ifelse(year_measured == 1 &
-                                                   !is.na(!!sym(nzavs_exposure)) 
-                                                   & !is.na(free_speech), 1, 0)) |>  # using R lang
+                                                   !is.na(!!sym(nzavs_exposure)), 1, 0)) |>  # using R lang
   dplyr::mutate(sample_origin = sample_origin_names_combined) |>  #shorter name
   arrange(id) |>
   filter((wave == 2019 & year_measured == 1) |
@@ -570,14 +560,10 @@ mutate(
 
 
 # check n
-N <- n_unique(dat_long$id) # 31557
+N <- n_unique(dat_long$id) # 32371
 N
 
 table(dat_long$wave)
-
-
-N <- n_unique(dat_long$id)
-N
 
 
 # factors 
@@ -655,61 +641,36 @@ N
 
 dt_19 <- dat_long |>
   filter(year_measured == 1 & wave == 2020) |> 
-  mutate(trust_science_high_confidence_scientific_community_z = scale(trust_science_high_confidence_scientific_community), 
-         free_speech_z = scale(free_speech))
+  mutate(modesty_z = scale(modesty))
 
-hist(dt_19$trust_science_high_confidence_scientific_community_z)
-hist(dt_19$free_speech)
-
-hist(dt_19$trust_science_high_confidence_scientific_community)
-
-table(dt_19$trust_science_high_confidence_scientific_community_z)
+hist(dt_19$modesty_z)
+hist(dt_19$modesty)
 
 
-mean_exposure_science <- mean(dt_19$trust_science_high_confidence_scientific_community,
-                      na.rm = TRUE)
-
-# just to view, do not use in function
-mean_exposure_science
-
-
-
-mean_exposure_free_speech <- mean(dt_19$trust_science_high_confidence_scientific_community,
+mean_exposure<- mean(dt_19$modesty,
                               na.rm = TRUE)
 
 # just to view, do not use in function
-mean_exposure_free_speech 
+mean_exposure
 
 
 
 # make sure to use the sd
 
-min_score_science_z <- min(dt_19$trust_science_high_confidence_scientific_community_z, na.rm = TRUE)
-min_score_science_z
+min_score <- min(dt_19$modesty_z, na.rm = TRUE)
+min_score
 
-max_score_science_z <- max(dt_19$trust_science_high_confidence_scientific_community_z, na.rm = TRUE)
-max_score_science_z
+max_score <- max(dt_19$modesty_z, na.rm = TRUE)
+max_score
 
-sd_exposure_science <- sd(dt_19$trust_science_high_confidence_scientific_community,
-                  na.rm = TRUE)
-sd_exposure_science
-
-one_point_in_sd_units_science <- 1/sd_exposure_science
-one_point_in_sd_units_science
-
-
-min_score_free_speech_z <- min(dt_19$free_speech_z, na.rm = TRUE)
-min_score_free_speech_z
-
-max_score_free_speech_z<- max(dt_19$free_speech_z, na.rm = TRUE)
-max_score_free_speech_z
-
-sd_exposure_free_speech <- sd(dt_19$free_speech,
+sd_exposure<- sd(dt_19$modesty,
                           na.rm = TRUE)
-one_point_in_sd_units_free_speech
 
-one_point_in_sd_units_free_speech <- 1/one_point_in_sd_units_free_speech
-one_point_in_sd_units_free_speech
+sd_exposure
+
+one_point_in_sd <- 1/sd_exposure
+one_point_in_sd
+
 
 
 
@@ -719,8 +680,7 @@ one_point_in_sd_units_free_speech
 
 # generate bar plot
 graph_density_of_exposure <- coloured_histogram(dt_19, 
-                                                col_name = "trust_science_high_confidence_scientific_community", 
-                                                scale_min = min_score, scale_max = max_score)
+                                                scale_min = 1, scale_max = 7)
 
 graph_density_of_exposure
 
@@ -730,108 +690,36 @@ ggsave(
   width = 12,
   height = 8,
   units = "in",
-  filename = "graph_density_of_exposure.png",
-  device = 'png',
-  limitsize = FALSE,
-  dpi = 600
-)
-
-graph_density_of_exposure_free_speech <- coloured_histogram(dt_19, 
-                                                col_name = "free_speech", 
-                                                scale_min = min_score, scale_max = max_score)
-
-graph_density_of_exposure_free_speech
-
-ggsave(
-  graph_density_of_exposure_free_speech,
-  path = here::here(here::here(push_mods, "figs")),
-  width = 12,
-  height = 8,
-  units = "in",
-  filename = "graph_density_of_exposure_free_speech.png",
+  filename = "graph_density_of_exposure_modesty.png",
   device = 'png',
   limitsize = FALSE,
   dpi = 600
 )
 
 
-
-# check sample 
-N <-n_unique(dat_long$id) #31557 
-N
-
-# double check path
-push_mods
-
-dev.off()
 # check
 dt_check_exposure <- dat_long |> filter(wave == 2019| wave == 2020)
 
-nzavs_exposure
-nzavs_exposure
-variable_to_check <- sym("trust_science_high_confidence_scientific_community")
-variable_to_check
-# makes sure all is false
-
-missing_values_table <- table(is.na(dt_check_exposure$trust_science_high_confidence_scientific_community))
+missing_values_table <- table(is.na(dt_check_exposure$modesty))
 missing_values_table
 
 # makes sure all is false
 dt_positivity_full <- dat_long |>
   filter(wave == 2019 | wave == 2020) |>
-  select(wave, id, trust_science_high_confidence_scientific_community, free_speech,sample_weights) |> 
-  mutate(trust_science_high_confidence_scientific_community_round = round(trust_science_high_confidence_scientific_community, 0))
+  select(wave, id, modesty) |> 
+  mutate(modesty_round = round(modesty, 0))
 
 dt_positivity_full
 
-# check sample weights NA - will return to this after impute
-table (is.na(dt_positivity_full$trust_science_high_confidence_scientific_community)) # 
-
 # test positivity
 out <-
-  msm::statetable.msm(trust_science_high_confidence_scientific_community, id, data = dt_positivity_full)
+  msm::statetable.msm(modesty_round, id, data = dt_positivity_full)
 out
 # transition table
 
 t_tab <- transition_table(out, state_names = NULL)
 t_tab
 
-
-out <-
-  msm::statetable.msm(free_speech, id, data = dt_positivity_full)
-
-# transition table
-t_tab <- transition_table(out, state_names = NULL)
-t_tab
-
-
-
-nzavs_exposure
-dt_check_exposure <- dat_long |>   filter(wave == 2018 | wave == 2019) 
-
-# makes sure all is false
-table (is.na(dt_check_exposure$religion_identification_level))
-
-dt_positivity_full <- dat_long |>
-  filter(wave == 2018 | wave == 2019) |>
-  select(wave, id, religion_identification_level, religion_identification_level) |> 
-  mutate(religion_identification_level_round = round(religion_identification_level, 0))
-
-dt_positivity_full
-
-# no need for the rounded variable
-table(dt_positivity_full$religion_identification_level)
-
-# check sample weights NA - will return to this after impute
-table (is.na(dt_positivity_full$sample_weights)) # 
-
-# test positivity
-out <-
-  msm::statetable.msm(religion_identification_level, id, data = dt_positivity_full)
-
-# transition table
-t_tab <- transition_table(out, state_names = NULL)
-t_tab
 
 # set variables for baseline exposure and outcome -------------------------
 
@@ -853,7 +741,7 @@ baseline_vars = c(
   #  "hlth_bmi",
   # bmi
   # "pwi", # pwi
- # "kessler6_sum",
+  # "kessler6_sum",
   #  "support", #soc support
   #  "belong", # social belonging
   #  "smoker", # smoker
@@ -874,7 +762,7 @@ baseline_vars = c(
   #Please rate how politically liberal versus conservative you see yourself as being.
   # Sample origin names combined
   "urban",
- # "children_num",
+  # "children_num",
   "parent",
   #  "hours_children_log",
   # new
@@ -898,13 +786,13 @@ baseline_vars = c(
   #  "religion_spiritual_identification", Not measured
   "religion_identification_level",
   #"religion_religious",
- # "religion_church_binary",
+  # "religion_church_binary",
   #  "religion_prayer_binary",
   #  "religion_scripture_binary",
   # "religion_believe_god",
- # "religion_believe_spirit",
+  # "religion_believe_spirit",
   # "I have a high degree of confidence in the scientific community",
- # "trust_science_high_confidence_scientific_community",
+  # "trust_science_high_confidence_scientific_community",
   ##Our society places too much emphasis on science.
   #"trust_science_our_society_places_too_much_emphasis_reversed",
   #"free_speech",
@@ -915,17 +803,15 @@ baseline_vars = c(
 baseline_vars
 
 # set exposure variable, can be both the continuous and the coarsened, if needed
-exposure_var = c("trust_science_our_society_places_too_much_emphasis_reversed", 
-                 "trust_science_high_confidence_scientific_community",
+exposure_var = c("modesty",
                  "free_speech", 
                  "not_lost") #
 
 
 # outcomes
 outcome_vars = c(
-  "free_speech",
-  "trust_science_our_society_places_too_much_emphasis_reversed", 
-  "trust_science_high_confidence_scientific_community"
+  "trust_science_high_confidence_scientific_community",
+                 "free_speech"
 )
 
 
@@ -935,13 +821,12 @@ outcome_vars = c(
 
 # custom function
 rm(prep_coop_all)
-prep_coop_all <- margot_wide_impute_baseline(
+prep_coop_all_modesty <- margot_wide_impute_baseline(
   dat_long,
   baseline_vars = baseline_vars,
   exposure_var = exposure_var,
   outcome_vars = outcome_vars
 )
-
 
 # check mi model
 # outlist <-
@@ -957,38 +842,22 @@ prep_coop_all <- margot_wide_impute_baseline(
 
 push_mods
 # save function -- will save to your "push_mod" directory
-here_save(prep_coop_all, "prep_coop_all")
+here_save(prep_coop_all_modesty, "prep_coop_all_modesty")
 
 # read function
-prep_coop_all <- here_read("prep_coop_all")
+prep_coop_all_modesty <- here_read("prep_coop_all_modesty")
 
-table( prep_coop_all$t1_not_lost )
-
-head(prep_coop_all)
+table( prep_coop_all_modesty$t1_not_lost )
 
 
-# find  columns with NA in t0
-cols_with_na <- prep_coop_all %>%
-  select(starts_with("t2_")) %>%
-  summarise(across(everything(), ~any(is.na(.)))) %>%
-  pivot_longer(cols = everything(), names_to = "col_name", values_to = "has_na") %>%
-  filter(has_na == TRUE) %>%
-  pull(col_name)
-
-# show results
-print(cols_with_na)
-
-
-#hack 
-
-naniar::vis_miss(prep_coop_all, warn_large_data = FALSE)
+naniar::vis_miss(prep_coop_all_modesty, warn_large_data = FALSE)
 dev.off()
 
 
 #check must be a dataframe
-str(prep_coop_all)
-nrow(prep_coop_all)
-colnames(prep_coop_all)
+str(prep_coop_all_modesty)
+nrow(prep_coop_all_modesty)
+colnames(prep_coop_all_modesty)
 
 
 # arrange data for analysis -----------------------------------------------
@@ -1001,10 +870,8 @@ colnames(prep_coop_all)
 #                                                    levels = unique_levels,
 #                                                    ordered = TRUE)
 
-str(prep_coop_all$t0_education_level_coarsen)
-
 df_wide_censored <-
-  prep_coop_all |>
+  prep_coop_all_modesty |>
   mutate(
     t0_eth_cat = as.factor(t0_eth_cat)    
     #   t0_smoker_binary = as.integer(ifelse(t0_smoker > 0, 1, 0))#,
@@ -1033,13 +900,13 @@ df_clean <- df_wide_censored %>%
         !t0_not_lost &
         !t1_not_lost &
         !t0_sample_weights &
-       !t0_education_level_coarsen,
+        !t0_education_level_coarsen,
       #  !t0_smoker_binary & 
       #  !t1_trust_science_our_society_places_too_much_emphasis_reversed,
       #   !t2_smoker_binary,
-    #  !t1_trust_science_our_society_places_too_much_emphasis_reversed  &
-     # !t1_trust_science_high_confidence_scientific_community  &
-    #  !t1_free_speech,
+      #  !t1_trust_science_our_society_places_too_much_emphasis_reversed  &
+      # !t1_trust_science_high_confidence_scientific_community  &
+      #  !t1_free_speech,
       ~ scale(.x),
       .names = "{col}_z"
     )
@@ -1050,9 +917,6 @@ df_clean <- df_wide_censored %>%
     t0_not_lost,
     t0_sample_weights,
     t0_education_level_coarsen,
-  #  t1_trust_science_our_society_places_too_much_emphasis_reversed,
-    t1_trust_science_high_confidence_scientific_community,
-    t1_free_speech,
     t1_not_lost,
     #   t2_smoker_binary,
     ends_with("_z")
@@ -1067,17 +931,17 @@ df_clean <- df_wide_censored %>%
 dim(df_clean)
 naniar::vis_miss(df_clean, warn_large_data = FALSE)
 
-table(df_clean$t1_trust_science_high_confidence_scientific_community)
+table(df_clean$t1_modesty_z)
 
 
 # check path
 push_mods
 
 # save
-here_save(df_clean, "df_clean")
+here_save(df_clean, "df_clean_modesty")
 
 # read if needed
-df_clean <- here_read("df_clean")
+df_clean <- here_read("df_clean_modesty")
 
 
 #check n
@@ -1092,6 +956,7 @@ names_base <-
                      -t0_sample_weights,
                      -t0_not_lost ) |>  colnames()
 
+table(df_clean$t0_sample_origin)
 names_base
 names_outcomes <-
   df_clean |> select(starts_with("t2")) |> colnames()
@@ -1102,13 +967,15 @@ names_outcomes
 
 #### SET VARIABLE NAMES: Customise for each outcomewide model
 #  model
-A <- "t1_trust_science_high_confidence_scientific_community"
-A_z <-"t1_trust_science_high_confidence_scientific_community_z"
+A
+
+
+# cens
 C <- c("t1_not_lost")
+
 
 #L <- list(c("L1"), c("L2"))
 W <- c(paste(names_base, collapse = ", "))
-head( df_clean$t1_trust_science_our_society_places_too_much_emphasis_reversed_z )
 
 # check
 print(W)
@@ -1126,14 +993,17 @@ print(W)
 # f_1 <- function (data, trt) data[[trt]] + 1
 
 
+one_point_in_sd
+max_score
+
 
 f <- function(data, trt) {
-  ifelse(data[[trt]] <= 7 - 1, data[[trt]] + 1,  data[[trt]])
+  ifelse(data[[trt]] <= max_score - one_point_in_sd, data[[trt]] + one_point_in_sd,  data[[trt]])
 }
 
 
 # shift all to at least the mean
-f_z <- function(data, trt) {
+f_1 <- function(data, trt) {
   ifelse(data[[trt]] <= 0,  0,  data[[trt]])
 }
 
@@ -1148,8 +1018,7 @@ names_base
 
 baseline_vars
 
-A
-A_1
+
 
 ## QUICK TEST
 
@@ -1160,10 +1029,10 @@ covariates <-
   df_clean |> select(starts_with("t0"),
                      -t0_sample_weights,
                      -t0_not_lost#, 
-                   #  -t0_alert_level_combined,
-                  #   -t0_sample_origin,
-                  #   -t0_education_level_coarsen
-                  ) |>  colnames()
+                     #  -t0_alert_level_combined,
+                     #   -t0_sample_origin,
+                     #   -t0_education_level_coarsen
+  ) |>  colnames()
 
 covariates
 
@@ -1177,7 +1046,7 @@ full_formula_t1_not_lost <- paste("t1_not_lost ~", covariate_formula)
 fit_t1 <- glm(as.formula(full_formula_t1_not_lost), family = binomial(link = "logit"), data = df_clean)
 
 # 
-model_parameters(fit_t1, ci_method = "wald", exponentiate = TRUE)[25,]
+model_parameters(fit_t1, ci_method = "wald", exponentiate = TRUE)
 
 # get iptw
 library(ipw)
@@ -1192,19 +1061,20 @@ ipw_t1 <- ipw::ipwpoint(
   exposure = t1_not_lost, 
   family = "binomial",
   link = "logit",
-  denominator =  ~t0_eth_cat + t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + 
-    t0_born_nz_z + t0_household_inc_log_z + t0_partner_z + t0_parent_z + 
-    t0_political_conservative_z + t0_urban_z + t0_agreeableness_z + 
-    t0_conscientiousness_z + t0_extraversion_z + t0_honesty_humility_z + 
-    t0_openness_z + t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
- #   t0_trust_science_our_society_places_too_much_emphasis_reversed_z + 
-    t0_trust_science_high_confidence_scientific_community_z + 
-    t0_free_speech_z,
+  numerator = ~ 1,
+  denominator =  ~t0_eth_cat + t0_sample_origin + t0_alert_level_combined + t0_education_level_coarsen + 
+    t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + t0_born_nz_z + 
+    t0_household_inc_log_z + t0_partner_z + t0_parent_z + t0_political_conservative_z + 
+    t0_urban_z + t0_agreeableness_z + t0_conscientiousness_z + 
+    t0_extraversion_z + t0_honesty_humility_z + t0_openness_z + 
+    t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
+    t0_free_speech_z + t0_trust_science_high_confidence_scientific_community_z,
   data = df_clean
 )
 
 df_clean$ipw_t1 <- ipw_t1$ipw
 
+# stabalized weights
 df_clean$t0_composite_weight <- df_clean$ipw_t1 * df_clean$t0_sample_weights
 
 hist( df_clean$t0_composite_weight)
@@ -1213,15 +1083,12 @@ hist( df_clean$t0_composite_weight)
 
 
 ## CROSS SECTIONAL 
-mr_0 <- lm(t0_trust_science_high_confidence_scientific_community_z  ~t0_eth_cat + 
-             t0_alert_level_combined + 
-             t0_education_level_coarsen + 
+mr_0 <- lm(t0_trust_science_high_confidence_scientific_community_z  ~t0_eth_cat + t0_sample_origin + t0_alert_level_combined + t0_education_level_coarsen + 
              t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + t0_born_nz_z + 
              t0_household_inc_log_z + t0_partner_z + t0_parent_z + t0_political_conservative_z + 
              t0_urban_z + t0_agreeableness_z + t0_conscientiousness_z + 
              t0_extraversion_z + t0_honesty_humility_z + t0_openness_z + 
              t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
-            # t0_trust_science_our_society_places_too_much_emphasis_reversed_z + 
              t0_free_speech_z, weights = t0_composite_weight,
            data = df_clean)
 
@@ -1230,15 +1097,12 @@ mr_0 <- lm(t0_trust_science_high_confidence_scientific_community_z  ~t0_eth_cat 
 plot(model_parameters( mr_0))
 
 
-mr_1 <- lm(t0_free_speech_z  ~t0_eth_cat + 
-             t0_alert_level_combined + 
-             t0_education_level_coarsen + 
+mr_1 <- lm(t0_free_speech_z  ~t0_eth_cat + t0_sample_origin + t0_alert_level_combined + t0_education_level_coarsen + 
              t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + t0_born_nz_z + 
              t0_household_inc_log_z + t0_partner_z + t0_parent_z + t0_political_conservative_z + 
              t0_urban_z + t0_agreeableness_z + t0_conscientiousness_z + 
              t0_extraversion_z + t0_honesty_humility_z + t0_openness_z + 
              t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
-             #  t0_trust_science_our_society_places_too_much_emphasis_reversed_z + 
              t0_trust_science_high_confidence_scientific_community_z, weights = t0_composite_weight,
            data = df_clean)
 
@@ -1248,61 +1112,36 @@ plot(model_parameters( mr_1))
 
 
 
-mr_1 <- lm( t0_political_conservative_z ~t0_eth_cat + 
-             t0_alert_level_combined + 
-             t0_education_level_coarsen + 
-             t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + t0_born_nz_z + 
-             t0_household_inc_log_z + t0_partner_z + t0_parent_z + t0_political_conservative_z + 
-             t0_urban_z + t0_agreeableness_z + t0_conscientiousness_z + 
-             t0_extraversion_z + t0_honesty_humility_z + t0_openness_z + 
-             t0_neuroticism_z + t0_modesty_z  + 
-             #  t0_trust_science_our_society_places_too_much_emphasis_reversed_z + 
-             t0_trust_science_high_confidence_scientific_community_z, weights = t0_composite_weight,
+#  
+ml_1 <- lm(t2_trust_science_high_confidence_scientific_community_z ~ t1_modesty_z *
+             (t0_eth_cat + t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + 
+                t0_born_nz_z + t0_household_inc_log_z + t0_partner_z + t0_parent_z + 
+                t0_political_conservative_z + t0_urban_z + t0_agreeableness_z + 
+                t0_conscientiousness_z + t0_extraversion_z + t0_honesty_humility_z + 
+                t0_openness_z + t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
+                t0_trust_science_high_confidence_scientific_community_z + 
+                t0_free_speech_z) , weights = t0_composite_weight,
            data = df_clean)
 
-#model_parameters( mr_0)[2,]
+model_parameters( ml_1 )[2,]
 
-plot(model_parameters( mr_1))
-
-
+plot(model_parameters( ml_1))
 
 
 
 
-
-
-# nothing 
-mr_1 <- lm(t2_trust_science_high_confidence_scientific_community_z ~t1_free_speech *
-                 (t0_eth_cat + t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + 
-                    t0_born_nz_z + t0_household_inc_log_z + t0_partner_z + t0_parent_z + 
-                    t0_political_conservative_z + t0_urban_z + t0_agreeableness_z + 
-                    t0_conscientiousness_z + t0_extraversion_z + t0_honesty_humility_z + 
-                    t0_openness_z + t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
-                    t0_trust_science_our_society_places_too_much_emphasis_reversed_z + 
-                    t0_trust_science_high_confidence_scientific_community_z + 
-                    t0_free_speech_z) , weights = t0_composite_weight,
-                                         data = df_clean)
-
-model_parameters( mr_1 )[2,]
-
-plot(model_parameters( mr_1))
-
-
-
-
-mr_2 <- lm(t2_free_speech_z ~ t1_trust_science_high_confidence_scientific_community_z *
-           (t0_eth_cat + t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + 
-              t0_born_nz_z + t0_household_inc_log_z + t0_partner_z + t0_parent_z + 
-              t0_political_conservative_z + t0_urban_z + t0_agreeableness_z + 
-              t0_conscientiousness_z + t0_extraversion_z + t0_honesty_humility_z + 
-              t0_openness_z + t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
-              t0_trust_science_our_society_places_too_much_emphasis_reversed_z + 
-              t0_trust_science_high_confidence_scientific_community_z + 
-              t0_free_speech_z) , weights = t0_composite_weight,
-         data = df_clean)
+ml_2 <- lm(t2_free_speech_z ~ t1_modesty_z *
+             (t0_eth_cat + t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + 
+                t0_born_nz_z + t0_household_inc_log_z + t0_partner_z + t0_parent_z + 
+                t0_political_conservative_z + t0_urban_z + t0_agreeableness_z + 
+                t0_conscientiousness_z + t0_extraversion_z + t0_honesty_humility_z + 
+                t0_openness_z + t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
+                t0_trust_science_high_confidence_scientific_community_z + 
+                t0_free_speech_z) , weights = t0_composite_weight,
+           data = df_clean)
 
 # nothing
-model_parameters( mr_1 )[2,]
+model_parameters( ml_2 )[2,]
 
 plot(model_parameters( mr_2))
 
@@ -1311,47 +1150,17 @@ dev.off()
 dat_19 <- dat_long |> 
   filter(wave == 2019)
 
-model_parameters(
-  mt_0 <-  lm(t2_trust_science_high_confidence_scientific_community_z ~ bs(t1_free_speech_z), data = dat_19)
-)
-
-plot( ggeffects::ggeffect(mt_0, terms = c("t1_free_speech_z")))
-
 
 model_parameters(
-  mt_0 <-  lm(t2_trust_science_high_confidence_scientific_community_z ~ bs(t1_free_speech_z), data = dat_19)
-)
-
-plot( ggeffects::ggeffect(mt_0, terms = c("t1_free_speech_z")))
-
-
-
-
-model_parameters(
-  mt_2  <- lm(t2_free_speech_z ~ bs(t1_trust_science_high_confidence_scientific_community),  
+  mt_2  <- lm(t2_free_speech_z ~ bs(t1_modesty_z),  
               weights = t0_composite_weight,data = df_clean)
 )
 
-
-
-
-model_parameters(
-mt_1 <-  lm(t2_trust_science_high_confidence_scientific_community_z ~ bs(t1_free_speech_z), data = df_clean)
-)
-
-plot( ggeffects::ggeffect(mt_1, terms = c("t1_free_speech_z")))
+plot( ggeffects::ggeffect(mt_2, terms = c("t1_modesty_z")))
 
 
 model_parameters(
-  mt_2  <- lm(t2_free_speech_z ~ bs(t1_trust_science_high_confidence_scientific_community),  
-     weights = t0_composite_weight,data = df_clean)
-)
-
-plot( ggeffects::ggeffect(mt_2, terms = c("t1_trust_science_high_confidence_scientific_community")))
-
-
-model_parameters(
-   lm(trust_science_high_confidence_scientific_community ~ time, data = dat_long_2)
+  lm(trust_science_high_confidence_scientific_community ~ time, data = dat_long_2)
 )
 
 
@@ -1371,25 +1180,6 @@ model_parameters(
 )
 
 
-
-# test
-model_parameters(
-  lm(
-    t2_free_speech_z ~ t1_trust_science_high_confidence_scientific_community *
-      (t0_trust_science_high_confidence_scientific_community_z + t0_free_speech_z +
-      t0_age_z + 
-      t0_male_z + 
-      t0_political_conservative_z), data = df_clean)
-)
-
-model_parameters(
-  lm(
-    t2_trust_science_high_confidence_scientific_community_z ~ t1_free_speech *
-      (t0_trust_science_high_confidence_scientific_community_z + t0_free_speech_z +
-      t0_age_z + 
-      t0_male_z + 
-      t0_political_conservative_z), data = df_clean)
-)
 
 dat_long_2 <-  dat_long |> mutate(time = as.numeric(wave)-1)
 
@@ -1419,18 +1209,18 @@ plot( ggeffects::ggeffect(m_time_speech, terms = c("time"))) + scale_y_continuou
 
 
 model_parameters(
- m1<- lm(
-    trust_science_high_confidence_scientific_community ~ bs(free_speech) * bs(time), 
+  m1<- lm(
+    trust_science_high_confidence_scientific_community ~ bs(modesty) * bs(time), 
     data = dat_long_2
   )
 )
 
-plot( ggeffects::ggeffect(m1, terms = c( "free_speech", "time"))) + scale_y_continuous(limits = c(1,7))
+plot( ggeffects::ggeffect(m1, terms = c( "modesty", "time"))) + scale_y_continuous(limits = c(1,7))
 
 
 
 model_parameters(
- m2 <-  lm(
+  m2 <-  lm(
     free_speech ~ trust_science_high_confidence_scientific_community * time, 
     data = dat_long_2
   )
@@ -1449,9 +1239,9 @@ plot( ggeffects::ggeffect(m3, terms = c( "trust_science_high_confidence_scientif
 
 
 m4 <-  lm(
-    trust_science_high_confidence_scientific_community ~ bs(free_speech) * bs(time), 
-    data = dat_long_2
-  )
+  trust_science_high_confidence_scientific_community ~ bs(free_speech) * bs(time), 
+  data = dat_long_2
+)
 )
 
 plot( ggeffects::ggeffect(m4, terms = c( "free_speech", "time")))+ scale_y_continuous(limits = c(1,7))
@@ -1467,8 +1257,8 @@ plot( ggeffects::ggeffect(m2, terms = c("trust_science_high_confidence_scientifi
 
 
 
-
-
+f
+f_1
 
 # FREE SPEECH
 # Censorship and freedom of speech
@@ -1476,9 +1266,9 @@ plot( ggeffects::ggeffect(m2, terms = c("trust_science_high_confidence_scientifi
 # Although I may disagree with the opinions that other people hold, they should be allowed to express those views publicly.
 
 
+df_clean$t2_free_speech_z
 
-
-t2_free_speech_z_trt_A <- lmtp_tmle(
+t2_free_speech_z_modesty_up_one <- lmtp_tmle(
   data = df_clean,
   trt = A,
   baseline = names_base,
@@ -1495,11 +1285,10 @@ t2_free_speech_z_trt_A <- lmtp_tmle(
 )
 
 
-t2_free_speech_z_trt_A
-t2_free_speech_z_trt_A
-here_save(t2_free_speech_z_trt_A, "t2_free_speech_z_trt_A")
+t2_free_speech_z_modesty_up_one
+here_save(t2_free_speech_z_modesty_up_one, "t2_free_speech_z_modesty_up_one")
 
-t2_free_speech_z_null <- lmtp_tmle(
+t2_free_speech_z_modesty_null <- lmtp_tmle(
   data = df_clean,
   trt = A,
   baseline = names_base,
@@ -1515,73 +1304,13 @@ t2_free_speech_z_null <- lmtp_tmle(
   parallel = n_cores
 )
 
-t2_free_speech_z_null
-here_save(t2_free_speech_z_null, "t2_free_speech_z_null")
+t2_free_speech_z_modesty_null
+here_save(t2_free_speech_z_modesty_null, "t2_free_speech_z_modesty_null")
 
 # no relationship
-lmtp_contrast(t2_free_speech_z_trt_A,
-              ref = t2_free_speech_z_null,
+lmtp_contrast(t2_free_speech_z_modesty_up_one,
+              ref = t2_free_speech_z_modesty_null,
               type = "additive")
-
-
-# speech: z-shift low to mean ---------------------------------------------
-
-
-# FREE SPEECH
-# Censorship and freedom of speech
-# People who hold opinions that are harmful or offensive to minority groups should be banned from expressing those views publicly.
-# Although I may disagree with the opinions that other people hold, they should be allowed to express those views publicly.
-
-f_z
-A_z
-
-t2_free_speech_z_trt_A_z <- lmtp_tmle(
-  data = df_clean,
-  trt = A_z,
-  baseline = names_base,
-  outcome = "t2_free_speech_z",
-  cens = C,
-  shift = f_z,
-  mtp = TRUE,
-  folds = 5,
-  outcome_type = "continuous",
-  weights = df_clean$t0_sample_weights,
-  learners_trt = sl_lib,
-  learners_outcome = sl_lib,
-  parallel = n_cores
-)
-
-
-
-t2_free_speech_z_trt_A_z
-here_save(t2_free_speech_z_trt_A_z, "t2_free_speech_z_trt_A_z")
-
-t2_free_speech_z_null_z <- lmtp_tmle(
-  data = df_clean,
-  trt = A,
-  baseline = names_base,
-  outcome = "t2_free_speech_z",
-  cens = C,
-  shift = NULL,
-  # mtp = TRUE,
-  folds = 5,
-  outcome_type = "continuous",
-  weights = df_clean$t0_sample_weights,
-  learners_trt = sl_lib,
-  learners_outcome = sl_lib,
-  parallel = n_cores
-)
-
-t2_free_speech_z_null
-here_save(t2_free_speech_z_null, "t2_free_speech_z_null")
-
-# no relationship
-lmtp_contrast(t2_free_speech_z_trt_A,
-              ref = t2_free_speech_z_null,
-              type = "additive")
-
-
-
 
 
 
@@ -1593,16 +1322,13 @@ lmtp_contrast(t2_free_speech_z_trt_A,
 ## SCIENCE CREDIBILITY 
 # "I have a high degree of confidence in the scientific community",
 
-f_z
-A_1_z
-
-t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z <- lmtp_tmle(
+t2_science_confidence_z_modesty_up_one <- lmtp_tmle(
   data = df_clean,
-  trt = A_1_z,
+  trt = A,
   baseline = names_base,
   outcome = "t2_trust_science_high_confidence_scientific_community_z",
   cens = C,
-  shift = f_z,
+  shift = f,
   mtp = TRUE,
   folds = 5,
   outcome_type = "continuous",
@@ -1613,186 +1339,131 @@ t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z <- lmtp_tmle(
 )
 
 
-t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z
-t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z
-here_save(t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z, 
-          "t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z")
-# 
-# #"How often do you have a drink containing alcohol?"
-# t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null <- lmtp_tmle(
-#   data = df_clean,
-#   trt = A_1,
-#   baseline = names_base,
-#   outcome = "t2_trust_science_high_confidence_scientific_community_z",
-#   cens = C,
-#   shift = NULL,
-#   # mtp = TRUE,
-#   folds = 5,
-#   outcome_type = "continuous",
-#   weights = df_clean$t0_sample_weights,
-#   learners_trt = sl_lib,
-#   learners_outcome = sl_lib,
-#   parallel = n_cores
-# )
-# 
-# t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null
-# here_save(t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null, 
-#           "t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null")
+t2_science_confidence_z_modesty_up_one
+here_save(t2_science_confidence_z_modesty_up_one, 
+          "t2_science_confidence_z_modesty_up_one")
 
+
+
+t2_science_confidence_z_modesty_null <- lmtp_tmle(
+  data = df_clean,
+  trt = A,
+  baseline = names_base,
+  outcome = "t2_trust_science_high_confidence_scientific_community_z",
+  cens = C,
+  shift = NULL,
+  # mtp = TRUE,
+  folds = 5,
+  outcome_type = "continuous",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
+t2_science_confidence_z_modesty_null
+here_save(t2_science_confidence_z_modesty_null, "t2_science_confidence_z_modesty_null")
+
+# no relationship
+lmtp_contrast(t2_science_confidence_z_modesty_up_one,
+              ref = t2_science_confidence_z_modesty_null,
+              type = "additive")
 
 
 
 
 # CONTRASTS ---------------------------------------------------------------
 
-t2_free_speech_z_trt_A <- 
-  here_read( "t2_free_speech_z_trt_A")
 
-t2_free_speech_z_null <- 
-  here_read("t2_free_speech_z_null")
+lmtp_contrast(t2_free_speech_z_modesty_up_one,
+              ref = t2_free_speech_z_modesty_null,
+              type = "additive")
 
-t2_free_speech_z_trt_A_z <- 
-  here_read( "t2_free_speech_z_trt_A_z")
+# free speech
+t2_free_speech_z_modesty_up_one <- 
+  here_read( "t2_free_speech_z_modesty_up_one")
 
-t2_free_speech_z_trt_A
-t2_free_speech_z_trt_A_z
+t2_free_speech_z_modesty_null <- 
+  here_read("t2_free_speech_z_modesty_null")
 
 
-#1 
-
-contrast_t2_free_speech_z_trt_A <-
-  lmtp_contrast(t2_free_speech_z_trt_A,
-                ref = t2_free_speech_z_null,
+contrast_t2_free_speech_z_modesty_up_one <-
+  lmtp_contrast(t2_free_speech_z_modesty_up_one,
+                ref = t2_free_speech_z_modesty_null,
                 type = "additive")
 
 
-tab_contrast_t2_free_speech_z_trt_A<-
-  margot_tab_lmtp(contrast_t2_free_speech_z_trt_A,
+tab_contrast_t2_free_speech_z_modesty_up_one<-
+  margot_tab_lmtp(contrast_t2_free_speech_z_modesty_up_one,
                   scale = "RD",
                   new_name = "Free Speech")
 
 
-out_tab_contrast_t2_free_speech_z_trt_A <-
-  lmtp_evalue_tab(tab_contrast_t2_free_speech_z_trt_A,
+out_tab_contrast_t2_free_speech_z_modesty_up_one <-
+  lmtp_evalue_tab(tab_contrast_t2_free_speech_z_modesty_up_one,
                   scale = c("RD"))
 
-out_tab_contrast_t2_free_speech_z_trt_A
+out_tab_contrast_t2_free_speech_z_modesty_up_one
 
 
 
 
+# Science confidence
+t2_science_confidence_z_modesty_up_one <- 
+  here_read( "t2_science_confidence_z_modesty_up_one")
 
-#1
-contrast_t2_free_speech_z_trt_A_z <-
-  lmtp_contrast(t2_free_speech_z_trt_A_z,
-                ref = t2_free_speech_z_null,
+t2_science_confidence_z_modesty_null <- 
+  here_read("t2_science_confidence_z_modesty_null")
+
+
+contrast_t2_science_confidence_z_modesty_up_one <-
+  lmtp_contrast(t2_science_confidence_z_modesty_up_one,
+                ref = t2_science_confidence_z_modesty_null,
                 type = "additive")
 
 
-tab_contrast_t2_free_speech_z_trt_A_z<-
-  margot_tab_lmtp(contrast_t2_free_speech_z_trt_A_z,
+tab_contrast_t2_science_confidence_z_modesty_up_one<-
+  margot_tab_lmtp(contrast_t2_science_confidence_z_modesty_up_one,
                   scale = "RD",
                   new_name = "Free Speech")
 
 
-out_tab_contrast_t2_free_speech_z_trt_A_z <-
-  lmtp_evalue_tab(tab_contrast_t2_free_speech_z_trt_A_z,
+out_tab_contrast_t2_science_confidence_z_modesty_up_one <-
+  lmtp_evalue_tab(tab_contrast_t2_science_confidence_z_modesty_up_one,
                   scale = c("RD"))
 
-out_tab_contrast_t2_free_speech_z_trt_A_z
+out_tab_contrast_t2_science_confidence_z_modesty_up_one
 
 
-## Science confidence
 
 
-t2_trust_science_high_confidence_scientific_community_z_trt_A_1 <- 
-  here_read("t2_trust_science_high_confidence_scientific_community_z_trt_A_1")
-t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z <- 
-  here_read("t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z")
-t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null <- 
-  here_read("t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null")
-
-t2_trust_science_high_confidence_scientific_community_z_trt_A_1
-t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z
-
-contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1 <-
-  lmtp_contrast(t2_trust_science_high_confidence_scientific_community_z_trt_A_1,
-                ref = t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null,
-                type = "additive")
-
-contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1
-tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1 <-
-  margot_tab_lmtp(contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1,
-                  scale = "RD",
-                  new_name = "Free Speech")
 
 
-out_tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1 <-
-  lmtp_evalue_tab(tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1,
-                  scale = c("RD"))
-
-out_tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1
-
-
-t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z
-t2_trust_science_high_confidence_scientific_community_z_trt_A_1
-
-
-# 2
-contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z <-
-  lmtp_contrast(t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z,
-                ref = t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null,
-                type = "additive")
-
-
-tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z<-
-  margot_tab_lmtp(contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z,
-                  scale = "RD",
-                  new_name = "Free Speech")
-
-
-out_tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z<-
-  lmtp_evalue_tab(tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z,
-                  scale = c("RD"))
-
-out_tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z
-
-
-out_tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1
-out_tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1_z
 
 # make tables -------------------------------------------------------------
 # don't forget to report smoking
 
 # bind individual tables
-tab_health <- rbind(
-  # out_tab_contrast_t2_sfhealth_z,
-  t2_trust_science_high_confidence_scientific_community_z_trt_A_1,
-  t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null,
-)
-
-tab_body <- rbind(
-  out_tab_contrast_t2_bodysat_z,
-  out_tab_contrast_t2_kessler6_sum_z,
+tab_modesty <- rbind(
+  out_tab_contrast_t2_free_speech_z_modesty_up_one,
+  out_tab_contrast_t2_science_confidence_z_modesty_up_one,
 )
 
 # make group table
-group_tab_health <- group_tab(tab_health  , type = "RD")
+group_tab_modesty<- group_tab(tab_modesty  , type = "RD")
 
 # save
-here_save(group_tab_health, "group_tab_health")
+here_save(group_tab_modesty, "group_tab_modesty")
 
 
 # make group table
-group_tab_body <- group_tab(tab_body , type = "RD")
+group_tab_modesty <- group_tab(group_tab_modesty , type = "RD")
 
-# save
-here_save(group_tab_body, "group_tab_body")
 
 
 # create plots -------------------------------------------------------------
 N 
-sub_title = "Science Credibility: shift + 1 point everyone (up to max 1), N = 31,577"
+sub_title = "Modesty: shift + 1 point everyone (up to max 1), N = 31,577"
 
 
 
@@ -1800,7 +1471,7 @@ sub_title = "Science Credibility: shift + 1 point everyone (up to max 1), N = 31
 plot_group_tab_health <- margot_plot(
   group_tab_health,
   type = "RD",
-  title = "Freedom of Speech Effects",
+  title = "Modesty Effects",
   subtitle = sub_title,
   xlab = "",
   ylab = "",
