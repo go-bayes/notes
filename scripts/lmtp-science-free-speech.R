@@ -1102,6 +1102,200 @@ C
 
 names_base
 
+baseline_vars
+
+
+## QUICK TEST
+
+# linear model ------------------------------------------------------------
+
+# censoring weights
+covariates <-
+  df_clean |> select(starts_with("t0"),
+                     -t0_sample_weights,
+                     -t0_not_lost, 
+                     -t0_alert_level_combined,
+                     -t0_sample_origin,
+                     -t0_education_level_coarsen) |>  colnames()
+
+covariates
+
+# for regression
+covariate_formula <- paste(covariates, collapse = " + ")
+covariate_formula
+
+covariate_formula
+full_formula_t1_not_lost <- paste("t1_not_lost ~", covariate_formula)
+
+fit_t1 <- glm(as.formula(full_formula_t1_not_lost), family = binomial(link = "logit"), data = df_clean)
+
+# 
+model_parameters(fit_t1, ci_method = "wald", exponentiate = TRUE)[25,]
+
+test <- glm(t1_not_lost ~ t0_free_speech_z, family = binomial(link = "logit"), data = df_clean)
+
+model_parameters(test, ci_method = "wald", exponentiate = TRUE)
+
+# get iptw
+library(ipw)
+
+# Your Numerator and Denominator
+numerator_formula <- ~ 1
+denominator_formula <- as.formula(paste("~", covariate_formula))
+denominator_formula
+# Run ipwpoint
+# Run ipwpoint
+ipw_t1 <- ipw::ipwpoint(
+  exposure = t1_not_lost, 
+  family = "binomial",
+  link = "logit",
+  denominator =  ~t0_eth_cat + t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + 
+    t0_born_nz_z + t0_household_inc_log_z + t0_partner_z + t0_parent_z + 
+    t0_political_conservative_z + t0_urban_z + t0_agreeableness_z + 
+    t0_conscientiousness_z + t0_extraversion_z + t0_honesty_humility_z + 
+    t0_openness_z + t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
+    t0_trust_science_our_society_places_too_much_emphasis_reversed_z + 
+    t0_trust_science_high_confidence_scientific_community_z + 
+    t0_free_speech_z,
+  data = df_clean
+)
+
+df_clean$ipw_t1 <- ipw_t1$ipw
+
+df_clean$t0_composite_weight <- df_clean$ipw_t1 * df_clean$t0_sample_weights
+
+hist( df_clean$t0_composite_weight)
+
+
+# nothing 
+m1 <- lm(t2_trust_science_high_confidence_scientific_community_z ~ t1_free_speech *
+                 (t0_eth_cat + t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + 
+                    t0_born_nz_z + t0_household_inc_log_z + t0_partner_z + t0_parent_z + 
+                    t0_political_conservative_z + t0_urban_z + t0_agreeableness_z + 
+                    t0_conscientiousness_z + t0_extraversion_z + t0_honesty_humility_z + 
+                    t0_openness_z + t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
+                    t0_trust_science_our_society_places_too_much_emphasis_reversed_z + 
+                    t0_trust_science_high_confidence_scientific_community_z + 
+                    t0_free_speech_z) , weights = t0_composite_weight,
+                                         data = df_clean)
+model_parameters( m1 )[2,]
+
+
+m2 <- lm(t2_free_speech_z ~ t1_trust_science_high_confidence_scientific_community_z *
+           (t0_eth_cat + t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + 
+              t0_born_nz_z + t0_household_inc_log_z + t0_partner_z + t0_parent_z + 
+              t0_political_conservative_z + t0_urban_z + t0_agreeableness_z + 
+              t0_conscientiousness_z + t0_extraversion_z + t0_honesty_humility_z + 
+              t0_openness_z + t0_neuroticism_z + t0_modesty_z + t0_religion_identification_level_z + 
+              t0_trust_science_our_society_places_too_much_emphasis_reversed_z + 
+              t0_trust_science_high_confidence_scientific_community_z + 
+              t0_free_speech_z) , weights = t0_composite_weight,
+         data = df_clean)
+
+model_parameters( m2 )[2,]
+confint(msm)
+
+model_parameters(
+  lm(t2_trust_science_high_confidence_scientific_community_z ~ t0_trust_science_high_confidence_scientific_community_z, data = df_clean)
+)
+
+model_parameters(
+  lm(t2_trust_science_high_confidence_scientific_community_z ~ t0_trust_science_high_confidence_scientific_community_z,  
+     weights = t0_composite_weight,data = df_clean)
+)
+
+
+
+model_parameters(
+   lm(trust_science_high_confidence_scientific_community ~ time, data = dat_long_2)
+)
+
+
+model_parameters(
+  lm(
+    free_speech ~ time, data = dat_long_2)
+)
+
+model_parameters(
+  lm(
+    free_speech ~ trust_science_high_confidence_scientific_community * time, data = dat_long_2)
+)
+
+model_parameters(
+  lm(
+    trust_science_high_confidence_scientific_community ~ free_speech * time, data = dat_long_2)
+)
+
+
+
+# test
+model_parameters(
+  lm(
+    t2_free_speech_z ~ t1_trust_science_high_confidence_scientific_community *
+      (t0_trust_science_high_confidence_scientific_community_z + t0_free_speech_z +
+      t0_age_z + 
+      t0_male_z + 
+      t0_political_conservative_z), data = df_clean)
+)
+
+model_parameters(
+  lm(
+    t2_trust_science_high_confidence_scientific_community_z ~ t1_free_speech *
+      (t0_trust_science_high_confidence_scientific_community_z + t0_free_speech_z +
+      t0_age_z + 
+      t0_male_z + 
+      t0_political_conservative_z), data = df_clean)
+)
+
+dat_long_2 <-  dat_long |> mutate(time = as.numeric(wave)-1)
+
+# this 
+
+model_parameters(
+  m_time_science_confidence<- lm(
+    trust_science_high_confidence_scientific_community ~ bs(time), 
+    data = dat_long_2
+  )
+)
+
+plot( ggeffects::ggeffect(m_time_science_confidence, terms = c("time")))
+
+
+model_parameters(
+  m_time_speech <- lm(
+    free_speech ~ bs(time), 
+    data = dat_long_2
+  )
+)
+
+plot( ggeffects::ggeffect(m_time_science_confidence, terms = c("time")))
+plot( ggeffects::ggeffect(m_time_speech, terms = c("time")))
+
+
+
+
+model_parameters(
+ m1<- lm(
+    trust_science_high_confidence_scientific_community ~ free_speech * time, 
+    data = dat_long_2
+  )
+)
+
+model_parameters(
+ m2 <-  lm(
+    free_speech ~ trust_science_high_confidence_scientific_community * time, 
+    data = dat_long_2
+  )
+)
+
+
+# this looks like attrition 
+plot( ggeffects::ggeffect(m1, terms = c( "free_speech", "time")))
+
+
+# this looks like attrition 
+plot( ggeffects::ggeffect(m2, terms = c("trust_science_high_confidence_scientific_community", "time")) ) 
+
 
 # FREE SPEECH 
 # Censorship and freedom of speech
@@ -1149,6 +1343,10 @@ t2_free_speech_z_null <- lmtp_tmle(
 t2_free_speech_z_null
 here_save(t2_free_speech_z_null, "t2_free_speech_z_null")
 
+# no relationship
+lmtp_contrast(t2_free_speech_z_trt_A,
+              ref = t2_free_speech_z_null,
+              type = "additive")
 
 
 ## SCIENCE CREDIBILITY 
@@ -1219,107 +1417,57 @@ t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null <-
 
 
 
-
-contrast_t2_self_esteem_z <-
-  lmtp_contrast(t2_self_esteem_z,
-                ref = t2_self_esteem_z_null,
+contrast_t2_free_speech_z
+contrast_t2_free_speech_z <-
+  lmtp_contrast(t2_free_speech_z_trt_A,
+                ref = t2_free_speech_z_null,
                 type = "additive")
 
 
-tab_contrast_t2_self_esteem_z <-
-  margot_tab_lmtp(contrast_t2_self_esteem_z,
+tab_contrast_t2_free_speech_z <-
+  margot_tab_lmtp(contrast_t2_free_speech_z,
                   scale = "RD",
-                  new_name = "Self esteem: socialising >=2 hours per week")
+                  new_name = "Free Speech")
 
 
-out_tab_contrast_t2_self_esteem_z <-
-  lmtp_evalue_tab(tab_contrast_t2_self_esteem_z,
+out_tab_contrast_t2_free_speech_z <-
+  lmtp_evalue_tab(tab_contrast_t2_free_speech_z,
                   scale = c("RD"))
 
-out_tab_contrast_t2_self_esteem_z
+out_tab_contrast_t2_free_speech_z
 
-# perfectionism
 
-t2_perfectionism_z <- here_read("t2_perfectionism_z")
-t2_perfectionism_z_null <-
-  here_read("t2_perfectionism_z_null")
 
-contrast_t2_perfectionism_z <-
-  lmtp_contrast(t2_perfectionism_z,
-                ref = t2_perfectionism_z_null,
+## Science confidence
+
+
+contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1 <-
+  lmtp_contrast(t2_trust_science_high_confidence_scientific_community_z_trt_A_1,
+                ref = t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null,
                 type = "additive")
 
-
-tab_contrast_t2_perfectionism_z <-
-  margot_tab_lmtp(contrast_t2_perfectionism_z ,
+contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1
+tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1 <-
+  margot_tab_lmtp(contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1,
                   scale = "RD",
-                  new_name = "Perfectionism: socialising >=2 hours per week")
+                  new_name = "Free Speech")
 
 
-out_tab_contrast_t2_perfectionism_z <-
-  lmtp_evalue_tab(tab_contrast_t2_perfectionism_z,
+out_tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1 <-
+  lmtp_evalue_tab(tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1,
                   scale = c("RD"))
 
-out_tab_contrast_t2_perfectionism_z
+out_tab_contrast_t2_trust_science_high_confidence_scientific_community_z_trt_A_1
 
-
-# self control have
-t2_self_control_have_lots_z <-
-  here_read("t2_self_control_have_lots_z")
-t2_self_control_have_lots_z_null <-
-  here_read("t2_self_control_have_lots_z_null")
-
-contrast_t2_self_control_have_lots_z <-
-  lmtp_contrast(t2_self_control_have_lots_z,
-                ref = t2_self_control_have_lots_z_null,
-                type = "additive")
-
-
-tab_contrast_t2_self_control_have_lots_z <-
-  margot_tab_lmtp(contrast_t2_self_control_have_lots_z ,
-                  scale = "RD",
-                  new_name = "Self control have: socialising >=2 hours per week")
-
-
-out_tab_contrast_t2_self_control_have_lots_z <-
-  lmtp_evalue_tab(tab_contrast_t2_self_control_have_lots_z,
-                  scale = c("RD"))
-
-out_tab_contrast_t2_self_control_have_lots_z
-# self control wish
-t2_self_control_wish_more_reversed_z <-
-  here_read("t2_self_control_wish_more_reversed_z")
-t2_self_control_wish_more_reversed_z_null <-
-  here_read("t2_self_control_wish_more_reversed_z_null")
-
-contrast_t2_self_control_wish_more_reversed_z <-
-  lmtp_contrast(t2_self_control_wish_more_reversed_z,
-                ref = t2_self_control_wish_more_reversed_z_null,
-                type = "additive")
-
-tab_contrast_t2_self_control_wish_more_reversed_z <-
-  margot_tab_lmtp(
-    contrast_t2_self_control_wish_more_reversed_z,
-    scale = "RD",
-    new_name = "Self control wish more (reversed):  socialising >=2 hours per week"
-  )
-
-
-out_tab_contrast_t2_self_control_wish_more_reversed_z <-
-  lmtp_evalue_tab(tab_contrast_t2_self_control_wish_more_reversed_z,
-                  scale = c("RD"))
-
-out_tab_contrast_t2_self_control_wish_more_reversed_z
 
 # make tables -------------------------------------------------------------
-
 # don't forget to report smoking
 
 # bind individual tables
 tab_health <- rbind(
   # out_tab_contrast_t2_sfhealth_z,
-  out_tab_contrast_t2_sfhealth_your_health_z,
-  out_tab_contrast_t2_hours_exercise_log_z,
+  t2_trust_science_high_confidence_scientific_community_z_trt_A_1,
+  t2_trust_science_high_confidence_scientific_community_z_trt_A_1_null,
 )
 
 tab_body <- rbind(
