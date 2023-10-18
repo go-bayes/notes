@@ -1268,8 +1268,8 @@ model_parameters(
   )
 )
 
-plot( ggeffects::ggeffect(m_time_science_confidence, terms = c("time")))
-plot( ggeffects::ggeffect(m_time_speech, terms = c("time")))
+plot( ggeffects::ggeffect(m_time_science_confidence, terms = c("time"))) + scale_y_continuous(limits = c(1,7))
+plot( ggeffects::ggeffect(m_time_speech, terms = c("time"))) + scale_y_continuous(limits = c(1,7))
 
 
 
@@ -1287,6 +1287,26 @@ model_parameters(
     data = dat_long_2
   )
 )
+
+
+model_parameters(
+  m3 <-  lm(
+    free_speech ~ bs(trust_science_high_confidence_scientific_community) * bs(time), 
+    data = dat_long_2
+  )
+)
+
+plot( ggeffects::ggeffect(m3, terms = c( "trust_science_high_confidence_scientific_community", "time")))
+
+
+model_parameters(
+  m4 <-  lm(
+    trust_science_high_confidence_scientific_community ~ bs(free_speech) * bs(time), 
+    data = dat_long_2
+  )
+)
+
+plot( ggeffects::ggeffect(m4, terms = c( "free_speech", "time")))
 
 
 # this looks like attrition 
