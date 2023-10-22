@@ -1008,6 +1008,27 @@ f_1 <- function(data, trt) {
 }
 
 
+# shift all to at least the mean
+f_all_7 <- function(data, trt) {
+  ifelse(data[[trt]] < 7,  7,  data[[trt]])
+}
+
+
+f_all_7_z <- function(data, trt) {
+  ifelse(data[[trt]] < max_score,  max_score,  data[[trt]])
+}
+
+
+f_all_1_z <- function(data, trt) {
+  ifelse(data[[trt]] > min_score,  min_score,  data[[trt]])
+}
+
+min_score
+
+
+
+
+
 # check assignments
 f
 A
@@ -1112,8 +1133,8 @@ plot(model_parameters( mr_1))
 
 
 
-#  
-ml_1 <- lm(t2_trust_science_high_confidence_scientific_community_z ~ t1_modesty_z *
+#  Conditional
+ml_1 <- lm(t2_trust_science_high_confidence_scientific_community_z ~ bs(t1_modesty_z) *
              (t0_eth_cat + t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + 
                 t0_born_nz_z + t0_household_inc_log_z + t0_partner_z + t0_parent_z + 
                 t0_political_conservative_z + t0_urban_z + t0_agreeableness_z + 
@@ -1125,12 +1146,12 @@ ml_1 <- lm(t2_trust_science_high_confidence_scientific_community_z ~ t1_modesty_
 
 model_parameters( ml_1 )[2,]
 
-plot(model_parameters( ml_1))
+
+plot( ggeffects::ggeffect(ml_1, terms = c("t1_modesty_z")))
 
 
 
-
-ml_2 <- lm(t2_free_speech_z ~ t1_modesty_z *
+ml_2 <- lm(t2_free_speech_z ~ bs(t1_modesty_z) *
              (t0_eth_cat + t0_male_z + t0_age_z + t0_nz_dep2018_z + t0_nzsei13_z + 
                 t0_born_nz_z + t0_household_inc_log_z + t0_partner_z + t0_parent_z + 
                 t0_political_conservative_z + t0_urban_z + t0_agreeableness_z + 
@@ -1140,47 +1161,15 @@ ml_2 <- lm(t2_free_speech_z ~ t1_modesty_z *
                 t0_free_speech_z) , weights = t0_composite_weight,
            data = df_clean)
 
-# nothing
-model_parameters( ml_2 )[2,]
-
-plot(model_parameters( mr_2))
-
-dev.off()
-
-dat_19 <- dat_long |> 
-  filter(wave == 2019)
-
-
-model_parameters(
-  mt_2  <- lm(t2_free_speech_z ~ bs(t1_modesty_z),  
-              weights = t0_composite_weight,data = df_clean)
-)
-
-plot( ggeffects::ggeffect(mt_2, terms = c("t1_modesty_z")))
-
-
-model_parameters(
-  lm(trust_science_high_confidence_scientific_community ~ time, data = dat_long_2)
-)
-
-
-model_parameters(
-  lm(
-    free_speech ~ time, data = dat_long_2)
-)
-
-model_parameters(
-  lm(
-    free_speech ~ trust_science_high_confidence_scientific_community * time, data = dat_long_2)
-)
-
-model_parameters(
-  lm(
-    trust_science_high_confidence_scientific_community ~ free_speech * time, data = dat_long_2)
-)
 
 
 
+plot( ggeffects::ggeffect(ml_2, terms = c("t1_modesty_z")))
+
+
+
+
+# Multi-level
 dat_long_2 <-  dat_long |> mutate(time = as.numeric(wave)-1)
 
 # this 
@@ -1257,16 +1246,11 @@ plot( ggeffects::ggeffect(m2, terms = c("trust_science_high_confidence_scientifi
 
 
 
-f
-f_1
-
 # FREE SPEECH
 # Censorship and freedom of speech
 # People who hold opinions that are harmful or offensive to minority groups should be banned from expressing those views publicly.
 # Although I may disagree with the opinions that other people hold, they should be allowed to express those views publicly.
 
-
-df_clean$t2_free_speech_z
 
 t2_free_speech_z_modesty_up_one <- lmtp_tmle(
   data = df_clean,
@@ -1288,6 +1272,31 @@ t2_free_speech_z_modesty_up_one <- lmtp_tmle(
 t2_free_speech_z_modesty_up_one
 here_save(t2_free_speech_z_modesty_up_one, "t2_free_speech_z_modesty_up_one")
 
+
+
+t2_free_speech_z_modesty_shift_up_to_mean <- lmtp_tmle(
+  data = df_clean,
+  trt = A,
+  baseline = names_base,
+  outcome = "t2_free_speech_z",
+  cens = C,
+  shift = f_1,
+  mtp = TRUE,
+  folds = 5,
+  outcome_type = "continuous",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
+t2_free_speech_z_modesty_shift_up_to_mean
+
+here_save(t2_free_speech_z_modesty_shift_up_to_mean, "t2_free_speech_z_modesty_shift_up_to_mean")
+
+
+
+
 t2_free_speech_z_modesty_null <- lmtp_tmle(
   data = df_clean,
   trt = A,
@@ -1306,6 +1315,54 @@ t2_free_speech_z_modesty_null <- lmtp_tmle(
 
 t2_free_speech_z_modesty_null
 here_save(t2_free_speech_z_modesty_null, "t2_free_speech_z_modesty_null")
+
+
+
+
+t2_free_speech_z_modesty_f_all_7_z <- lmtp_tmle(
+  data = df_clean,
+  trt = A,
+  baseline = names_base,
+  outcome = "t2_free_speech_z",
+  cens = C,
+  shift = f_all_7_z,
+  mtp = TRUE,
+  folds = 5,
+  outcome_type = "continuous",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
+t2_free_speech_z_modesty_f_all_7_z
+
+here_save(t2_free_speech_z_modesty_f_all_7_z, "t2_free_speech_z_modesty_f_all_7_z")
+
+
+t2_free_speech_z_modesty_f_all_1_z <- lmtp_tmle(
+  data = df_clean,
+  trt = A,
+  baseline = names_base,
+  outcome = "t2_free_speech_z",
+  cens = C,
+  shift = f_all_1_z,
+  mtp = TRUE,
+  folds = 5,
+  outcome_type = "continuous",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
+t2_free_speech_z_modesty_f_all_1_z
+
+here_save(t2_free_speech_z_modesty_f_all_1_z, "t2_free_speech_z_modesty_f_all_1_z")
+
+
+
+
 
 # no relationship
 lmtp_contrast(t2_free_speech_z_modesty_up_one,
@@ -1345,6 +1402,77 @@ here_save(t2_science_confidence_z_modesty_up_one,
 
 
 
+t2_science_confidence_z_modesty_shift_up_to_mean<- lmtp_tmle(
+  data = df_clean,
+  trt = A,
+  baseline = names_base,
+  outcome = "t2_trust_science_high_confidence_scientific_community_z",
+  cens = C,
+  shift = f_1,
+  mtp = TRUE,
+  folds = 5,
+  outcome_type = "continuous",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
+
+t2_science_confidence_z_modesty_shift_up_to_mean
+here_save(t2_science_confidence_z_modesty_shift_up_to_mean, 
+          "t2_science_confidence_z_modesty_shift_up_to_mean")
+
+
+t2_science_confidence_z_modesty_f_all_7_z<- lmtp_tmle(
+  data = df_clean,
+  trt = A,
+  baseline = names_base,
+  outcome = "t2_trust_science_high_confidence_scientific_community_z",
+  cens = C,
+  shift = f_all_7_z,
+  mtp = TRUE,
+  folds = 5,
+  outcome_type = "continuous",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
+
+t2_science_confidence_z_modesty_f_all_7_z
+here_save(t2_science_confidence_z_modesty_f_all_7_z, 
+          "t2_science_confidence_z_modesty_f_all_7_z")
+
+
+
+
+t2_science_confidence_z_modesty_f_all_1_z<- lmtp_tmle(
+  data = df_clean,
+  trt = A,
+  baseline = names_base,
+  outcome = "t2_trust_science_high_confidence_scientific_community_z",
+  cens = C,
+  shift = f_all_1_z,
+  mtp = TRUE,
+  folds = 5,
+  outcome_type = "continuous",
+  weights = df_clean$t0_sample_weights,
+  learners_trt = sl_lib,
+  learners_outcome = sl_lib,
+  parallel = n_cores
+)
+
+
+t2_science_confidence_z_modesty_f_all_1_z
+here_save(t2_science_confidence_z_modesty_f_all_1_z, 
+          "t2_science_confidence_z_modesty_f_all_1_z")
+
+
+
+
+
 t2_science_confidence_z_modesty_null <- lmtp_tmle(
   data = df_clean,
   trt = A,
@@ -1370,6 +1498,31 @@ lmtp_contrast(t2_science_confidence_z_modesty_up_one,
               type = "additive")
 
 
+lmtp_contrast(t2_science_confidence_z_modesty_f_all_1_z,
+              ref = t2_science_confidence_z_modesty_f_all_7_z,
+              type = "additive")
+
+
+
+
+lmtp_contrast(t2_science_confidence_z_modesty_f_all_1_z,
+              ref = t2_science_confidence_z_modesty_null,
+              type = "additive")
+
+
+lmtp_contrast(t2_science_confidence_z_modesty_f_all_1_z,
+              ref = t2_science_confidence_z_modesty_f_all_7_z,
+              type = "additive")
+
+lmtp_contrast(t2_science_confidence_z_modesty_f_all_7_z,
+              ref = t2_science_confidence_z_modesty_null,
+              type = "additive")
+
+
+lmtp_contrast(t2_science_confidence_z_modesty_f_all_7_z,
+              ref = t2_science_confidence_z_modesty_null,
+              type = "additive")
+
 
 
 # CONTRASTS ---------------------------------------------------------------
@@ -1380,8 +1533,8 @@ lmtp_contrast(t2_free_speech_z_modesty_up_one,
               type = "additive")
 
 # free speech
-t2_free_speech_z_modesty_up_one <- 
-  here_read( "t2_free_speech_z_modesty_up_one")
+t2_free_speech_z_modesty_shift_up_to_mean <- 
+  here_read( "t2_free_speech_z_modesty_shift_up_to_mean")
 
 t2_free_speech_z_modesty_null <- 
   here_read("t2_free_speech_z_modesty_null")
@@ -1408,13 +1561,47 @@ out_tab_contrast_t2_free_speech_z_modesty_up_one
 
 
 
+# shift all to average
+# free speech
+t2_free_speech_z_modesty_shift_up_to_mean <- 
+  here_read( "t2_free_speech_z_modesty_shift_up_to_mean")
+
+
+
+contrast_t2_free_speech_z_modesty_shift_up_to_mean <-
+  lmtp_contrast(t2_free_speech_z_modesty_shift_up_to_mean,
+                ref = t2_free_speech_z_modesty_null,
+                type = "additive")
+
+
+tab_contrast_t2_free_speech_z_modesty_shift_up_to_mean<-
+  margot_tab_lmtp(contrast_t2_free_speech_z_modesty_shift_up_to_mean,
+                  scale = "RD",
+                  new_name = "Free Speech")
+
+
+out_tab_contrast_t2_free_speech_z_modesty_shift_up_to_mean <-
+  lmtp_evalue_tab(tab_contrast_t2_free_speech_z_modesty_shift_up_to_mean,
+                  scale = c("RD"))
+
+out_tab_contrast_t2_free_speech_z_modesty_shift_up_to_mean
+
+
+
+
+
+
 # Science confidence
 t2_science_confidence_z_modesty_up_one <- 
   here_read( "t2_science_confidence_z_modesty_up_one")
 
 t2_science_confidence_z_modesty_null <- 
   here_read("t2_science_confidence_z_modesty_null")
+t2_science_confidence_z_modesty_shift_up_to_mean <- 
+  here_read( "t2_science_confidence_z_modesty_shift_up_to_mean")
 
+
+# first contrast
 
 contrast_t2_science_confidence_z_modesty_up_one <-
   lmtp_contrast(t2_science_confidence_z_modesty_up_one,
@@ -1425,7 +1612,7 @@ contrast_t2_science_confidence_z_modesty_up_one <-
 tab_contrast_t2_science_confidence_z_modesty_up_one<-
   margot_tab_lmtp(contrast_t2_science_confidence_z_modesty_up_one,
                   scale = "RD",
-                  new_name = "Free Speech")
+                  new_name = "Science Credibility")
 
 
 out_tab_contrast_t2_science_confidence_z_modesty_up_one <-
@@ -1435,8 +1622,25 @@ out_tab_contrast_t2_science_confidence_z_modesty_up_one <-
 out_tab_contrast_t2_science_confidence_z_modesty_up_one
 
 
+# shift up to mean
+
+contrast_t2_science_confidence_z_modesty_shift_up_to_mean<-
+  lmtp_contrast(t2_science_confidence_z_modesty_shift_up_to_mean,
+                ref = t2_science_confidence_z_modesty_null,
+                type = "additive")
 
 
+tab_contrast_t2_science_confidence_z_modesty_shift_up_to_mean<-
+  margot_tab_lmtp(contrast_t2_science_confidence_z_modesty_shift_up_to_mean,
+                  scale = "RD",
+                  new_name = "Science Credibility")
+
+
+out_tab_contrast_t2_science_confidence_z_modesty_shift_up_to_mean<-
+  lmtp_evalue_tab(tab_contrast_t2_science_confidence_z_modesty_shift_up_to_mean,
+                  scale = c("RD"))
+
+out_tab_contrast_t2_science_confidence_z_modesty_shift_up_to_mean
 
 
 
@@ -1444,32 +1648,41 @@ out_tab_contrast_t2_science_confidence_z_modesty_up_one
 # don't forget to report smoking
 
 # bind individual tables
-tab_modesty <- rbind(
+tab_bind_modesty_up_one <- rbind(
   out_tab_contrast_t2_free_speech_z_modesty_up_one,
-  out_tab_contrast_t2_science_confidence_z_modesty_up_one,
+  out_tab_contrast_t2_science_confidence_z_modesty_up_one
 )
 
 # make group table
-group_tab_modesty<- group_tab(tab_modesty  , type = "RD")
+group_tab_modesty_up_one<- group_tab(tab_bind_modesty_up_one  , type = "RD")
 
 # save
-here_save(group_tab_modesty, "group_tab_modesty")
+here_save(group_tab_modesty_up_one, "group_tab_modesty_up_one")
 
+
+
+# bind individual tables
+tab_bind_modesty_shift_up_to_mean<- rbind(
+  out_tab_contrast_t2_free_speech_z_modesty_shift_up_to_mean,
+  out_tab_contrast_t2_science_confidence_z_modesty_shift_up_to_mean
+)
 
 # make group table
-group_tab_modesty <- group_tab(group_tab_modesty , type = "RD")
-
+group_tab_modesty_shift_up_to_mean <- group_tab(tab_bind_modesty_shift_up_to_mean  , type = "RD")
+group_tab_modesty_shift_up_to_mean
+# save
+here_save(group_tab_modesty_shift_up_to_mean, "group_tab_modesty_shift_up_to_mean")
 
 
 # create plots -------------------------------------------------------------
 N 
-sub_title = "Modesty: shift + 1 point everyone (up to max 1), N = 31,577"
+sub_title = "Modesty: shift + 1 point everyone (up to max 1), N = 32,371"
 
 
 
 # graph health
-plot_group_tab_health <- margot_plot(
-  group_tab_health,
+plot_group_tab_modesty_up_one <- margot_plot(
+  group_tab_modesty_up_one,
   type = "RD",
   title = "Modesty Effects",
   subtitle = sub_title,
@@ -1488,20 +1701,63 @@ plot_group_tab_health <- margot_plot(
   x_lim_hi =  .5
 )
 
+plot_group_tab_modesty_up_one
+
+
 # save graph
 ggsave(
-  plot_group_tab_health,
+  plot_group_tab_modesty_up_one,
   path = here::here(here::here(push_mods, "figs")),
   width = 8,
   height = 6,
   units = "in",
-  filename = "plot_group_tab_health.png",
+  filename = "plot_group_tab_modesty_up_one.png",
   device = 'png',
   limitsize = FALSE,
   dpi = 600
 )
 
-plot_group_tab_health
+
+# second analysis
+
+sub_title_1 = "Modesty: shift + 1 point everyone (up to max 1), N = 32,371"
+
+
+plot_group_tab_modesty_shift_up_to_mean <- margot_plot(
+  group_tab_modesty_shift_up_to_mean,
+  type = "RD",
+  title = "Modesty Effects",
+  subtitle = sub_title,
+  xlab = "",
+  ylab = "",
+  estimate_scale = 1,
+  base_size = 8,
+  text_size = 2.5,
+  point_size = .5,
+  title_size = 12,
+  subtitle_size = 11,
+  legend_text_size = 8,
+  legend_title_size = 10,
+  x_offset = -1,
+  x_lim_lo = -1,
+  x_lim_hi =  .5
+)
+
+plot_group_tab_modesty_shift_up_to_mean
+
+
+ggsave(
+  plot_group_tab_modesty_shift_up_to_mean,
+  path = here::here(here::here(push_mods, "figs")),
+  width = 8,
+  height = 6,
+  units = "in",
+  filename = "plot_group_tab_modesty_shift_up_to_mean.png",
+  device = 'png',
+  limitsize = FALSE,
+  dpi = 600
+)
+
 
 
 
