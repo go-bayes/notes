@@ -1470,6 +1470,16 @@ plot( ggeffects::ggeffect(m2, terms = c("trust_science_high_confidence_scientifi
 
 
 
+# test --------------------------------------------------------------------
+
+df_clean_test <- df_clean |>
+  slice_head(n = 2000)
+
+
+
+
+
+
 # FREE SPEECH
 # Censorship and freedom of speech
 # People who hold opinions that are harmful or offensive to minority groups should be banned from expressing those views publicly.

@@ -2097,3 +2097,79 @@ ggsave(
   limitsize = FALSE,
   dpi = 600
 )
+
+
+
+
+# set random seed for reproducibility
+set.seed(12345)
+
+# Define the number of participants and trials per participant
+n_participants <- 32
+n_trials <- 80
+
+
+sample_sizes <- c(32, 64, 96, 128, 160)
+
+# Simulate recognition confidence data
+# Determine number of trials per participant
+n_per_participant <- n/32
+if (n_per_participant != as.integer(n_per_participant)) {
+  stop("Each sample size should be a multiple of 32 for equal trials per participant.")
+}
+
+# Simulate data
+
+
+
+##  power
+library(lme4)
+
+set.seed(12345)
+
+# Define parameters
+n_sims <- 500  # number of simulations
+sample_sizes <- c(32, 64, 96, 128, 160)
+slope <- 0.5
+intercept <- 4
+true_power <- numeric(length(sample_sizes))
+
+# Simulation
+for (i in 1:length(sample_sizes)) {
+  
+  n <- sample_sizes[i]
+  significant_count <- 0
+  
+  for (j in 1:n_sims) {
+    
+    # Simulate data as before
+    recognition_confidence <- sample(1:6, n, replace=TRUE)
+    noise <- rnorm(n, 0, 1.5)
+    location_confidence <- intercept + slope * recognition_confidence + noise
+    location_confidence <- pmin(pmax(location_confidence, 0), 10)
+    data <- data.frame(
+      participant = rep(1:32, each=n/32),
+      recognition_confidence = recognition_confidence,
+      location_confidence = location_confidence
+    )
+    
+    # Fit model
+    model <- lm(location_confidence ~ recognition_confidence, data=data, REML=FALSE)
+    
+    # Extract p-value (using a method suitable for lmer objects)
+    p_val <- summary(model)$coefficients[2]  # assumes recognition_confidence is the second coefficient
+    
+    # Count significant effects
+    if (p_val < 0.05) {
+      significant_count <- significant_count + 1
+    }
+  }
+  
+  # Calculate power for this sample size
+  true_power[i] <- significant_count / n_sims
+}
+
+warnings()
+# Results
+data.frame(sample_size = sample_sizes, power = true_power)
+
