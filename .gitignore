@@ -8,7 +8,7 @@ mods/*
 _cache/
 *.html
 **/_files
-*DS_Store
+DS_Store
 */.DS_Store
 */daryl_meaning_cache/
 **/.png
