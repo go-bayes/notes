@@ -646,7 +646,7 @@ shaded_region <- data.frame(
 )
 
 # Do the plot
-timeplot <- ggplot()+
+timeplot <- ggplot() +
   geom_line(data = timeseries, aes(y = count, x = year, group = type, color = type, linetype = type), linewidth = 1)+
   labs(title = " ", x = "Year", y="Cumulative mean", color = "Variable",linetype = "Variable",group = "Variable") + 
   scale_color_manual(values = c("#50C878", "#DAA520", "#8E4585"))+

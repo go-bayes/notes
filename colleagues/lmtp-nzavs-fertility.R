@@ -225,7 +225,6 @@ library(dplyr)
 library(tidyr)
 
 
-
 # handle 'ever_had_child'
 dat_prep_1 <- dat %>%
   arrange(id, wave) |>
@@ -934,8 +933,6 @@ out <-
 t_tab <- transition_table(out, state_names = NULL)
 t_tab
 
-
-
 # test positivity
 out <-
   msm::statetable.msm(religion_church_four, id, data = dt_positivity_full)
@@ -1263,6 +1260,12 @@ f_1
 # make test data (if needed)
 df_clean_test <- df_clean |>
   slice_head(n = 2000)
+
+
+janitor
+
+t0_x1 ....t0_x20...t0_church_.....t0_children....t0_remained_in_study_at_t1....t1...asdfad.... t2....asasdads
+t1_x1 = NA..... t_10 = NA
 
 
 # test
