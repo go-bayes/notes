@@ -432,8 +432,9 @@ summary(emm, vcov = vcovHC(model_weighted_sample, type = "HC1"))
 
 
 ### Try measurement error 
+set.seed(123)
 n_measurement <- 10000 
-beta_a_true <- 1
+beta_a_true <- .1
 
 a_error <- rnorm(n_measurement, .5)
 a_true <- rnorm(n_measurement, 2, .5)
@@ -442,9 +443,7 @@ a_measured <-  a_error + a_true
 y_error <- rnorm(n_measurement, .5)
 
 y_true <- beta_a_true * a_true  + rnorm(n_measurement, .1)
-y_measured <-  y_error + y_true 
-
-y_true
+y_measured <-  y_error + y_true # + rnorm(n_measurement, .1)
 
 # truth
 model_true_measure <- lm( y_true ~ a_true)
@@ -453,6 +452,21 @@ summary(model_true_measure)
 
 # measurement error
 model_error_measure <- lm( y_measured ~ a_measured)
-
 summary(model_error_measure)
 
+## conditioning 
+model_error_measure_a <- lm( y_measured ~   a_measured  + a_error + y_error)
+summary(model_error_measure_a)
+
+## conditioning 
+model_error_measure_a <- lm( y_measured ~   a_measured  + a_error)
+summary(model_error_measure_a)
+
+
+## conditioning 
+model_error_measure_a <- lm( y_measured ~   a_measured  + a_error)
+summary(model_error_measure_a)
+
+## conditioning 
+model_error_measure_a <- lm( y_measured ~  a_measured + y_error)
+summary(model_error_measure_a)
