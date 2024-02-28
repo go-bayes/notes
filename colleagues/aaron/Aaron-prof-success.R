@@ -304,7 +304,7 @@ dyad_counts
 
 
 # dyads in all waves ------------------------------------------------------
-count_dyads_multi_wave <- function(dat, start_wave = 2009, end_wave = 2021, year_measured_val = 1) {
+count_dyads_multi_wave <- function(dat, start_wave = 2009, end_wave = 2022, year_measured_val = 1) {
   results <- tibble()
   
   for(wave in seq(start_wave, end_wave)) {
@@ -706,8 +706,10 @@ dat_long  <- dat_final_dyadic %>%
 
 
 
-skimr::n_unique(dat_long$id)
+
 skimr::n_unique(dat_long$rel_num)
+
+
 
 dat_19 <- dat_long |>
   filter(wave == 2) |>
@@ -1186,6 +1188,7 @@ t2_nzsei13_z_up <- lmtp_tmle(
   parallel = n_cores
 )
 
+citation("glue")
 
 t2_nzsei13_z_up
 here_save(t2_nzsei13_z_up, "t2_nzsei13_z_up-backup")
