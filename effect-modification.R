@@ -54,6 +54,7 @@ weights
 model_weighted <- lm(y_sample ~ a_sample + z_sample + a_sample*z_sample, weights = weights)
 summary(model_weighted)
 summary(model_sample)
+
 # three models look very close 
 parameters::model_parameters(model_weighted )
 parameters::model_parameters(model_population)
@@ -145,6 +146,7 @@ data_population = data.frame (a_population, y_population, z_population)
 model_sample <- glm(y_sample ~ a_sample * z_sample, data = data_sample)
 summary(model_sample)
     
+
 #  weighted sample
 model_weighted_sample <- glm(y_sample ~  a_sample  * z_sample, data = data_sample, weights = weights)
 summary(model_weighted_sample)

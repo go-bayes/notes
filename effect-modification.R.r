@@ -269,27 +269,27 @@ parameters::model_parameters(model_population)
 
 ## regression standardisation 
 library(stdReg)
-fit_std_sample <- stdReg::stdGlm( model_sample, data = data_sample, X = "a_sample")
+fit_std_sample <- stdReg::stdGlm( model_sample, data = sample_data, X = "a_sample")
 
 summary(fit_std_sample, 
 contrast = "difference", 
 reference = 0)
 
-fit_std_weighted_sample <- stdReg::stdGlm( model_weighted_sample, data = data_sample, X = "a_sample")
+fit_std_weighted_sample <- stdReg::stdGlm( model_weighted_sample, data = sample_data, X = "a_sample")
 
 summary(fit_std_sample, 
 contrast = "difference", 
 reference = 0)
 
 ## population effect is different
-fit_std_population <- stdReg::stdGlm( model_population, data = data_population, X = "a_population")
+fit_std_population <- stdReg::stdGlm( model_population, data = population_data, X = "a_population")
 summary(fit_std_population, 
 contrast = "difference", 
 reference = 0)
 
 ## next try weights adjusted ate
 fit_std_weighted_sample_weights <- stdReg::stdGlm( model_weighted_sample, 
-    data = data_sample, 
+    data = sample_data, 
     X = "a_sample")
 
 # and we get the right answer
