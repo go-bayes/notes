@@ -1,0 +1,968 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  singlecolumn]{article}
+
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage[]{libertinus}
+\ifPDFTeX\else  
+    % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[top=30mm,left=20mm,heightrounded]{geometry}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+% Make \paragraph and \subparagraph free-standing
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{241,243,245}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.40,0.45,0.13}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\ExtensionTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.28,0.35,0.67}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.46,0.62}{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.07,0.07,0.07}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  % set entry spacing
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\input{/Users/joseph/GIT/latex/latex-for-quarto.tex}
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Review: RRBB-2024-0076 Quantifying Potential Selection Bias in Observational Research: Simulations and Analyses Exploring Religion and Depression Using a Prospective UK Cohort Study (ALSPAC)},
+  pdfauthor={Joseph A. Bulbulia},
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Review: RRBB-2024-0076 Quantifying Potential Selection Bias in
+Observational Research: Simulations and Analyses Exploring Religion and
+Depression Using a Prospective UK Cohort Study (ALSPAC)}
+\author{Joseph A. Bulbulia}
+\date{2024-04-02}
+
+\begin{document}
+\maketitle
+
+\subsection{Decision}\label{decision}
+
+Major revisions required before considering for publication.
+
+\subsection{Summary}\label{summary}
+
+This submission addresses the critical issue of sample and target
+population mismatch, or ``selection bias.'' The authors specifically
+focus on the implications of panel attrition in a longitudinal study of
+pregnant women from Bristol in the early 1990s, examining the bias
+introduced when estimating the effects of religiosity on depression. The
+paper employs simulation and comparison of different datasets to
+evaluate problems of mismatch.
+
+Despite its merits, the manuscript contains methodological flaws that I
+believe preclude publication in its current form. However, with
+substantial revisions addressing the concerns outlined below, the study
+has the potential for publication.
+
+\subsection{Concerns and
+Recommendations}\label{concerns-and-recommendations}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Methodological problems}: the study suffers from significant
+  methodological issues. These issues must be thoroughly addressed in a
+  revision.
+\item
+  \textbf{Misuse of regression coefficients}: The authors rely on
+  regression coefficients to evaluate threats to external validity, but
+  this is misguided. This approach fails to account for treatment effect
+  modification, leading to inaccurate assessments of bias. Below, I
+  demonstrate the problem using a simulation.
+\item
+  \textbf{Focus on marginal effect estimates}: a revised version of the
+  paper should include a more robust analysis that accounts for the
+  complexities of sample/target population mismatch and its implications
+  estimating causal effects They should include interaction terms when
+  simulating data, and they should specifically evaluate whether
+  differences in the distribution of effect-modifiers in the sample and
+  target population lead to differences between sample and target
+  population causal effect estimates. Anything less is arguably
+  unrealistic for longitudinal research in the study of religion.
+\item
+  \textbf{Encouragement}: despite the current shortcomings, the
+  submission addresses an issue of considerable importance and
+  widespread confusion. The authors should be encouraged to undertake
+  the necessary revisions and resubmit their work. Appropriately
+  considered findings will make a valuable contribution to the field.
+\item
+  \textbf{Acknowledgment of fallibility}: I offer my review with the
+  hope that it will assist the authors in strengthening their paper. I
+  apologise if I have overlooked important details in their work.
+\end{enumerate}
+
+\subsection{Simulation to clarify the
+issues}\label{simulation-to-clarify-the-issues}
+
+To understand why we must focus on marginal effect estimates, consider
+the following simulation and analysis.
+
+First, we load the \texttt{stdReg} library, which obtains marginal
+effect estimates by simulating counterfactuals under different levels of
+treatment (\citeproc{ref-sjuxf6lander2016}{Sjölander 2016}). If a
+treatment is continuous, the levels can be specified.
+
+We also load the \texttt{parameters} library, which creates nice tables
+(\citeproc{ref-parameters2020}{Lüdecke \emph{et al.} 2020}).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# to obtain marginal effects}
+\FunctionTok{library}\NormalTok{(stdReg)}
+\CommentTok{\# to create nice tables}
+\FunctionTok{library}\NormalTok{(parameters)}
+\end{Highlighting}
+\end{Shaded}
+
+Next, we write a function to simulate data for the sample and and target
+populations.
+
+We assume the treatment effect is the same in the sample and target
+population. We will assume that the coefficient for the effect-modifier
+and the coefficient for interaction are the same. We assume no
+unmeasured confounding throughout the study. We assume only selective
+attrition of one effect modifier such that the baseline population
+differs from the sample population at the end of the study.
+
+That is: \textbf{the distribution of effect modifiers is the only
+respect in which the sample will differ from the target population.}
+
+This function will generate data under a range of scenarios.\footnote{See
+  documentation in the \texttt{margot} package: Bulbulia
+  (\citeproc{ref-margot2024}{2024})}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# function to generate data for the sample and population, }
+\CommentTok{\# along with precise sample weights for the population, there are differences }
+\CommentTok{\# in the distribution of the true effect modifier but no differences in the treatment effect }
+\CommentTok{\# or the effect modification.all that differs between the sample and the population is }
+\CommentTok{\# the distribution of effect{-}modifiers.}
+
+
+\CommentTok{\# reproducability}
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+
+
+\CommentTok{\# function based on margot::simulate\_ate\_data\_with\_weights, }
+\CommentTok{\# see: https://go{-}bayes.github.io/margot/}
+
+\NormalTok{simulate\_ate\_data\_with\_weights }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(}\AttributeTok{n\_sample =} \DecValTok{10000}\NormalTok{, }\CommentTok{\# sample n}
+                                           \CommentTok{\#population n}
+                                           \AttributeTok{n\_population =} \DecValTok{100000}\NormalTok{,}
+                                           \CommentTok{\# prob of effect modifier in sample}
+                                           \AttributeTok{p\_z\_sample =} \FloatTok{0.1}\NormalTok{,}
+                                           \CommentTok{\#prob of effect modifier in the population}
+                                           \AttributeTok{p\_z\_population =} \FloatTok{0.5}\NormalTok{,}
+                                           \CommentTok{\# treatment effect}
+                                           \AttributeTok{beta\_a =} \DecValTok{1}\NormalTok{,}
+                                           \CommentTok{\# coef of intervention}
+                                           \AttributeTok{beta\_z =} \FloatTok{2.5}\NormalTok{,}
+                                           \CommentTok{\# coef  of effect{-}modifier}
+                                           \AttributeTok{beta\_az =} \FloatTok{0.5}\NormalTok{,}
+                                           \CommentTok{\# effect modification of a by z}
+                                           \AttributeTok{noise\_sd =}\NormalTok{ .}\DecValTok{5}\NormalTok{) \{}
+
+  \CommentTok{\# create sample data}
+\NormalTok{  z\_sample }\OtherTok{\textless{}{-}} \FunctionTok{rbinom}\NormalTok{(n\_sample, }\DecValTok{1}\NormalTok{, p\_z\_sample) }\CommentTok{\# simulate data for sample z}
+\NormalTok{  a\_sample }\OtherTok{\textless{}{-}} \FunctionTok{rbinom}\NormalTok{(n\_sample, }\DecValTok{1}\NormalTok{, }\FloatTok{0.5}\NormalTok{) }\CommentTok{\# for sample treatment}
+  
+  \CommentTok{\# simulate outcome}
+\NormalTok{  y\_sample }\OtherTok{\textless{}{-}}\NormalTok{ beta\_a }\SpecialCharTok{*}\NormalTok{ a\_sample }\SpecialCharTok{+}\NormalTok{ beta\_z }\SpecialCharTok{*}\NormalTok{ z\_sample }\SpecialCharTok{+}\NormalTok{ beta\_az }\SpecialCharTok{*}\NormalTok{ (a\_sample }\SpecialCharTok{*}\NormalTok{ z\_sample) }\SpecialCharTok{+}
+    \FunctionTok{rnorm}\NormalTok{(n\_sample, }\AttributeTok{mean =} \DecValTok{0}\NormalTok{, }\AttributeTok{sd =}\NormalTok{ noise\_sd)  }\CommentTok{\# use noise\_sd for the noise term}
+  
+  \CommentTok{\# put sample data in data frame}
+\NormalTok{  sample\_data }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(y\_sample, a\_sample, z\_sample)}
+  
+  \CommentTok{\# simulate population data, where the distribution of effect modifiers differs, but the treatment effect is the same}
+\NormalTok{  z\_population }\OtherTok{\textless{}{-}} \FunctionTok{rbinom}\NormalTok{(n\_population, }\DecValTok{1}\NormalTok{, p\_z\_population)}
+\NormalTok{  a\_population }\OtherTok{\textless{}{-}} \FunctionTok{rbinom}\NormalTok{(n\_population, }\DecValTok{1}\NormalTok{, }\FloatTok{0.5}\NormalTok{) }\CommentTok{\# same effect of a on y }
+\NormalTok{  y\_population }\OtherTok{\textless{}{-}}\NormalTok{ beta\_a }\SpecialCharTok{*}\NormalTok{ a\_population }\SpecialCharTok{+}\NormalTok{ beta\_z }\SpecialCharTok{*}\NormalTok{ z\_population }\SpecialCharTok{+} 
+\NormalTok{    beta\_az }\SpecialCharTok{*}\NormalTok{ (a\_population }\SpecialCharTok{*}\NormalTok{ z\_population) }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(n\_population, }\AttributeTok{mean =} \DecValTok{0}\NormalTok{, }\AttributeTok{sd =}\NormalTok{ noise\_sd)  }\CommentTok{\# noise}
+  
+  \CommentTok{\# put population data in dataframe}
+\NormalTok{  population\_data }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(y\_population, a\_population, z\_population)}
+  
+  \CommentTok{\# simulate weighting based on z distribution difference}
+\NormalTok{  weight\_z\_1 }\OtherTok{=}\NormalTok{ p\_z\_population }\SpecialCharTok{/}\NormalTok{ p\_z\_sample }\CommentTok{\# adjust weight for Z=1}
+\NormalTok{  weight\_z\_0 }\OtherTok{=}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ p\_z\_population) }\SpecialCharTok{/}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}}\NormalTok{ p\_z\_sample) }\CommentTok{\# adjust weight for Z=0}
+\NormalTok{  weights }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(z\_sample }\SpecialCharTok{==} \DecValTok{1}\NormalTok{, weight\_z\_1, weight\_z\_0)}
+  
+  \CommentTok{\# add weights to sample\_data}
+\NormalTok{  sample\_data}\SpecialCharTok{$}\NormalTok{weights }\OtherTok{=}\NormalTok{ weights}
+  
+  \CommentTok{\# return list of data frames and weights}
+  \FunctionTok{list}\NormalTok{(}\AttributeTok{sample\_data =}\NormalTok{ sample\_data, }\AttributeTok{population\_data =}\NormalTok{ population\_data)}
+\NormalTok{\}}
+
+\CommentTok{\# simulate the data {-}{-} you can use different parameters}
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{simulate\_ate\_data\_with\_weights}\NormalTok{(}
+  \AttributeTok{n\_sample =} \DecValTok{10000}\NormalTok{,}
+  \AttributeTok{n\_population =} \DecValTok{100000}\NormalTok{,}
+  \AttributeTok{p\_z\_sample =} \FloatTok{0.1}\NormalTok{,}
+  \AttributeTok{p\_z\_population =} \FloatTok{0.5}\NormalTok{,}
+  \AttributeTok{beta\_a =} \DecValTok{1}\NormalTok{,}
+  \AttributeTok{beta\_z =} \FloatTok{2.5}\NormalTok{,}
+  \AttributeTok{noise\_sd =} \FloatTok{0.5}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Ok, we have generated both sample and population data.
+
+Next, we verify that the distributions of effect modifiers differ in the
+sample and in the target population:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# obtain the generated data}
+\NormalTok{sample\_data }\OtherTok{\textless{}{-}}\NormalTok{ data}\SpecialCharTok{$}\NormalTok{sample\_data}
+\NormalTok{population\_data }\OtherTok{\textless{}{-}}\NormalTok{ data}\SpecialCharTok{$}\NormalTok{population\_data}
+
+
+\CommentTok{\# check imbalance}
+\FunctionTok{table}\NormalTok{(sample\_data}\SpecialCharTok{$}\NormalTok{z\_sample) }\CommentTok{\# type 1 is rare}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+
+   0    1 
+9055  945 
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{table}\NormalTok{(population\_data}\SpecialCharTok{$}\NormalTok{z\_population) }\CommentTok{\# type 1 is common}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+
+    0     1 
+49916 50084 
+\end{verbatim}
+
+Good, the distributions differ. The simulation is working as intended.
+
+Next, consider the question: ``What are the differences in the
+coefficients that we obtain from the study population at the end of
+study, as compared with the target population?''
+
+First, we obtain the coefficients for the sample. They are as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# model coefficients sample}
+\NormalTok{model\_sample  }\OtherTok{\textless{}{-}}
+  \FunctionTok{glm}\NormalTok{(y\_sample }\SpecialCharTok{\textasciitilde{}}\NormalTok{ a\_sample }\SpecialCharTok{*}\NormalTok{ z\_sample, }\AttributeTok{data =}\NormalTok{ sample\_data)}
+
+\CommentTok{\# summary}
+\NormalTok{parameters}\SpecialCharTok{::}\FunctionTok{model\_parameters}\NormalTok{(model\_sample, }\AttributeTok{ci\_method =} \StringTok{"wald"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Parameter           | Coefficient |       SE |        95% CI | t(9996) |      p
+-------------------------------------------------------------------------------
+(Intercept)         |   -6.89e-03 | 7.38e-03 | [-0.02, 0.01] |   -0.93 | 0.350 
+a sample            |        1.01 |     0.01 | [ 0.99, 1.03] |   95.84 | < .001
+z sample            |        2.47 |     0.02 | [ 2.43, 2.52] |  104.09 | < .001
+a sample × z sample |        0.51 |     0.03 | [ 0.44, 0.57] |   14.82 | < .001
+\end{verbatim}
+
+Ok, let's obtain the coefficients for the weighted regression of the
+sample. Notice that the coefficients are virtually the same:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# model the sample weighted to the population, again note that these coefficients are similar }
+\NormalTok{model\_weighted\_sample }\OtherTok{\textless{}{-}}
+  \FunctionTok{glm}\NormalTok{(y\_sample }\SpecialCharTok{\textasciitilde{}}\NormalTok{  a\_sample  }\SpecialCharTok{*}\NormalTok{ z\_sample,}
+      \AttributeTok{data =}\NormalTok{ sample\_data,}
+      \AttributeTok{weights =}\NormalTok{ weights)}
+
+\CommentTok{\# summary}
+\FunctionTok{summary}\NormalTok{(parameters}\SpecialCharTok{::}\FunctionTok{model\_parameters}\NormalTok{(model\_weighted\_sample, }\AttributeTok{ci\_method =}
+                                       \StringTok{"wald"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Parameter           | Coefficient |        95% CI |      p
+----------------------------------------------------------
+(Intercept)         |   -6.89e-03 | [-0.03, 0.01] | 0.480 
+a sample            |        1.01 | [ 0.98, 1.04] | < .001
+z sample            |        2.47 | [ 2.45, 2.50] | < .001
+a sample × z sample |        0.51 | [ 0.47, 0.55] | < .001
+
+Model: y_sample ~ a_sample * z_sample (10000 Observations)
+Residual standard deviation: 0.494 (df = 9996)
+\end{verbatim}
+
+We might be tempted to infer that weighting wasn't relevant to the
+analysis. However, we'll see that such an interpretation would be a
+mistake.
+
+Next, let us obtain model coefficients for the population. Note again
+there is no difference -- only narrower errors owing to the large sample
+size.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# model coefficients population {-}{-} note that these coefficients are very similar. }
+\NormalTok{model\_population }\OtherTok{\textless{}{-}}
+  \FunctionTok{glm}\NormalTok{(y\_population }\SpecialCharTok{\textasciitilde{}}\NormalTok{ a\_population }\SpecialCharTok{*}\NormalTok{ z\_population, }\AttributeTok{data =}\NormalTok{ population\_data)}
+
+\NormalTok{parameters}\SpecialCharTok{::}\FunctionTok{model\_parameters}\NormalTok{(model\_population, }\AttributeTok{ci\_method =} \StringTok{"wald"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Parameter                   | Coefficient |       SE |        95% CI | t(99996) |      p
+----------------------------------------------------------------------------------------
+(Intercept)                 |    2.49e-03 | 3.18e-03 | [ 0.00, 0.01] |     0.78 | 0.434 
+a population                |        1.00 | 4.49e-03 | [ 0.99, 1.01] |   222.35 | < .001
+z population                |        2.50 | 4.49e-03 | [ 2.49, 2.51] |   556.80 | < .001
+a population × z population |        0.50 | 6.35e-03 | [ 0.49, 0.51] |    78.80 | < .001
+\end{verbatim}
+
+Again, there is no difference. That is, we find that all model
+coefficients are practically equivalent. The different distribution of
+effect modifiers does not result in different coefficient values for the
+treatment effect, the effect-modifier ``effect,'' or the interaction of
+effect modifier and treatment.
+
+Consider why this is the case: in a large sample where the causal
+effects are invariant -- as we have simulated them to be -- we will have
+good replication in the effect modifiers within the sample, so our
+statistical model can recover the \emph{coefficients} for the population
+-- no problem.
+
+However, \textbf{in causal inference, we are interested in obtaining the
+marginal effect of the treatment}. That is, we seek an estimate for the
+counterfactual contrast in which everyone in a pre-specified population
+was subject to one level of treatment compared with a counterfactual
+condition in which everyone in a population was subject to another level
+of the same treatment. \textbf{When the sample population differs in the
+distribution of effect modifiers from the target population effect, the
+marginal effect estimates will typically differ.}
+
+To see this, we use the \texttt{stdReg} package to recover marginal
+effect estimates, comparing (1) the sample ATE, (2) the true oracle ATE
+for the population, and (3) the weighted sample ATE. We will use the
+outputs of the same models above. The only difference is that we will
+calculate marginal effects from these outputs. We will contrast a
+difference from an intervention in which everyone receives treatment = 0
+with one in which everyone receives treatment = 1, however, this choice
+is arbitrary, and the general lessons apply irrespective of the
+estimand.
+
+First, consider this ATE for the sample population.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# What inference do we draw?  We cannot say the models are unbiased for the marginal effect estimates. }
+\CommentTok{\# regression standardisation }
+\FunctionTok{library}\NormalTok{(stdReg) }\CommentTok{\# to obtain marginal effects }
+
+
+\CommentTok{\# obtain sample ate}
+\NormalTok{fit\_std\_sample }\OtherTok{\textless{}{-}}
+\NormalTok{  stdReg}\SpecialCharTok{::}\FunctionTok{stdGlm}\NormalTok{(model\_sample, }\AttributeTok{data =}\NormalTok{ sample\_data, }\AttributeTok{X =} \StringTok{"a\_sample"}\NormalTok{)}
+
+\CommentTok{\# summary}
+\FunctionTok{summary}\NormalTok{(fit\_std\_sample,}
+        \AttributeTok{contrast =} \StringTok{"difference"}\NormalTok{,}
+        \AttributeTok{reference =} \DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+
+Formula: y_sample ~ a_sample * z_sample
+Family: gaussian 
+Link function: identity 
+Exposure:  a_sample 
+Reference level:  a_sample = 0 
+Contrast:  difference 
+
+  Estimate Std. Error lower 0.95 upper 0.95
+0     0.00     0.0000       0.00       0.00
+1     1.06     0.0101       1.04       1.08
+\end{verbatim}
+
+The treatment effect is given as a 1.06 unit change in the outcome
+across the sample population, with a confidence interval from 1.04 to
+1.08.
+
+Next, we obtain the true (oracle) treatment effect for the population
+under the same intervention.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DocumentationTok{\#\# note the population effect is different}
+
+\CommentTok{\#obtain true ate}
+\NormalTok{fit\_std\_population }\OtherTok{\textless{}{-}}
+\NormalTok{  stdReg}\SpecialCharTok{::}\FunctionTok{stdGlm}\NormalTok{(model\_population, }\AttributeTok{data =}\NormalTok{ population\_data, }\AttributeTok{X =} \StringTok{"a\_population"}\NormalTok{)}
+
+\CommentTok{\# summary}
+\FunctionTok{summary}\NormalTok{(fit\_std\_population,}
+        \AttributeTok{contrast =} \StringTok{"difference"}\NormalTok{,}
+        \AttributeTok{reference =} \DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+
+Formula: y_population ~ a_population * z_population
+Family: gaussian 
+Link function: identity 
+Exposure:  a_population 
+Reference level:  a_population = 0 
+Contrast:  difference 
+
+  Estimate Std. Error lower 0.95 upper 0.95
+0     0.00    0.00000       0.00       0.00
+1     1.25    0.00327       1.24       1.26
+\end{verbatim}
+
+Behold, the true treatment effect is a 1.25 unit change in the
+population, with a confidence bound between 1.24 and 1.26. This is well
+outside the ATE that we obtain from the sample population!
+
+Next, consider the ATE in the weighted regression, where the sample was
+weighted to the target population's true distribution of effect
+modifiers.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DocumentationTok{\#\# next try weights adjusted ate where we correctly assign population weights to the sample}
+\NormalTok{fit\_std\_weighted\_sample\_weights }\OtherTok{\textless{}{-}}\NormalTok{ stdReg}\SpecialCharTok{::}\FunctionTok{stdGlm}\NormalTok{( model\_weighted\_sample, }
+    \AttributeTok{data =}\NormalTok{ sample\_data, }
+    \AttributeTok{X =} \StringTok{"a\_sample"}\NormalTok{)}
+
+\CommentTok{\# this gives us the right answer}
+\FunctionTok{summary}\NormalTok{(fit\_std\_weighted\_sample\_weights, }
+    \AttributeTok{contrast =} \StringTok{"difference"}\NormalTok{, }
+    \AttributeTok{reference =} \DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+
+Formula: y_sample ~ a_sample * z_sample
+Family: gaussian 
+Link function: identity 
+Exposure:  a_sample 
+Reference level:  a_sample = 0 
+Contrast:  difference 
+
+  Estimate Std. Error lower 0.95 upper 0.95
+0     0.00     0.0000       0.00       0.00
+1     1.25     0.0172       1.22       1.29
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Moral of the story. When we marginalise over the entire sample we need to weight estimates to the target population. }
+\end{Highlighting}
+\end{Shaded}
+
+Good news, we find that we obtain the population-level causal effect
+estimate with accurate coverage by weighting the sample to the target
+population. So with appropriate weights, our results generalise from the
+sample to the target population.
+
+\subsection{Lessons}\label{lessons}
+
+\begin{itemize}
+\tightlist
+\item
+  Regression coefficients do not clarify the problem of sample/target
+  population mismatch -- or selection bias as discussed in this
+  manuscript.
+\item
+  The correct advice to investigators is that they should not rely on
+  regression coefficients when evaluating the biases that arise from
+  sample attrition. This advice applies to both methods that the authors
+  use to investigate threats of bias. That is, to implement this advice,
+  the authors must first take it.
+\item
+  Generally, observed data are insufficient for assessing threats.
+  Observed data do not clarify structural sources of bias, nor do they
+  clarify effect-modification in the full counterfactual data condition
+  in which all receive the treatment and all do not receive the
+  treatment (at the same level).
+\item
+  To properly assess bias, one would need access to the counterfactual
+  outcome---what would have happened to the missing participants had
+  they not been lost to follow-up or had they responded. Again, such
+  counterfactual or ``full data'' are inherently unobservable
+  (\citeproc{ref-vanderlaan2011}{Van Der Laan and Rose 2011}).
+\item
+  In simple settings like the one we just simulated, we may address the
+  gap between the sample and target population using methods such as
+  modelling the censoring (e.g., censoring weighting). However, we never
+  know what setting we are in or whether it is simple---such modelling
+  must be handled with care. There is a large and growing epidemiology
+  literature on this topic (see, for example, Li \emph{et al.}
+  (\citeproc{ref-li2023non}{2023})).
+\item
+  Matters become more complex when there is confounding and selection
+  bias because the problem is not merely one of external validity but
+  also internal validity (i.e.~obtaining valid causal effect estimates
+  for the baseline sample). See for example Scharfstein \emph{et al.}
+  (\citeproc{ref-scharfstein1999adjusting}{1999}); Laan and Robins
+  (\citeproc{ref-laan2003unified}{2003}); Howe \emph{et al.}
+  (\citeproc{ref-howe2016selection}{2016}) (note that Howe \emph{et al.}
+  (\citeproc{ref-howe2016selection}{2016}), ``selection'' bias is
+  defined as collider stratification bias, a variety of confounding bias
+  and not simple sample and target population mismatch.)\\
+\item
+  Matters become more complex still in the presence of
+  treatment-confounder feedback, for which only special methods are
+  needed e.g. Rotnitzky \emph{et al.}
+  (\citeproc{ref-rotnitzky2017multiply}{2017}) chapters in Laan and
+  Gruber (\citeproc{ref-van2012targeted}{2012}).
+\end{itemize}
+
+\subsection{Suggestions for revision}\label{suggestions-for-revision}
+
+\subsubsection{Assumptions and validity in specific
+contexts}\label{assumptions-and-validity-in-specific-contexts}
+
+\begin{itemize}
+\tightlist
+\item
+  I think the authors must clarify the conditions under which their
+  methodology is applicable. Theoretically, if they wanted to retain the
+  current analysis, they might acknowledge that their approach could
+  hold under unverifiable assumptions of Missing Completely At Random
+  (MCAR) and the absence of interactions. Although such a commentary may
+  be relevant for biological inquiries, such as vaccine efficacy, where
+  these assumptions might be more plausible, it seems rather doubtful in
+  the study of religions.
+\end{itemize}
+
+\subsubsection{Utility of regression
+coefficients}\label{utility-of-regression-coefficients}
+
+\begin{itemize}
+\tightlist
+\item
+  I recommend critically examining how regression coefficients may
+  mislead in assessing external validity. By illustrating the problem
+  through simulations---along the lines suggested here---the authors
+  could offer a valuable perspective. Such an approach would not only
+  elucidate the methodological pitfalls but also enrich understanding of
+  sample/target population mismatch. For example, the authors could
+  re-examine the assumptions of previous studies.
+\end{itemize}
+
+\subsubsection{Address the ``Elephant in the
+Room''}\label{address-the-elephant-in-the-room}
+
+\begin{itemize}
+\tightlist
+\item
+  The discussion should extend to the broader implications of
+  sample/target population mismatch beyond the immediate context of
+  pregnant women in Bristol during the early 1990s. Highlighting this
+  issue encourages clarity about assessing the generalisability of
+  causal effect estimates. To date, the small but growing literature in
+  this area has not been careful on this point.
+\end{itemize}
+
+By addressing these points, a substantially revised manuscript has the
+potential to make a substantive contribution to the literature on causal
+inference and its application to the study of religion and culture more
+generally.
+
+\subsubsection{Small Points}\label{small-points}
+
+\paragraph{1. Abstract accuracy}\label{abstract-accuracy}
+
+\begin{itemize}
+\tightlist
+\item
+  Non-random participation is not a unitary phenomenon, but a spectrum
+  of challenges. These include defining or selecting the target
+  population, varying participation rates, nested vs.~non-nested trial
+  designs \& others. The authors might find the following works helpful:
+  Dahabreh and Hernán (\citeproc{ref-dahabreh2019}{2019}) and Dahabreh
+  \emph{et al.} (\citeproc{ref-dahabreh2021study}{2021}) for randomised
+  trials and Bareinboim and Pearl
+  (\citeproc{ref-bareinboim2013general}{2013}) for observational
+  studies.
+\end{itemize}
+
+\paragraph{2. Abstract is unclear}\label{abstract-is-unclear}
+
+\begin{itemize}
+\tightlist
+\item
+  The abstract should promptly and clearly state the study's objective,
+  focusing on the effect of church attendance on depression among the
+  target population. The phrase ``despite non-random participation by
+  the exposure and outcome'' is unclear because the meanings of these
+  terms have yet to be defined.
+\end{itemize}
+
+\paragraph{3. Clarify the target population
+throughout}\label{clarify-the-target-population-throughout}
+
+\begin{itemize}
+\tightlist
+\item
+  In abstract and throughout, clearly define the target population for
+  ALSPAC at baseline, for example, as ``healthy pregnant women living in
+  Bristol in the early 1990s''. Address the generalisation concern
+  explicitly.
+\end{itemize}
+
+\paragraph{4. Revise redundant
+statements}\label{revise-redundant-statements}
+
+\begin{itemize}
+\tightlist
+\item
+  For example, ``\ldots with attendance at a place of worship associated
+  with continued participation\ldots{}'' This sounds like ``with
+  attendance at a place of worship associated with attendance at a place
+  of worship.''
+\end{itemize}
+
+\paragraph{5. Simplify terminology}\label{simplify-terminology}
+
+\begin{itemize}
+\tightlist
+\item
+  Consider consistently using a term such as ``composite religiosity''
+  instead of the acronym \emph{RSBB} throughout the article for ease of
+  understanding.
+\end{itemize}
+
+\paragraph{6. Clarify methodology}\label{clarify-methodology}
+
+\begin{itemize}
+\item
+  The introduction to the simulation approach should explicitly address
+  potential concerns about effect modification and how it influences the
+  study's findings.
+\item
+  If you retain comparative data analysis (I think you should not),
+  explain each step of the analysis clearly.
+\end{itemize}
+
+\paragraph{7. Clarify rationale for variable
+selection}\label{clarify-rationale-for-variable-selection}
+
+\begin{itemize}
+\tightlist
+\item
+  The rationale for selecting a limited number of variables from ALSPAC
+  should be clearly explained. Arguably, a richer dataset is needed to
+  assess effect-modification. Moreover, confounding would need to be
+  addressed as well---if internal validity fails, so too will external
+  validity. The authors cannot lose sight of confounding bias if their
+  interest is in external validity. Again, I suggest simulating data in
+  which a mismatch arises even without confounding bias.
+\end{itemize}
+
+\paragraph{9. Directed Acyclic Graph -- not persuasive, and probably not
+needed.}\label{directed-acyclic-graph-not-persuasive-and-probably-not-needed.}
+
+\begin{itemize}
+\tightlist
+\item
+  If you keep the DAG, make sure to avoid cycles (e.g., by indexing
+  nodes by time); reconsider the credibility of the assumptions made,
+  especially concerning effect modification by ethnicity (only through
+  SEP and Marital Status)? Again, problems arise even with
+  unconfoundedness, as demonstrated above, so addressing confounding
+  bias is insufficient to address threats to generalisation from
+  attrition. A simple contribution would set confounding bias to the
+  side.
+\end{itemize}
+
+\subsection*{References}\label{references}
+\addcontentsline{toc}{subsection}{References}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{1}{0}
+\bibitem[\citeproctext]{ref-bareinboim2013general}
+Bareinboim, E, and Pearl, J (2013) A general algorithm for deciding
+transportability of experimental results. \emph{Journal of Causal
+Inference}, \textbf{1}(1), 107--134.
+
+\bibitem[\citeproctext]{ref-margot2024}
+Bulbulia, JA (2024) \emph{Margot: MARGinal observational
+treatment-effects}. Retrieved from
+\url{https://go-bayes.github.io/margot/}
+
+\bibitem[\citeproctext]{ref-dahabreh2021study}
+Dahabreh, IJ, Haneuse, SJA, Robins, JM, \ldots{} Hernán, MA (2021) Study
+designs for extending causal inferences from a randomized trial to a
+target population. \emph{American Journal of Epidemiology},
+\textbf{190}(8), 1632--1642.
+
+\bibitem[\citeproctext]{ref-dahabreh2019}
+Dahabreh, IJ, and Hernán, MA (2019) Extending inferences from a
+randomized trial to a target population. \emph{European Journal of
+Epidemiology}, \textbf{34}(8), 719--722.
+doi:\href{https://doi.org/10.1007/s10654-019-00533-2}{10.1007/s10654-019-00533-2}.
+
+\bibitem[\citeproctext]{ref-howe2016selection}
+Howe, CJ, Cole, SR, Lau, B, Napravnik, S, and Eron Jr, JJ (2016)
+Selection bias due to loss to follow up in cohort studies.
+\emph{Epidemiology}, \textbf{27}(1), 91--97.
+
+\bibitem[\citeproctext]{ref-van2012targeted}
+Laan, MJ van der, and Gruber, S (2012) Targeted minimum loss based
+estimation of causal effects of multiple time point interventions.
+\emph{The International Journal of Biostatistics}, \textbf{8}(1).
+
+\bibitem[\citeproctext]{ref-laan2003unified}
+Laan, MJ, and Robins, JM (2003) \emph{Unified methods for censored
+longitudinal data and causality}, Springer.
+
+\bibitem[\citeproctext]{ref-li2023non}
+Li, W, Miao, W, and Tchetgen Tchetgen, E (2023) Non-parametric inference
+about mean functionals of non-ignorable non-response data without
+identifying the joint distribution. \emph{Journal of the Royal
+Statistical Society Series B: Statistical Methodology}, \textbf{85}(3),
+913--935.
+
+\bibitem[\citeproctext]{ref-parameters2020}
+Lüdecke, D, Ben-Shachar, MS, Patil, I, and Makowski, D (2020)
+Extracting, computing and exploring the parameters of statistical models
+using {R}. \emph{Journal of Open Source Software}, \textbf{5}(53), 2445.
+doi:\href{https://doi.org/10.21105/joss.02445}{10.21105/joss.02445}.
+
+\bibitem[\citeproctext]{ref-rotnitzky2017multiply}
+Rotnitzky, A, Robins, J, and Babino, L (2017) On the multiply robust
+estimation of the mean of the g-functional. \emph{arXiv Preprint
+arXiv:1705.08582}.
+
+\bibitem[\citeproctext]{ref-scharfstein1999adjusting}
+Scharfstein, DO, Rotnitzky, A, and Robins, JM (1999) Adjusting for
+nonignorable drop-out using semiparametric nonresponse models.
+\emph{Journal of the American Statistical Association},
+\textbf{94}(448), 1096--1120.
+
+\bibitem[\citeproctext]{ref-sjuxf6lander2016}
+Sjölander, A (2016) Regression standardization with the R package
+stdReg. \emph{European Journal of Epidemiology}, \textbf{31}(6),
+563--574.
+doi:\href{https://doi.org/10.1007/s10654-016-0157-3}{10.1007/s10654-016-0157-3}.
+
+\bibitem[\citeproctext]{ref-vanderlaan2011}
+Van Der Laan, MJ, and Rose, S (2011) \emph{Targeted Learning: Causal
+Inference for Observational and Experimental Data}, New York, NY:
+Springer. Retrieved from
+\url{https://link.springer.com/10.1007/978-1-4419-9782-1}
+
+\end{CSLReferences}
+
+
+
+\end{document}

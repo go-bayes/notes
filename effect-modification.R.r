@@ -193,109 +193,121 @@ reference = 0)
 
 
 
-### BEGIN 
-rm(list = ls())
+# START HERE ---------------------------------------------------------------------
+# simulate effect-modification
+
+# to obtain marginal effects
 library(stdReg)
-simulate_ate_data_with_weights_and_noise <- function(n_sample = 10000, n_population = 10000,
-                                                     p_z_sample = 0.1, p_z_population = 0.5,
-                                                     beta_a = 1, beta_z = 2.5, beta_az = 0.5,
-                                                     noise_sd = 1) {  # Added parameter for noise standard deviation
+
+# to create nice tables
+library(parameters)
+
+simulate_ate_data_with_weights_and_noise <- function(n_sample = 10000,
+                                                     n_population = 100000,
+                                                     p_z_sample = 0.1,  # probability of effect modifier in the sample
+                                                     p_z_population = 0.5, #probability of effect modifier in the population
+                                                     beta_a = 1,  # coef of intervention
+                                                     beta_z = 2.5, # coef  of effect-modifier
+                                                     beta_az = 0.5, # effect modification of a by z
+                                                     noise_sd = .5) {  # added parameter for noise standard deviation
   set.seed(123)
   
-  # Generate sample data
-  z_sample <- rbinom(n_sample, 1, p_z_sample)
-  a_sample <- rbinom(n_sample, 1, 0.5)
+  # generate sample data
+  z_sample <- rbinom(n_sample, 1, p_z_sample) # simulate data for sample z
+  a_sample <- rbinom(n_sample, 1, 0.5) # for sample treatment
+  
+  # simulate outcome
   y_sample <- beta_a * a_sample + beta_z * z_sample + beta_az * (a_sample * z_sample) +
-    rnorm(n_sample, mean = 0, sd = noise_sd)  # Use noise_sd for the noise term
+    rnorm(n_sample, mean = 0, sd = noise_sd)  # use noise_sd for the noise term
+  
+  # put data in dataframe
   sample_data <- data.frame(y_sample, a_sample, z_sample)
   
-  # Generate population data
+  # simulate population data, where the distribution of effect modifiers differs but treatment effect is the same
   z_population <- rbinom(n_population, 1, p_z_population)
-  a_population <- rbinom(n_population, 1, 0.5)
+  a_population <- rbinom(n_population, 1, 0.5) # same effect of a on y 
   y_population <- beta_a * a_population + beta_z * z_population + 
     beta_az * (a_population * z_population) + rnorm(n_population, mean = 0, sd = noise_sd)  # Use noise_sd for the noise term
   population_data <- data.frame(y_population, a_population, z_population)
   
-  # Simulate weighting based on Z distribution difference
+  # simulate weighting based on z distribution difference
   weight_z_1 = p_z_population / p_z_sample # adjust weight for Z=1
   weight_z_0 = (1 - p_z_population) / (1 - p_z_sample) # adjust weight for Z=0
   weights <- ifelse(z_sample == 1, weight_z_1, weight_z_0)
   
-  # Add weights to sample_data
+  # add weights to sample_data
   sample_data$weights = weights
   
   # Return list of data frames and weights
   list(sample_data = sample_data, population_data = population_data)
 }
 
-# example
-data <- simulate_ate_data_with_weights_and_noise(n_sample = 10000, n_population = 10000,
-                                                                p_z_sample = 0.1, p_z_population = 0.5,
-                                                                beta_a = 1, beta_z = 2.5, beta_az = 0.5,
-                                                                noise_sd = 0.5)  # Specifying a lower noise level
+# example -- you can use different parameters
+data <- simulate_ate_data_with_weights_and_noise(
+  n_sample = 10000,
+  n_population = 100000,
+  p_z_sample = 0.1,
+  p_z_population = 0.5,
+  beta_a = 1,
+  beta_z = 2.5,
+  noise_sd = 0.5
+)  
+
 
 # Access the generated sample data with weights and population data
 sample_data <- data$sample_data
 population_data <- data$population_data
 # check imbalance 
-table(sample_data$z_sample)
-head(population_data$z_population)
-
-# Use the function to generate data and weights
-# data_with_weights <- simulate_ate_data_with_weights(n_sample = 10000, n_population = 10000,
-#                                                     p_z_sample = 0.1, p_z_population = 0.5,
-#                                                     beta_a = 0, beta_z = 2.5, beta_az = 0.15)
+table(sample_data$z_sample) # type 1 is rare
+table(population_data$z_population) # type 1 is commone
 
 
-# fit models
+# model coefficients sample
+model_sample  <- glm(y_sample ~ a_sample * z_sample, data = sample_data)
+parameters::model_parameters(model_sample, ci_method="wald")
 
-# regression standardisation on sample
-model_sample <- glm(y_sample ~ a_sample * z_sample, data = sample_data)
-summary(model_sample)
-    
-#  weighted sample
+
+# model coefficients population -- note that these coefficients are very similar. 
+model_population <- glm(y_population ~ a_population * z_population, data = population_data)
+parameters::model_parameters(model_population, ci_method="wald")
+
+
+# model the sample weighted to the population, again note that these coefficients are very similiar 
 model_weighted_sample <- glm(y_sample ~  a_sample  * z_sample, data = sample_data, weights = weights)
-summary(model_weighted_sample)
+summary(parameters::model_parameters(model_weighted_sample, ci_method="wald"))
 
-# populations
-model_population <- glm(y_population ~  a_population  * z_population, data = population_data)
-summary(model_population)
 
-# regression coefs all very similar
-parameters::model_parameters(model_sample)
-parameters::model_parameters(model_weighted_sample )
-parameters::model_parameters(model_population)
+# What inference do we draw?  We cannot say that the models are unbiased for the marginal effect estimates. 
 
 
 ## regression standardisation 
-library(stdReg)
+library(stdReg). # to obtain marginal effects 
+
 fit_std_sample <- stdReg::stdGlm( model_sample, data = sample_data, X = "a_sample")
 
 summary(fit_std_sample, 
 contrast = "difference", 
 reference = 0)
 
-fit_std_weighted_sample <- stdReg::stdGlm( model_weighted_sample, data = sample_data, X = "a_sample")
 
-summary(fit_std_sample, 
-contrast = "difference", 
-reference = 0)
-
-## population effect is different
+## note the population effect is different
 fit_std_population <- stdReg::stdGlm( model_population, data = population_data, X = "a_population")
 summary(fit_std_population, 
 contrast = "difference", 
 reference = 0)
 
-## next try weights adjusted ate
+## next try weights adjusted ate where we correctly assign population weights to the sample
 fit_std_weighted_sample_weights <- stdReg::stdGlm( model_weighted_sample, 
     data = sample_data, 
     X = "a_sample")
 
-# and we get the right answer
+# this gives us the the right answer
 summary(fit_std_weighted_sample_weights, 
     contrast = "difference", 
     reference = 0)
+
+
+# Moral of the story. When we marginalise over the entire sample we need to weight estimates to the target population. 
 
 
 
