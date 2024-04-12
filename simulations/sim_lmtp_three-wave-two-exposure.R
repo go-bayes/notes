@@ -3,6 +3,8 @@
 # between two causal models for three wave study
 library(lmtp)
 library(margot)
+
+#devtools::install_github("go-bayes/margot")
 library(future)
 library(SuperLearner)
 library(xgboost)
@@ -31,7 +33,7 @@ sl_lib <- c("SL.glmnet",
 set.seed(123)
 
 # set N
-n =5000
+n =1000
 # baseline confounders
 W0 <- rnorm(n, 1)
 
@@ -119,6 +121,31 @@ model_y0_mediator_gain <- lmtp_sdr(
 )
 
 model_y0_mediator_gain
+
+here_save(model_y0_mediator_gain, "model_y0_mediator_gain")
+
+
+model_y0_mediator_gain_2 <- lmtp_sdr(
+  outcome = "Y2",
+  baseline = c("W0","L0","Y0"),
+  shift = gain_A,
+  data = dat,
+  trt = A,
+  time_vary = L_alpha,
+  #cens = C,
+  mtp = TRUE,
+  folds = 10,
+  outcome_type = "continuous",
+  #  weights = df_clean_slice$t0_sample_weights,
+  learners_trt= "SL.ranger",
+  # ranger much faster
+  learners_outcome=  "SL.ranger",
+  parallel = n_cores
+)
+
+model_y0_mediator_gain
+
+lmtp_contrast(model_y0_mediator_gain, ref = model_y0_mediator_gain_2, type = "additive")
 
 here_save(model_y0_mediator_gain, "model_y0_mediator_gain")
 
