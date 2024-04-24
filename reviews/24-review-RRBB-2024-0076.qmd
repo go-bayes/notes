@@ -1,27 +1,15 @@
 ---
 title: "Review: RRBB-2024-0076 Quantifying Potential Selection Bias in Observational Research: Simulations and Analyses Exploring Religion and Depression Using a Prospective UK Cohort Study (ALSPAC)"
 abstract: |
-author: 
-  - name: Joseph A. Bulbulia
-    affiliation: Victoria University of Wellington, New Zealand
-    orcid_id: 0000-0002-5861-2056
-    email: joseph.bulbulia@vuw.ac.nz
-editor_options: 
-  chunk_output_type: console
 format:
-  pdf:
-    sanitize: true
-    keep-tex: true
-    link-citations: true
-    colorlinks: true
-    documentclass: article
-    classoption: [singlecolumn]
-    lof: false
-    lot: false
-    geometry:
-      - top=30mm
-      - left=20mm
-      - heightrounded
+  pdf: default
+  plos-pdf:
+    keep-tex: true   
+    journal:
+      # This is an identifier for the target journal: 
+      # from https://plos.org/resources/writing-center/ following submission guidelines link, the identifier is the part of the URL after https://journals.plos.org/<id>/s/submission-guidelines
+    id: plosone
+    keep-tex: true 
     header-includes:
       - \input{/Users/joseph/GIT/latex/latex-for-quarto.tex}
 date: last-modified
@@ -32,7 +20,7 @@ execute:
   eval: true
 fontfamily: libertinus
 bibliography: /Users/joseph/GIT/templates/bib/references.bib
-csl: /Users/joseph/GIT/templates/csl/camb-a.csl
+
 ---
 
 ```{r}

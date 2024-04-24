@@ -1,0 +1,11 @@
+{
+  "test.qmd": {
+    "test.tex": "7f42ba52"
+  },
+  "notes.qmd": {
+    "notes.tex": "139f4b33"
+  },
+  "plos-template.qmd": {
+    "plos-template.tex": "f932dc60"
+  }
+}
