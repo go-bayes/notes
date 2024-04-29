@@ -1,4 +1,7 @@
 # test margot package
+push_mods <- '/Users/joseph/Library/CloudStorage/Dropbox-v-project/data/notes'
+
+push_mods
 
 library(margot)
 library(tidyverse)
@@ -22,8 +25,8 @@ skimr::skim(df_nz) |> arrange(n_missing)
 # obtain ids for individuals who participated in 2018 and have no missing baseline exposure
 ids_2018 <- df_nz %>%
   dplyr::filter(year_measured == 1, wave == 2018) %>%
-  dplyr::filter(!is.na(!!sym(name_exposure))) |> # criteria, no missing
-  dplyr::filter(!is.na(eth_cat)) |> # criteria, no missing
+ # dplyr::filter(!is.na(!!sym(name_exposure))) |> # criteria, no missing
+#  dplyr::filter(!is.na(eth_cat)) |> # criteria, no missing
   pull(id)
 
 
@@ -36,8 +39,22 @@ ids_2019 <- df_nz %>%
 # intersect IDs from 2018 and 2019 to ensure participation in both years
 ids_2018_2019 <- intersect(ids_2018, ids_2019)
 # data wrangling
-dat_long <- df_nz |>
+
+dat_long_test <- df_nz |>
+  # dplyr::filter(id %in% ids_2018_2019 &
+  #                 wave %in% c(2018, 2019, 2020)) |>
+  # 
   dplyr::filter(id %in% ids_2018_2019 &
+                  wave %in% c(2018, 2019, 2020))
+
+n_unique(dat_long_test$id)
+
+
+dat_long <- df_nz |>
+  # dplyr::filter(id %in% ids_2018_2019 &
+  #                 wave %in% c(2018, 2019, 2020)) |>
+  # 
+  dplyr::filter(id %in% ids_2018 &
                   wave %in% c(2018, 2019, 2020)) |>
   arrange(id, wave) |>
   select(
@@ -178,91 +195,6 @@ dat_long$sample_weights <- ifelse(dat_long$male == 1, gender_weight_male, gender
 hist(dat_long$sample_weights)
 
 
-# df_19 <- df_nz |> filter(wave == 2019) |> 
-#   select(forgiveness) |>   drop_na()
-# 
-# 
-# coloured_histogram_quantiles <- coloured_histogram_quantiles(
-#    df = df_19,
-#    col_name = "forgiveness",
-#    n_quantiles = 2,
-#    binwidth = 0.1 # Adjust binwidth as needed
-#   )
-# 
-# 
-# 
-
-# summary(dat_long$perfectionism)
-# table(dt_test$perfectionism_3tile)
-# 
-# 
-# dt_test <- create_ordered_variable_custom(df_nz, "hours_exercise", 
-#                                           c(1, 2, 7, Inf), c("[1_2)", "[2_7)", "[7_up]")) #
-# 
-# 
-create_ordered_variable <- function(df, var_name, n_divisions = NULL) {
-  if (is.null(n_divisions)) {
-    stop("Please specify the number of divisions.")
-  }
-  
-  # Ensure that the variable exists in the dataframe
-  if (!var_name %in% names(df)) {
-    stop("The specified variable does not exist in the dataframe.")
-  }
-  
-  # Handle NA values in data: ignore NAs for quantile computation but keep them in the final output
-  data_without_na <- na.omit(df[[var_name]])
-  
-  # Calculate initial quantile breaks
-  quantile_breaks <- quantile(data_without_na, probs = seq(0, 1, length.out = n_divisions + 1), na.rm = TRUE)
-  
-  # Ensure that breaks are unique and cover the full range of data
-  if (length(unique(quantile_breaks)) != length(quantile_breaks)) {
-    warning("Quantile breaks are not unique; adjusting to handle ties or insufficient unique values.")
-    unique_breaks <- unique(quantile_breaks)
-    while (length(unique_breaks) < n_divisions + 1) {
-      # Extend the breaks slightly beyond the max value to ensure coverage
-      unique_breaks <- sort(c(unique_breaks, max(unique_breaks) + diff(range(unique_breaks))/100))
-    }
-    quantile_breaks <- unique_breaks
-  }
-  
-  # Adjust the last break to be slightly greater than the max value to ensure inclusion of the max value
-  quantile_breaks[length(quantile_breaks)] <- max(quantile_breaks[length(quantile_breaks)], max(df[[var_name]], na.rm = TRUE)) + .Machine$double.eps*100
-  
-  # Create labels for each segment based on the actual number of breaks
-  cut_labels <- paste0("tile_", seq_len(length(quantile_breaks) - 1))
-  
-  # Assign the ordered factor to the dataframe
-  df[[paste0(var_name, "_", n_divisions, "tile")]] <- cut(
-    df[[var_name]],
-    breaks = quantile_breaks,
-    labels = cut_labels,
-    ordered_result = TRUE,
-    include.lowest = TRUE
-  )
-  
-  return(df)
-}
-
-dat_long <- create_ordered_variable(dat_long, "perfectionism", n_divisions = 4) #
-table(is.na(dat_long$perfectionism_4tile))
-dat_long$perfectionism_4tile
-
-
-# view scale 
-print(quantile(dat_long$perfectionism, probs = seq(0, 1, 1/4), na.rm = TRUE))
-table(dat_long$perfectionism_4tile)
-
-
-# 
-# # not suited to quartiles 
-# max(dt_test$meaning_sense, na.rm=TRUE)
-
-
-labels <- levels( dat_long$perfectionism_4tile )
-labels
-
 
 # create ordered varaible based on quartiles at time 11 (exposure wave)
 # note these values may change from year to year because "quartile" is relative. So we pick the exposure year to define our units
@@ -277,528 +209,17 @@ labels
 baseline_vars = c("age", "male", "edu", "eth_cat", "partner", "employed", "born_nz", "neighbourhood_community", "household_inc_log", "parent", "religion_religious", "urban", "employed", "alert_level_combined_lead", "sample_weights")
 
 # treatment
-exposure_vars = c("perfectionism_4tile") 
+exposure_vars = c("perfectionism") 
 
 # outcome, can be many
 outcome_vars = c("kessler_latent_anxiety", "kessler_latent_depression")
 
 
-# make long data wide
+# make long data wide no imputations
 prep_dat_wide <- margot_wide(dat_long, 
                              baseline_vars = baseline_vars, 
                              exposure_var = exposure_vars,
                              outcome_vars = outcome_vars)
-
-
-# filter data, so that we impute within quartiles
-list_filtered_df <-
-  margot::margot_filter(prep_dat_wide, exposure_vars = "t1_perfectionism_4tile", sort_var = "id")
-
-# checks 
-a <- nrow( list_filtered_df$tile_1)
-b <- nrow( list_filtered_df$tile_2)
-c <- nrow( list_filtered_df$tile_3)
-d <-nrow( list_filtered_df$tile_4)
-
-# must sum to equal
-a + b + c + d == nrow(prep_dat_wide)
-
-
-# visually inspect missingness
-naniar::vis_miss(prep_dat_wide, warn_large_data = FALSE)
-
-# check for collinear vars
-mice:::find.collinear(prep_dat_wide)
-
-# impute by quartile
-mice_health <- margot::impute_and_combine(list_filtered_df,  m = 5 )
-
-# post-impute arrange
-mice_health_mids <- mice_health %>%
-  arrange(.imp, id) |>
-  rename(sample_weights = t0_sample_weights) |>
-dplyr::mutate(
-  across(
-    where(is.numeric) & !t0_alert_level_combined_lead &
-      !sample_weights,
-    ~ scale(.x),
-    .names = "{col}_z"
-  )
-) %>%
-  select(-.imp_z, -.id_z) %>%
-  select(where(is.factor),
-         sample_weights,
-         ends_with("_z"),
-         .imp,
-         .id) |>
-  relocate(sample_weights, .before = starts_with("t1_"))  %>%
-  relocate(id, .before = sample_weights)  %>%
-  relocate(starts_with("t0_"), .before = starts_with("t1_"))  %>%
-  relocate(starts_with("t2_"), .after = starts_with("t1_"))  %>%
-  arrange(.imp, id) |>
-  droplevels() |>
-  mutate_if(is.matrix, as.vector) |>
-  as.mids()
-
-# create long version
-mice_health_long <-mice::complete(mice_health_mids, "long", inc = TRUE)
-
-# create
-
-
-# save
-saveRDS(mice_health_mids, here::here("dump", "mice_health_mids"))
-saveRDS(mice_health_long, here::here("dump", "mice_health_long"))
-mice_health_mids <- readRDS(here::here("dump", "mice_health_mids"))
-mice_health_long <- readRDS(here::here("dump", "mice_health_long"))
-
-
-
-# propensity scors --------------------------------------------------------
-
-
-# set exposure
-X = "t1_perfectionism_4tile"
-
-#
-estimand = "ATE"
-
-baseline_vars_models = mice_health_long |>  # post process of impute and combine
-  dplyr::select(starts_with("t0"))|> colnames() # note, we earlier change name of `t0_sample_weights` to `sample weights`
-
-
-# obtain propensity scores
-match_ebal_ate <- margot::match_mi_general(data = mice_health_mids, 
-                                      X = X, 
-                                      baseline_vars = baseline_vars_models, 
-                                      estimand = estimand,  
-                                      # focal = "< >", for ATT
-                                      method = "ebal", 
-                                      sample_weights = "sample_weights")
-
-
-# check balance
-bal.tab(match_ebal_ate)
-
-love.plot(match_ebal_ate, binary = "std", thresholds = c(m = .1),
-          wrap = 50, position = "bottom", size =3) 
-
-# consider results 
-sum_ebal_match_ebal_ate <- summary(match_ebal_ate)
-sum_ebal_match_ebal_ate
-plot(sum_ebal_match_ebal_ate)
-
-
-# trimmed weights
-match_ebal_ate_trim <- WeightIt::trim(match_ebal_ate, at = .99)
-
-# check balanc
-bal.tab(match_ebal_ate_trim)
-
-# summary
-summary_match_ebal_ate_trim <- summary(match_ebal_ate_trim)
-
-# check - extreme weights gone
-plot(summary_match_ebal_ate_trim)
-
-
-# plot for balance
-love.plot(match_ebal_ate_trim, binary = "std", thresholds = c(m = .1),
-          wrap = 50, position = "bottom", size =2, limits = list(m = c(-.5, .5)))
-
-# here_save(match_ebal_ate_trim, "match_ebal_ate_trim")
-# match_ebal_ate_trim <- here_read( "match_ebal_ate_trim")
-# 
-
-# set data frame; output of match_mi_general model
-df_ate = match_ebal_ate_trim
-
-# remind self of levels
-levels(mice_health_long$t1_perfectionism_4tile)
-
-# set treatment level
-treat_0 = "tile_1" # lowest quartile
-treat_1 = "tile_3" # third quartile
-
-# bootstrap simulations ( generally use 1000)
-nsims <- 200
-
-# cores
-cl =  parallel::detectCores () 
-
-estimand = "ATE"
-
-# as specified
-vcov = "HC2" # robust standard errors. 
-
-# cores
-cores = parallel::detectCores () # use all course
-# 
-
-# Example call to the function
-mod_fit_t2_kessler_latent_anxiety_z <-margot::causal_contrast_marginal(
-  df = df_ate,
-  Y = "t2_kessler_latent_anxiety_z",
-  X = X,
-  baseline_vars = baseline_vars_models,
-  treat_1 = treat_1,
-  treat_0 = treat_0,
-  nsims = 200,
-  cores = cores,
-  family = "gaussian",
-  weights = TRUE,
-  continuous_X = FALSE,
-  splines = FALSE,
-  estimand = "ATE",
-  type = "RD",
-  vcov = vcov
-)
-
-mod_fit_t2_kessler_latent_anxiety_z
-
-
-out_tab_engine <- margot::tab_engine_marginal(mod_fit_t2_kessler_latent_anxiety_z,
-                                      new_name = "test",
-                                      delta = 1,
-                                      sd = 1,
-                                      type = "RD",
-                                      continuous_X = FALSE)
-out_tab_engine
-
-
-
-fit_1  <- margot::double_robust_marginal(
-  df = df_ate,
-  Y = "t2_kessler_latent_anxiety_z",
-  X = X,
-  baseline_vars = baseline_vars_models,
-  treat_1 = treat_1,
-  treat_0 = treat_0,
-  nsims = 200,
-  cores = cores,
-  family = "gaussian",
-  weights = TRUE,
-  continuous_X = FALSE,
-  splines = FALSE,
-  estimand = "ATE",
-  type_causal = "RD",  
-  type_tab = "RD",    
-  vcov = vcov,         
-  new_name = "test",
-  delta = 1,
-  sd = 1
-)
-
-fit_1$tab_results
-
-fit_1$causal
-
-# conditional effects -----------------------------------------------------
-na_count <- sum(is.na(mice_health_mids$data$t0_eth_cat))
-print(paste("Number of NA values in 't0_eth_cat':", na_count))
-
-df_test<- as.data.frame(mice_health_mids[[2]])
-
-df_test
-
-library(mice)
-library(MatchIt)
-library(MatchThem)
-
-perform_analysis <- function(data, formula, method, estimand) {
-  # Function to perform matching or weighting
-  if (method == "ps") {
-    return(weightthem(formula = formula, data = data, estimand = estimand, method = "ps"))
-  } else {
-    match_out <- matchit(formula = formula, data = data, method = method, estimand = estimand)
-    return(match.data(match_out))
-  }
-}
-
-process_subgroups <- function(data, X, baseline_vars, subgroup, estimand, method) {
-  # Helper function to process each subgroup within a given dataset
-  formula_str <- as.formula(paste(X, "~", paste(baseline_vars, collapse = "+")))
-  levels_list <- unique(data[[subgroup]])
-  results_list <- vector("list", length(levels_list))
-  
-  for (i in seq_along(levels_list)) {
-    level <- levels_list[i]
-    sub_data <- subset(data, data[[subgroup]] == level, drop = FALSE)
-    if (nrow(sub_data) > 0) {
-      results_list[[i]] <- perform_analysis(sub_data, formula_str, method, estimand)
-    } else {
-      warning(paste("No data available for subgroup:", level))
-      results_list[[i]] <- NULL
-    }
-  }
-  names(results_list) <- levels_list
-  return(results_list)
-}
-
-match_mi_subgroup <- function(data, X, baseline_vars, estimand, method, subgroup = NULL) {
-  data_class <- class(data)
-  
-  if ("mids" %in% data_class) {
-    # Handle mids object: process each imputation separately
-    results <- lapply(1:mice::nimp(data), function(imp) {
-      imp_data <- mice::complete(data, action = imp)
-      if (!is.null(subgroup)) {
-        process_subgroups(imp_data, X, baseline_vars, subgroup, estimand, method)
-      } else {
-        perform_analysis(imp_data, as.formula(paste(X, "~", paste(baseline_vars, collapse = "+"))), method, estimand)
-      }
-    })
-    return(results)
-  } else if ("data.frame" %in% data_class) {
-    # Handle regular dataframe
-    if (!is.null(subgroup)) {
-      return(process_subgroups(data, X, baseline_vars, subgroup, estimand, method))
-    } else {
-      return(perform_analysis(data, as.formula(paste(X, "~", paste(baseline_vars, collapse = "+"))), method, estimand))
-    }
-  } else {
-    stop("Input data must be either 'mids' or 'data.frame' object")
-  }
-}
-
-
-
-# Ensure that you adjust the names and parameters according to your actual data structure and needs.
-match_ebal_cate <- match_mi_subgroup(data = mice_health_mids, 
-                                    X = X, 
-                                    baseline_vars = baseline_vars_models, 
-                                    estimand = "ATT",  
-                                    method = "ebal", 
-                                    subgroup = "t0_eth_cat",
-                                    sample_weights = "sample_weights")
-print(match_ebal_cate)
-
-mice_health_long$t0_eth_cat
-
-
-baseline_vars_models = mice_health_long |>  # post process of impute and combine
-  dplyr::select(starts_with("t0"))|> colnames() # note, we earlier change name of `t0_sample_weights` to `sample weights`
-
-
-# obtain propensity scores
-match_ebal_cate <- match_mi_general(data = mice_health_mids, 
-                                   X = X, 
-                                   baseline_vars = baseline_vars_models, 
-                                   estimand = estimand,  
-                                   # focal = "< >", for ATT
-                                   method = "ebal", 
-                                   subgroup = "t0_eth_cat",
-                                   sample_weights = "sample_weights")
-match_ebal_cate
-
-baseline_vars_models_no_eth <- setdiff(baseline_vars_models, "t0_eth_cat")
-match_mi_general()
-
-
-dt_match_cate <- match_mi_general(
-  data = mice_health_mids,
-  X = X,
-  baseline_vars = baseline_vars_models,
-  estimand = "ATE",
-  method = "ebal",
-  subgroup = "t0_eth_cat"
-)
-
-
-# check balance
-bal.tab(match_ebal_cate$euro) #  good
-bal.tab(dt_match_super$māori) # not good
-
-# save data
-saveRDS(dt_match_super, here::here("data", "dt_match_super"))
-
-# check balance
-bal.tab(dt_match$euro)
-bal.tab(dt_match$māori)
-
-# code for summar
-sum_e <- summary(dt_match$euro)
-sum_m <- summary(dt_match$māori)
-# sum_p <- summary(dt_match$pacific)
-# sum_a <- summary(dt_match$asian)
-sum_e
-sum_m
-
-plot(sum_e)
-plot(sum_m)
-#plot(sum_p)
-#plot(sum_a)
-
-love.plot(dt_match$euro,
-          binary = "std",
-          thresholds = c(m = .1))
-
-love.plot(dt_match$māori,
-          binary = "std",
-          thresholds = c(m = .1))
-
-love.plot(dt_match$pacific,
-          binary = "std",
-          thresholds = c(m = .1))
-love.plot(dt_match$asian,
-          binary = "std",
-          thresholds = c(m = .1))
-
-
-# prepare data
-dt_ref_e <- subset(dt_8, t0_eth_cat == "euro")
-dt_ref_e$weights <- dt_match$euro$weights
-
-# prepare data
-dt_ref_m <- subset(dt_8, t0_eth_cat == "māori")
-dt_ref_m$weights <- dt_match$māori$weights
-
-# combine
-dt_ref_all <- rbind(dt_ref_e, dt_ref_m)
-
-# call dataframe `df`
-df = dt_ref_all
-
-
-# Let's calculate the ATE for the entire group, ignoring the subclasses.
-# let's make the contrasts between low and high perfectionism.
-baseline_vars_reflective_propensity
-baseline_vars_full
-
-#  GENERAL ATE (Not adjusting for subgroups)
-mod_ref_meaning   <- gcomp_sim(
-  df = df,
-  # note change
-  Y = "t2_meaning_z",
-  X = X,
-  baseline_vars = baseline_vars_full,
-  treat_1 = "high",
-  treat_0 = "low",
-  estimand = "ATE",
-  scale = "RD",
-  type = "RD",
-  nsims = 1000,
-  cores = 8,
-  family = gaussian,
-  weights = TRUE,
-  continuous_X = FALSE,
-  splines = FALSE,
-  new_name = "t2_meaning_z (composite)"
-)
-
-# ATE. we will cover "evalues" next week
-
-
-### SUBGROUP analysis
-df = dt_ref_all
-Y = "t2_meaning_z"
-X = "t1_perfectionism_coarsen"
-baseline_vars = baseline_vars_reflective_propensity
-treat_0 = "low"
-treat_1 = "high"
-estimand = "ATE"
-scale = "RD"
-nsims = 1000
-family = "gaussian"
-continuous_X = FALSE
-splines = FALSE
-cores = parallel::detectCores()
-subclass = "t0_eth_cat"
-
-# not we interact the subclass X treatment X covariates
-
-formula_str <-
-  paste(
-    Y,
-    "~",
-    S,
-    "*",
-    "(",
-    X ,
-    "*",
-    "(",
-    paste(baseline_vars_reflective_propensity, collapse = "+"),
-    ")",
-    ")"
-  )
-
-formula_str
-
-
-# fit model
-fit_all_all  <- glm(
-  as.formula(formula_str),
-  weights = weights,
-  # weights = if (!is.null(weight_var)) weight_var else NULL,
-  family = family,
-  data = df
-)
-
-
-
-# simulate coefficients
-sim_model_all <- sim(fit_all_all, n = nsims, vcov = "HC1")
-
-
-# simulate effect as modified in europeans
-sim_estimand_all_e <- sim_ame(
-  sim_model_all,
-  var = X,
-  cl = cores,
-  subset = t0_eth_cat == "euro", would need to specify 
-  verbose = FALSE
-)
-
-sim_estimand_all_e <-
-  transform(sim_estimand_all_e, RD = `E[Y(low)]` - `E[Y(high)]`)
-sim_estimand_all_e
-
-
-# simulate effect as modified in māori
-sim_estimand_all_m <- sim_ame(
-  sim_model_all,
-  var = X,
-  cl = cores,
-  subset = t0_eth_cat == "māori",  # would need to 
-  verbose = FALSE
-)
-
-# combine
-sim_estimand_all_m <-
-  transform(sim_estimand_all_m, RD = `E[Y(low)]` - `E[Y(high)]`)
-
-
-# summary
-summary(sim_estimand_all_e)
-summary(sim_estimand_all_m)
-
-# rearrange
-names(sim_estimand_all_e) <-
-  paste(names(sim_estimand_all_e), "e", sep = "_")
-
-names(sim_estimand_all_m) <-
-  paste(names(sim_estimand_all_m), "m", sep = "_")
-
-
-est_all <- cbind(sim_estimand_all_m, sim_estimand_all_e)
-est_all <- transform(est_all, `RD_m - RD_e` = RD_m - RD_e)
-
-
-# view summary
-summary(est_all)
-
-
-
-summary(fit_all_all)
-
-coefs <- coef(fit_all_all)
-table(is.na(coefs))#     t0_eth_catmāori:t1_perfectionism_coarsen.Q:t0_gen_cohort.C
-
-# #FALSE  TRUE
-# 344     4
-
-insight::get_varcov(fit_all_all)
-
 
 
 # grf ---------------------------------------------------------------------
@@ -822,45 +243,30 @@ library(grf)
 
 exposure_vars <- c("perfectionism", "censored")
 baseline_vars<-setdiff(baseline_vars, "sample_weights")
-df_impute_base<- margot_wide_impute_baseline(dat_long, baseline_vars = baseline_vars, 
+df_impute_base<- margot::margot_wide_impute_baseline(dat_long, baseline_vars = baseline_vars, 
                                              exposure_var = exposure_vars, outcome_vars = outcome_vars)
 
+here_save(df_impute_base, "df_impute_base")
 dt_18 <- dat_long |> filter(wave == 2018)
 
 # add sample weights
 df_impute_base$t0_sample_weights = dt_18$sample_weights
 
 # save
-saveRDS(df_impute_base, here::here("dump", "df_impute_base"))
+#here_save(df_impute_base,"df_impute_base")
 # train causal forest
 
 # sample weights
-t0_sample_weights <- df_impute_base$t0_sample_weights
+t0_sample_weights <- df_no_impute_base$t0_sample_weights
 
-# get censoring indicator
-D <- df_impute_base$t1_censored
 
+
+# correct
+df_impute_base[, c("t0_male", "t0_sample_weights")]
+
+t0_sample_weights
 # get key data features 
 baseline_vars
-# 
-# df_use_full <-
-#   df_use_full_f |> select(
-#     starts_with("t1"),
-#     starts_with("t2"),
-#     starts_with("t0"),
-#     -starts_with("t0_warm"),-t0_hlth_disability_z,
-#     -t0_hours_family_sqrt_round,
-#     -t0_hours_friends_sqrt_round,-t0_sfhealth_z,
-#     -t0_has_siblings,
-#     -t0_hlth_bmi_z,
-#     -t0_born_nz_z,
-#     -t0_friends_time_z,-t0_family_time_z,
-#     -t0_sample_origin,
-#     -t0_vengeful_rumin_z,
-#     -t0_religion_perceive_religious_discrim_z,
-#     -t0_gratitude_z,
-#     -t0_support_z
-#   )
 
 
 
@@ -870,25 +276,26 @@ nrow( df_impute_base )
 # get correct censoring 
 t0_na_condition <-
   rowSums(is.na(select(df_impute_base, starts_with("t1_")))) > 0
-t1_na_condition <-
-  rowSums(is.na(select(df_impute_base, starts_with("t2_")))) > 0
-baseline_vars
-df_impute_base$t0_alert_level_combined_lead
+# t1_na_condition <-
+#   rowSums(is.na(select(df_impute_base, starts_with("t2_")))) > 0
+# baseline_vars
+# df_impute_base$t0_sample_weights
 
 
 df_clean <- df_impute_base %>%
+  select(-t0_alert_level_combined_lead) |> 
   mutate(t0_censored = ifelse(t0_na_condition, 0, t0_censored)) %>%
-  mutate(t1_censored = ifelse(t1_na_condition, 0, t1_censored)) %>%
-  mutate(across(starts_with("t1_"), ~ ifelse(t0_censored == 0, NA_real_, .)),
-         across(starts_with("t2_"), ~ ifelse(t0_censored == 0, NA_real_, .))) %>%
-  mutate(across(starts_with("t2_"), ~ ifelse(t1_censored == 0, NA_real_, .))) |>
+ # mutate(t1_censored = ifelse(t1_na_condition, 0, t1_censored)) %>%
+ # mutate(across(starts_with("t1_"), ~ ifelse(t0_censored == 0, NA_real_, .)),
+  #        across(starts_with("t2_"), ~ ifelse(t0_censored == 0, NA_real_, .))) %>%
+  # mutate(across(starts_with("t2_"), ~ ifelse(t1_censored == 0, NA_real_, .))) |>
   # select variables
   dplyr::mutate(
     across(
       .cols = where(is.numeric) &
         !t0_censored &
         !t0_sample_weights & 
-        !t0_alert_level_combined_lead &
+      #  !t0_alert_level_combined_lead &
         !t1_censored,
       .fns = ~ scale(.),
       .names = "{.col}_z"
@@ -899,13 +306,13 @@ df_clean <- df_impute_base %>%
   select(
     where(is.factor),
     t0_sample_weights,
-    t0_alert_level_combined_lead,
+   # t0_alert_level_combined_lead,
     t0_sample_weights,
     t0_censored,
     t1_censored,
     ends_with("_z")
   ) |>
-  mutate(t0_lost = 1 - t1_censored) |> 
+  mutate(t0_lost = 1 - t0_censored) |> 
   mutate(t1_lost = 1 - t1_censored) |> 
   relocate(starts_with("t0_"), .before = starts_with("t1_")) |>
   relocate("t0_censored", .before = starts_with("t1_"))  |>
@@ -913,10 +320,14 @@ df_clean <- df_impute_base %>%
 
 
 
-# checks
+# checks - Lost means Lost in the next wave
 table(df_clean$t1_lost)
-table(df_clean$t1_censored)
+table(df_clean$t0_lost)
 
+table(df_clean$t0_censored)
+
+test <- df_impute_base |> filter(t0_censored == 1)
+nrow(test)
 # 
 # df_impute_base$t1_perfectionism_z = scale(df_impute_base$t1_perfectionism)
 
@@ -927,102 +338,574 @@ str( df_clean )
 nrow(df_clean)
 
 
+naniar::vis_miss(df_clean, warn_large_data = FALSE)
+
+# weights for treament ----------------------------------------------------
+
+baseline_vars_models = df_clean |>  # post process of impute and combine
+  dplyr::select(starts_with("t0"),-t0_censored, -t0_lost, -t0_sample_weights)|> colnames() # note, we ear
+
+baseline_vars_models
+# fit proponsity score model 
+
+library(MatchIt)
+library(WeightIt)
+
+
+#test
+match_mi_general_dev <- function(data,
+                             X,
+                             baseline_vars,
+                             estimand,
+                             method,
+                             focal = NULL,
+                             sample_weights = NULL,
+                             stabilize = FALSE,
+                             include.obj = FALSE,
+                             keep.mparts = TRUE,
+                             ...) {
+  
+  # Check input data type
+  data_class <- class(data)
+  if (!data_class %in% c("mids", "data.frame")) {
+    stop("Input data must be either 'mids' or 'data.frame' object")
+  }
+  
+  # Construct the formula
+  formula_str <- as.formula(paste(X, "~", paste(baseline_vars, collapse = "+")))
+  
+  # Choose appropriate function based on data type
+  weight_function <- if (data_class == "mids") MatchThem::weightthem else WeightIt::weightit
+  
+  # Function to perform matching
+  perform_matching <- function(data) {
+    if (is.null(sample_weights)) {
+      weight_function(
+        formula = formula_str,
+        data = data,
+        estimand = estimand,
+        stabilize = stabilize,
+        method = method,
+        focal = focal,
+        include.obj = include.obj,
+        keep.mparts = keep.mparts,
+        ...
+      )
+    } else {
+      weight_function(
+        formula = formula_str,
+        data = data,
+        estimand = estimand,
+        stabilize = stabilize,
+        method = method,
+        sample_weights = sample_weights,
+        focal = focal,
+        include.obj = include.obj,
+        keep.mparts = keep.mparts,
+        ...
+      )
+    }
+  }
+  
+  # Perform matching on the entire dataset
+  dt_match <- perform_matching(data)
+  
+  return(dt_match)
+}
+
+
+
+match_censoring <- match_mi_general_dev(data = df_clean, 
+                                            X = "t0_lost", 
+                                            baseline_vars = baseline_vars_models, 
+                                            estimand = "ATE",  
+                                            superlearner = TRUE,
+                                            method = "ebal",
+                                            # focal = "< >", for ATT
+                                            method = "super",
+                                           #SL.library = c("SL.ranger"),
+                                            SL.library = c("SL.glmnet", "SL.ranger",
+                                                       "SL.xgboost","SL.polymars"),
+                                            sample_weights = "sample_weights")
+
+# save output
+here_save( match_censoring, "match_censoring") 
+
+bal.tab(match_censoring)
+love.plot(match_censoring)
+
+
+min( match_censoring$weights )
+max( match_censoring$weights )
+# new weights
+df_clean$t0_combo_weights = match_censoring$weights * df_clean$t0_sample_weights
+
+min( df_clean$t0_combo_weights)
+
+
+df_clean_t1 <- df_clean |> filter(t0_lost == 0)
+
+#
+nrow(df_clean_t1)
+
+table(is.na(df_clean_t1$t1_perfectionism_z))
+
+# gets us the correct df for weights
+
+
+
+# next get data for t1
+
+# get correct censoring 
+
+# redundant but OK
+t0_na_condition <-
+  rowSums(is.na(select(df_clean_t1, starts_with("t1_")))) > 0
+
+# use
+t1_na_condition <-
+  rowSums(is.na(select(df_clean_t1, starts_with("t2_")))) > 0
+# baseline_vars
+# df_impute_base$t0_sample_weights
+
+
+df_clean_t2 <- df_clean_t1 %>%
+ # select(-t0_alert_level_combined_lead) |> 
+  mutate(t0_censored = ifelse(t0_na_condition, 0, t0_censored)) %>%
+  mutate(t1_censored = ifelse(t1_na_condition, 0, t1_censored)) %>%
+  mutate(across(starts_with("t1_"), ~ ifelse(t0_censored == 0, NA_real_, .)),
+         across(starts_with("t2_"), ~ ifelse(t0_censored == 0, NA_real_, .))) %>%
+  mutate(across(starts_with("t2_"), ~ ifelse(t1_censored == 0, NA_real_, .))) |>
+ # mutate(t0_lost = 1 - t0_censored) |> 
+  mutate(t1_lost = 1 - t1_censored) |> 
+  relocate(starts_with("t0_"), .before = starts_with("t1_")) |>
+  relocate("t0_censored", .before = starts_with("t1_"))  |>
+  relocate("t1_censored", .before = starts_with("t2_")) |> 
+  select(-t1_lost, -t0_lost)
+
+
+# test 
+nrow(df_clean_t2)
+
+# checks 
+hist(df_clean_t2$t0_combo_weights)
+
+# outcomes
+naniar::vis_miss(df_clean_t2, warn_large_data = F)
+
+
+
+
+
+
+
+#############
+
+# reduce covariates
+df_use_full <-
+  df_clean |> select(
+    starts_with("t1"),
+    starts_with("t2"),
+    starts_with("t0"),
+    -starts_with("t0_warm"),
+  )
+
+
+
+colnames( df_use_full )
+nrow( df_use_full )
+
+
+# data wrangle: create binary indicator
+
+table(df_clean$t0_religion_church_round_z)
+
+
+# train causal forest
+
+# sample weights
+t0_sample_weights <- df_use_full$t0_sample_weights
+
+# get censoring indicator
+D <- df_use_full$t1_lost
+
 # Causal forest weights
-grf_names_base <- df_clean |> select( starts_with("t0"), -starts_with(c("t1","t2")), - t0_sample_weights,-t0_censored, t0_lost, -t0_alert_level_combined_lead )|> colnames()
+# grf_names_base <- df_use_full |> select( starts_with("t0"), -starts_with(c("t1","t2")),  -t0_sample_weights)|> colnames()
+
+grf_names_base <- df_use_full |> select( starts_with("t0")), -starts_with(c("t1", "t2")),  -t0_sample_weights)|> colnames()
+
+nrow(df_use_full)
+
+# convert NAs to a factor level
+df_use_full$t0_eth_cat <- addNA(df_use_full$t0_eth_cat, ifany = TRUE)
+
+
+# convert factors to dummy variables for specific columns
+dummy_vars <- model.matrix(~ t0_eth_cat - 1, data = df_use_full)
+
+nrow(dummy_vars)
+# Combine the new dummy variables with the original dataframe
+data_new <- cbind(df_use_full, dummy_vars) |> select(-t0_eth_cat)
+
+baseline_predictors <- data_new |> colnames()
+
+baseline_predictors
+
+
+
+
+
+
+# GRF MODELS --------------------------------------------------------------
+# see: https://grf-labs.github.io/grf/
+#devtools::install_github("grf-labs/grf", subdir = "r-package/grf")
+library(grf)
+
+
+# data wrangle: create binary indicator
+
+table(df_clean$t0_religion_church_round_z)
+df_use_full_f <- df_clean |> 
+  mutate(t1_reg_church_attends = ifelse( t1_religion_church_round >= 4, 1, 0)) |> 
+  # mutate(t0_reg_church_attends = ifelse( t0_religion_church_round_z <= 4, 1, 0)) |> 
+  mutate(t0_has_siblings  = ifelse(t0_total_siblings_factor == 0, 0, 1)) |> 
+  select( -t0_total_siblings_factor)
+
+
+
+
+# train causal forest
+
+# sample weights
+t0_sample_weights <- df_use_full_f$t0_sample_weights
+
+# get censoring indicator
+D <- df_use_full_f$t1_not_lost
+
+# get key data features 
+
+# reduce covariates
+df_use_full <-
+  df_use_full_f |> select(
+    starts_with("t1"),
+    starts_with("t2"),
+    starts_with("t0"),
+    -starts_with("t0_warm"),-t0_hlth_disability_z,
+    -t0_hours_family_sqrt_round,
+    -t0_hours_friends_sqrt_round,-t0_sfhealth_z,
+    -t0_has_siblings,
+    -t0_hlth_bmi_z,
+    -t0_born_nz_z,
+    -t0_friends_time_z,-t0_family_time_z,
+    -t0_sample_origin,
+    -t0_vengeful_rumin_z,
+    -t0_religion_perceive_religious_discrim_z,
+    -t0_gratitude_z,
+    -t0_support_z
+  )
+
+
+
+colnames( df_use_full )
+nrow( df_use_full )
+
+
+# Causal forest weights
+grf_names_base <- df_use_full |> select( starts_with("t0"), -starts_with(c("t1","t2")), - t0_sample_weights,-t0_not_lost )|> colnames()
+
+selected_W = matrix( df_use_full$t1_reg_church_attends )
+selected_Y = matrix( df_use_full$t2_charity_donate )
+
+selected_X <- df_use_full %>% select(all_of(grf_names_base)) |> 
+  mutate(across(everything(), ~ {
+    x <- .
+    attributes(x) <- NULL
+    x
+  }))
+
+
+# Y var is censoring time
+Y = D + 1
+D
+sf_censor <- survival_forest(cbind(selected_X, selected_W), Y = Y, D = 1-D, prediction.type="Nelson-Aalen")
+summary(sf_censor)
+
+# K <- 1/predict(sf_censor, failure.times=pmin(Y,D), prediction.times="time")$predictions
+# 
+# hist(K)
+here_save(sf_censor, "sf_censor")
+censoring_prob <- sf_censor$predictions
+hist(censoring_prob)
+
+observed_events <- (D == 1)
+
+# compute sample weights # not  quite right?
+grf_sample_weights <- 1 / censoring_prob[observed_events]
+
+
+grf_sample_weights
+# inspect
+length(grf_sample_weights)
+hist(grf_sample_weights)
+
+
+# try another method
+# library(WeightIt)
+# library(cobalt)
+# 
+# 
+# 
+# grf_names_base
+# # propensity score matching using ebalance -- generally very good
+# 
+# 
+# grf_names_base_2 <- c(grf_names_base, 't1_reg_church_attends')
+# 
+# grf_names_base_2
+# 
+# cen_ebal <- match_mi_general(data = df_use_full, 
+#                                       X = "t1_not_lost", 
+#                                       baseline_vars = grf_names_base_2, 
+#                                       estimand = "ATE",  
+#                                       # focal = "< >", for ATT
+#                                       method = "ebal", 
+#                                       sample_weights = "sample_weights")
+# 
+# summary(cen_ebal)
+# bal.tab(cen_ebal, un = TRUE)
+# love.plot(cen_ebal, binary = "std", thresholds = c(m = .1),
+#           wrap = 50, position = "bottom", size =2) 
+# 
+# # get weights
+# df_use_full$w_weights <- cen_ebal$weights
+# df_use_full
+
+df_use_full <- df_use_full |> filter(t1_not_lost == 1) |> 
+  mutate(weights = grf_sample_weights * t0_sample_weights) 
+
+
+
+g_weights = matrix( df_use_full$weights)
+hist(g_weights)
+
+#  One-hot encoding to make cat vars continuous
+# Load necessary library
+library(dplyr)
+
+# rename dataframe
+df <- df_use_full
+colnames(df)
+# identify categorical variables (excluding 'id')
+categorical_vars <- sapply(df, is.factor) 
+#categorical_vars["id"] <- FALSE
+
+# Apply one-hot encoding to categorical variables and combine results
+df_encoded <- df %>% 
+  select(which(!categorical_vars)) %>% 
+  bind_cols(
+    lapply(names(df)[categorical_vars], function(col) {
+      model.matrix(~ . - 1, data = df[col])
+    })
+  )
+
+
+head(df_encoded)
+
+# Reorder the columns in df_encoded
+df_encoded <- df_encoded %>%
+  select(t0_religion_church_round_z, t0_hours_charity_z,t0_charity_donate_z, everything())
+
+head(df_encoded)
+
+
+
+g_W  = matrix( df_encoded$t1_reg_church_attends )
+t2_charity_donate = matrix( df_encoded$t2_charity_donate )
+t2_hours_charity = matrix( df_encoded$t0_hours_charity_z )
+
+
+
+use_names_base <- df_encoded |> select( starts_with("t0"), - t0_sample_weights,-t0_not_lost )|> colnames()
+use_names_base
+
+
+g_X <- df_encoded %>% select(all_of(use_names_base)) |> 
+  mutate(across(everything(), ~ {
+    x <- .
+    attributes(x) <- NULL
+    x
+  }))
+
+
+# g_XX <- g_X |> 
+#   select(t0_religion_church_round_z,t0_charity_donate_z, t0_eth_euro, t0_age_z, t0_partner_z, t0_urban_z, t0_hours_work_log_z, t0_religion_church_round_z, t0_education_level_coarsen_z, t0_household_inc_log_z) 
+
+str(g_W)
+str(g_X)
+str(g_W)
+str(g_Y)
+str(g_weights)
+
+# model charity
+tau_forest_t2_charity_donate <- grf::causal_forest(X= g_X, Y= t2_charity_donate, W = g_W, sample.weights = g_weights)
+
+# save
+here_save(tau_forest_t2_charity_donate, 'tau_forest_t2_charity_donate')
+
+
+# view
+tau_forest_t2_charity_donate
+
+## ATE
+average_treatment_effect(tau_forest_t2_charity_donate, target.sample = "all")
+
+633.9836
+
+average_treatment_effect(tau_forest_t2_charity_donate, target.sample = "treated")
+
+
+tau.hat.oob <- predict(tau_forest_t2_charity_donate)
+hist(tau.hat.oob$predictions)
+
+best_linear_projection(tau_forest_t2_charity_donate, g_X)
+rate <- rank_average_treatment_effect(tau_forest_t2_charity_donate, g_X[, "t0_religion_church_round_z"])
+plot(rate, ylab = "Church", main = "TOC: ranked by decreasing weight")
+forest.W <- regression_forest(g_X, g_W, tune.parameters = "all")
+W.hat <- predict(forest.W)$predictions
+
+g_Y <- t2_charity_donate
+forest.Y <- regression_forest(g_X, g_Y, tune.parameters = "all")
+Y.hat <- predict(forest.Y)$predictions
+
+
+forest.Y.varimp <- variable_importance(tau_forest_t2_charity_donate)
+forest.Y.varimp
+selected.vars <- which(forest.Y.varimp / mean(forest.Y.varimp) > 0.95)
+selected.vars
+colnames(g_X)
+
+# Forest in most import vars
+tau.forest <- causal_forest(g_X[, selected.vars], g_Y, g_W,
+                            W.hat = W.hat, Y.hat = Y.hat,
+                            tune.parameters = "all", sample.weights = g_weights)
+
+average_treatment_effect(tau.forest, target.sample = "all")
+
+
+
+# get vec for key params
+
+n<-nrow(g_X)
+n
+
+train <- sample(1:n, n / 2)
+train
+train.forest <- causal_forest(g_X[train, ], g_Y[train], g_W[train],  sample.weights = g_weights[train])
+eval.forest <- causal_forest(g_X[-train, ], g_Y[-train], g_W[-train], sample.weights = g_weights[-train])
+rate <- rank_average_treatment_effect(eval.forest,
+                                      predict(train.forest, g_X[-train, ])$predictions)
+plot(rate)
+
+average_treatment_effect(train.forest, target.sample = "all")
+average_treatment_effect(eval.forest, target.sample = "all")
+
+
+# tau.hat <- predict(tau_forest, X.test, estimate.variance = TRUE)
+# paste("AUTOC:", round(rate$estimate, 2), "+/", round(1.96 * rate$std.err, 2))
+
+
+##
+library(policytree)
+library(DiagrammeR)
+
+# get ate
+ate <- average_treatment_effect(tau_forest_t2_charity_donate)
+
+
+# quick eval
+varimp <- variable_importance(tau_forest_t2_charity_donate)
+varimp
+ranked.vars <- order(varimp, decreasing = TRUE)
+ranked.vars
+colnames(g_X)
+
+
+best_linear_projection(tau_forest_t2_charity_donate, g_X[ranked.vars[1:5]])
+
+
+# Compute doubly robust scores
+dr.scores <- grf::get_scores(tau_forest_t2_charity_donate)
+dr.scores
+# dr.scores <- double_robust_scores(tau_forest_t2_charity_donate)
+# dr.scores
+# # Use as the ATE as a "cost" of program treatment to find something non-trivial
+# cost <- ate[["estimate"]]
+# dr.rewards <- cbind(control=-dr.scores, treat=dr.scores - cost)
+
+# plot overlap
+use_X <- g_X[, selected.vars]
+
+tree <- policy_tree(use_X, dr.scores, depth = 2)
+tree_full <- policy_tree(g_X, dr.scores, depth = 2)
+here_save(tree_full,"tree_full")
+print(tree)
+plot(tree)
+
+print(tree)
+plot(tree_full)
+
+# Predict the treatment assignment {1, 2} for each sample.
+predicted <- predict(tree, g_X)
+plot(X[, 1], X[, 2], col = predicted)
+legend("topright", c("control", "treat"), col = c(1, 2), pch = 19)
+abline(0, -1, lty = 2)
+
+node.id <- predict(tree, X, type = "node.id")
+
+values <- aggregate(dr.scores, by = list(leaf.node = node.id),
+                    FUN = function(x) c(mean = mean(x), se = sd(x) / sqrt(length(x))))
+print(values, digits = 2)
+
 
 # eval grf fit ------------------------------------------------------------
 
-# censoring ---------------------------------------------------------------
 
-baseline_vars_models = df_clean |>  # post process of impute and combine
-  dplyr::select(starts_with("t0"), - t0_alert_level_combined_lead,-t0_censored, -t0_lost, -t0_sample_weights)|> colnames() # note, we ear
+# eval fit
 
-baseline_vars_models
+# The overlap assumption requires a positive probability of treatment for each 𝑋𝑖
+# . We should not be able to deterministically decide the treatment status of an individual based on its covariates, meaning none of the estimated propensity scores should be close to one or zero. One can check this with a histogram:
+hist(e.hat <- tau.forest$W.hat)
 
+W = g_W
+# One can also check that the covariates are balanced across the treated and control group by plotting the inverse-propensity weighted histograms of all samples, overlaid here for each feature (done with ggplot2 which supports weighted histograms):
+IPW <- ifelse(W == 1, 1 / e.hat, 1 / (1 - e.hat))
 
-summary(cen_ebal)
-bal.tab(cen_ebal, un = TRUE)
-love.plot(cen_ebal, binary = "std", thresholds = c(m = .1),
-          wrap = 50, position = "bottom", size =2)
+#Make long
 
-# assuming cen_ebal$weights are the propensity scores of being censored
-lost_prob <- cen_ebal$weights
+df <- cbind(g_W, g_XX,IPW)
 
-min(lost_prob)
+head(df)
+table(df$g_W)
 
-test <- (cen_ebal$weights * df_clean$t0_sample_weights)
+# Load the necessary library
+library(tidyr)
 
+# Reshape the dataframe
+df_long <- df %>%
+  pivot_longer(
+    cols = starts_with("t0_"), 
+    names_to = "variable", 
+    values_to = "value"
+  ) |> 
+  mutate(W = factor(g_W))
 
-# rename sample weights 
-df_clean$sample_weights <- (cen_ebal$weights * df_clean$t0_sample_weights)
+df_long$value
 
-
-df_clean_filtered<- df_clean_filtered |> 
-  mutate(t1_perfectionism_high = ifelse(t1_perfectionism_z >= 1, 1, 0))
-
-df_clean <- df_clean |>
-  relocate("sample_weights", .before = starts_with("t0_")) |>
-  relocate(starts_with("t0_"), .before = starts_with("t1_")) |>
-  relocate("t0_censored", .before = starts_with("t1_"))  |>
-  relocate("t1_censored", .before = starts_with("t2_"))
-
-
-df_clean_filtered <- df_clean |> 
-  filter(t1_censored == 1) 
-
-nrow(df_clean_filtered)
-df_clean_filtered$sample_weights
-
-# next propensity scores by groups 
-
-df_clean_filtered$t1_perfectionism_z
-levels(df_clean_filtered$t0_eth_cat)
-
-test_df <-df_clean_filtered |> filter(t0_eth_cat == "maori" | t0_eth_cat == "euro") |> droplevels()
-levels(test_df$t0_eth_cat)
-table(test_df$t0_eth_cat)
-
-baseline_vars_models_sans_eth <- setdiff(baseline_vars_models, "t0_eth_cat")
-
-string <- formula_str <- as.formula(paste("t1_perfectionism_high", "~", paste(baseline_vars_models_sans_eth, collapse = "+")))
-baseline_vars_models_sans_eth
-table(test_df$t0_eth_cat)
+ggplot(df_long, aes(x = value, weight = IPW, fill = W)) +
+  geom_histogram(alpha = 0.5, position = "identity", bins = 30) +
+  facet_wrap( ~ variable, ncol = 2)
 
 
-
-W1 <- weightit(string,   
-               method = "super",
-               estimand = "ATT",
-               weights = "sample_weights",
-               SL.library = c("SL.ranger","SL.glmnet", "SL.polymars", "SL.xgboost"),
-               super = TRUE,
-               data = df_clean_filtered)
-summary(W1)
-
-W2 <- weightit(
-  string,
-  method = "super",
-  estimand = "ATT",
-  by = "t0_eth_cat",
-  weights = "sample_weights",
-  super = TRUE, 
-  SL.library = c("SL.ranger","SL.glmnet", "SL.polymars", "SL.xgboost"),
-  data = df_clean_filtered
-)
-
-summary(W2)
-
-# test diff
-
-S <- sbps(W1, W2)
-
-test_df$t0_eth_cat
-
-
-bal.tab(W1, un = TRUE)
-love.plot(W1, binary = "std", thresholds = c(m = .1),
-          wrap = 50, position = "bottom", size =2)
-
-bal.tab(W2, cluster = "t0_eth_cat")
-
+ggplot(df, aes(x = t0_religion_church_round_z, weight = IPW, fill = as.factor(g_W))) +
+  geom_histogram(alpha = 0.5, position = "identity", bins = 30) 
 
