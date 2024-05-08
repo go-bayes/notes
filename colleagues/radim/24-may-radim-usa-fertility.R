@@ -93,7 +93,6 @@ if (!require(devtools, quietly = TRUE)) {
 
 # get 'margot' from my github (make sure to update)
 devtools::install_github("go-bayes/margot")
-}
 
 
 # Check if pacman is installed; if not, install it
@@ -396,7 +395,7 @@ dt_t8_prep_3 <- dt_t8_prep_2 |>
   mutate(t0_age_z = scale(t0_age)) |>
   # remove age
   select(-t0_age) |>
-  mutate(t1_not_lost = ifelse(t1_na_condition, 0, 1)) |> # use if censored at t1
+  mutate(t1_not_lost = ifelse(t1_na_condition == 1, 0, 1)) |> # use if censored at t1
   relocate(starts_with("t0_"), .before = starts_with("t1_")) |>
   relocate(starts_with("t1_"), .before = starts_with("t8_"))
 # standardise age and include
@@ -426,7 +425,8 @@ dt_t8_prep_4 <- cbind(dt_t8_prep_3, parent_education_dummies, religion_cat_dummi
 
 # remove irrelevant cols
 dt_hot_coded <- dt_t8_prep_4 |> 
-  select(-t0_religion_cat, t0_parent_education) |> 
+  select(-t0_religion_cat, t0_parent_education, -t1_faith_any, -t1_faith_full, -t0_religion_cat, -t0_religion_cat_numeric,
+         -t0_parent_education) |> 
   relocate(starts_with("t0_"), .before = starts_with("t1_")) |>
   relocate("t1_not_lost", .before = starts_with("t8_")) 
 
@@ -501,7 +501,10 @@ table(dt_hot_coded$t0_religion_cat9)
 
 dt_hot_coded$t0_combo_weights <- match_ebal_ate$weights
 
+dt_hot_coded <- dt_hot_coded |> 
+  select(-t0_sample_weights)
 
+colnames(dt_hot_coded)
 
 # remind self of levels if needed
 # levels(mice_health_long$t1_perfectionism_4tile)
@@ -528,7 +531,7 @@ cores = parallel::detectCores () # use all course
 
 dt_hot_coded$t8_at_least_2_kids_in
 
-baseline_vars_models <- setdiff()
+
 
 
 
@@ -557,109 +560,96 @@ propensity_mod_fit_t8_kids <-margot::double_robust_marginal(
   delta = 1,
   sd = 1
 )
-propensity_mod_fit_t8_kids
+
+
+model <- lm(t8_at_least_2_kids_in ~ ., data = dt_hot_coded)
+
+# religion cat 9 and parent education are not valid - go back and remove and redo prop score
+model
+
+# fix singularities
+dt_hot_coded_prep <- dt_hot_coded |> 
+  select(-t1_not_lost, -starts_with("t0_parent_education"),  -starts_with("t0_religion_cat"))
+
+colnames(dt_hot_coded_prep)
+
+
+model <- lm(t8_at_least_2_kids_in ~ ., data = dt_hot_coded_prep)
+
+# works
+summary(model)
+
+
+#new var names
+new_var_names <- dt_hot_coded_prep |> 
+  select(starts_with("t0_"), -t0_combo_weights) |> colnames()
+
+# check
+dt_hot_coded_prep$t8_at_least_2_kids_in
 
 
 
-dt_hot_coded$t8_at_least_2_kids_in
-## PROPENSITY SCORES ONLY (MARGINAL STRUCTURAL MODEL )
+##### MARGINAL EFFECT ESTIMATE ON RISK RATIO SCALE #########
 
-causal_contrast_marginal <- function(df, Y, X, baseline_vars = "1", treat_0 = treat_0,
-                                     treat_1 = treat_1, estimand = c("ATE", "ATT"), type = c("RR", "RD"),
-                                     nsims = 200, cores = parallel::detectCores(), family = "gaussian",
-                                     weights = NULL, continuous_X = FALSE, splines = FALSE, vcov = "HC2",
-                                     verbose = FALSE) {
-  
-  # Validate family
-  if (is.character(family)) {
-    if (!family %in% c("gaussian", "binomial", "Gamma", "inverse.gaussian", "poisson", "quasibinomial", "quasipoisson", "quasi")) {
-      stop("Invalid 'family' argument. Please specify a valid family function.")
-    }
-    family_fun <- get(family, mode = "function", envir = parent.frame())
-  } else if (inherits(family, "family")) {
-    family_fun <- family
-  } else {
-    stop("Invalid 'family' argument. Please specify a valid family function or character string.")
-  }
-  
-  # Build formula
-  build_formula_str <- function(Y, X, continuous_X, splines, baseline_vars) {
-    baseline_part <- if (length(baseline_vars) > 0 &&
-                         !(length(baseline_vars) == 1 && baseline_vars[1] == "1")) {
-      paste(baseline_vars, collapse = "+")
-    } else {
-      "1"  # If baseline_vars is "1" or empty, use "1" to fit just an intercept
-    }
-    
-    if (continuous_X && splines) {
-      return(paste(Y, "~ bs(", X , ")", "*", "(", baseline_part, ")"))
-    } else {
-      return(paste(Y, "~", X , "*", "(", baseline_part, ")"))
-    }
-  }
-  
-  
-  # Apply model
-  weight_var <- if (!is.null(weights) && weights %in% names(df)) df[[weights]] else NULL
-  formula_str <- build_formula_str(Y, X, continuous_X, splines, baseline_vars)
-  fit <- glm(as.formula(formula_str), weights = weight_var, family = family_fun, data = df)
-  sim_imp <- sim(fit, n = nsims, vcov = vcov)
-  
-  # Output processing and return
-  sim_estimand <- sim_ame(sim_imp, var = X, cl = cores, verbose = verbose)
-  summary(sim_estimand)
-}
-
-
-str(dt_hot_coded$t0_combo_weights)
-baseline_vars_models
-baseline_vars_models
-
-propensity_mod_fit_t8_kids_iptw <-causal_contrast_marginal(
-  df = dt_hot_coded,
+mod_fit_t8_kids <- margot::causal_contrast_marginal(
+  df = dt_hot_coded_prep,
   Y = "t8_at_least_2_kids_in",
   X = X, 
-  baseline_vars = baseline_vars_models, # we are not regressing with any covariates
+  baseline_vars = new_var_names, # we are not regressing with any covariates
   treat_1 = 1,
   treat_0 = 0,
   nsims = 1000,
   cores = cores,
   family = "quasibinomial",
   weights = "t0_combo_weights",
+  continuous_X = FALSE,
+  splines = FALSE,
   estimand = "ATE",
-  type = "RR"
-)
-    
-
-#reduce covariates
-
-setdiff(baseline_vars_models, c())
-
-# Example dataframe creation
-df_example <- data.frame(
-  id = 1:100,
-  Y = rbinom(100, 1, 0.5),
-  X = rbinom(100, 1, 0.5),
-  baseline_var1 = runif(100),
-  t0_weights_combo = runif(100, 0.5, 2)
+  type = "RR",  
+  vcov = vcov
 )
 
-# Example function call with specified weights
-result <- causal_contrast_marginal(
-  df = df_example,
-  Y = "Y",
-  X = "X",
-  baseline_vars = 1,
-  treat_0 = 0,
+mod_fit_t8_kids
+
+# GET RESULT IN FORM TO
+output <- margot::tab_engine_marginal(mod_fit_t8_kids, new_name = "Risk Ratio for Religious Service", 
+                              type = "RR")
+
+#check
+output
+
+# interpretation 
+margot::margot_interpret_table(output, causal_scale = "risk_ratio", estimand = "ATE")
+
+
+
+
+
+### ANOTHER FUNCTION 
+
+
+mod_fit_t8_kids <- margot::double_robust_marginal(
+  df = dt_hot_coded_prep,
+  Y = "t8_at_least_2_kids_in",
+  X = X,
+  baseline_vars = new_var_names, # we are not regressing with any covariates
   treat_1 = 1,
+  treat_0 = 0,
+  nsims = 1000,
+  cores = cores,
   family = "quasibinomial",
+  weights = "t0_combo_weights",
+  continuous_X = FALSE,
+  splines = FALSE,
   estimand = "ATE",
-  type = "RR",
-  vcov = "HC2",
-  weights = "t0_weights_combo"  # Specifying the weights variable by name
+  type_causal = "RR",  
+  type_tab = "RR",    
+  vcov = vcov,         
+  new_name = "At Least 2 x Children Time 8",
+  delta = 1,
+  sd = 1
 )
 
-# Print or view the result
-print(result)
+margot::margot_interpret_table(mod_fit_t8_kids$tab_results, causal_scale = "risk_ratio", estimand = "ATE")
 
 
