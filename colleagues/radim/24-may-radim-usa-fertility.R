@@ -85,7 +85,7 @@ push_mods <-  fs::path_expand(
 )
   
 
-# get devtools
+# get devtools if needed
 if (!require(devtools, quietly = TRUE)) {
   install.packages("devtools")
   library(devtools)
@@ -95,7 +95,7 @@ if (!require(devtools, quietly = TRUE)) {
 devtools::install_github("go-bayes/margot")
 
 
-# Check if pacman is installed; if not, install it
+# check if pacman is installed; if not, install it
 if (!require(pacman, quietly = TRUE)) {
   install.packages("pacman")
   library(pacman)
@@ -141,11 +141,11 @@ head(dat_init)
 
 
 # create weights for male/not male in t0
-# note, please use either "male" or "female" or "not_male" estc so that we know what the indicator meands
+# note, please use either "male" or "female" or "not_male"  so that we know what the indicator means
 
 table(dat_init$t0_gender_binary) # I will assume that 1 = male?  
 
-# check this and reverse if otherwise!
+# check this and reverse the code "male" if you mean female
 dat_init <- dat_init |> rename(t0_male = t0_gender_binary)
 
 
@@ -174,12 +174,11 @@ dat_init$t0_sample_weights <-
 # we will upweight males and down weight non-males to obtain a balance of gender in the *target* population
 
 
-# NOTE THERE IS EXTREME GENDER BALANCE AT t0 -- check this
+# NOTE THERE IS EXTREME GENDER BALANCE AT t0 -- check this???
 table(round(dat_init$t0_sample_weights, 3))
 
 
 # test total n in the data
-# total nzavs participants
 n_total <- nrow(dat_init)
 
 # get comma in number
@@ -193,7 +192,6 @@ margot::here_save(n_total, "n_total")
 
 # name of exposure
 
-
 # check missing values
 skimr::skim(dat_init) |> arrange(n_missing)
 
@@ -206,10 +204,14 @@ table(dat_init$all_waves) # those in all waves = 1681
 
 # inclusion criteria ------------------------------------------------------
 # inclusion criteria : no kids in 2005
-# exclusion: is na in 2005
 table(dat_init$kids_2005)
 
+
+
+# problem with missing vals? ----------------------------------------------
 # remove irrelevant variables 
+
+
 dat_inclusion <- dat_init |>  
   dplyr::filter(kids_2005 == 0) |>    ## NOTE SOMETHING GOES WRONG HERE, ALL FUTURE VALUES ARE DROPPED
   
@@ -220,11 +222,14 @@ dat_inclusion <- dat_init |>
   dplyr::select(-at_least_2_kid_in_2005, -at_least_2_kid_in_2003,-at_least_2_kid_in_2004) |> 
   droplevels()
 
+# names
 colnames(dat_inclusion)
 
-#
+#. No missing vals :)
 naniar::vis_miss(dat_inclusion)
 
+
+#  data is a mess, let's get it into shape :) -----------------------------
 
 # update the prefix_years function to correctly handle existing prefixed columns
 prefix_years <- function(name) {
@@ -259,7 +264,6 @@ print(head(dat_inclusion))
 
 
 # check na in exposure at baseline
-
 table( is.na(dat_inclusion$t0_ritual_any)) 
 
 
@@ -268,7 +272,7 @@ table( is.na(dat_inclusion$t0_ritual_any))
 table( is.na(dat_inclusion$t1_ritual_any)) 
 
 
-# n
+# n in study
 nrow(dat_inclusion)
 
 # lets make inclusion criteria no NA in the exposure (we can come back to this)
@@ -293,6 +297,7 @@ naniar::vis_miss(dt_exposure_all)
 dt_baseline_exposure <- dt_exposure_all |> 
   select(id, t0_ritual_1aweek, t1_ritual_1aweek)
 
+# check
 head(dt_baseline_exposure)
 
 
@@ -303,7 +308,13 @@ dt_long <- pivot_longer(
   names_to = c("wave", ".value"),
   names_pattern = "(t[0-9]+)_(.*)"
 )
-dt_long$ritual_1aweek
+
+
+
+# transition table - useful for the publication ---------------------------
+
+# THIS SHOWS HOW MANY PEOPLE CHANGED IN REGULAR ATTENDANCE BETWEEN WAVE 0 and WAVE 1
+
 # make wave numeric
 dt_long$wave <- as.numeric(sub("t", "", dt_long$wave))
 
@@ -367,7 +378,7 @@ str(dt_t8_prep_2$t0_religion_cat)
 dt_t8_prep_2$t0_religion_cat <- as.factor(dt_t8_prep_2$t0_religion_cat)
 
 
-
+table(dt_t8_prep_2$t0_religion_cat)
 # mapping to view
 # View mapping of factor levels to numeric codes
 factor_levels <- levels(dt_t8_prep_2$t0_religion_cat)
@@ -384,7 +395,7 @@ table( dt_t8_prep_2$t0_parent_income)
 
 
 # make censoring variable for whether someone lost in t8
-# note there SHOULD BE PEOPLE WHO LEAVE THE STUDY
+# note there SHOULD BE PEOPLE WHO LEAVE THE STUDY so we need include missing value indicators
 t1_na_condition <- rowSums(is.na(select(dt_t8_prep_2, starts_with("t8_")))) > 0
 
 
@@ -419,6 +430,7 @@ religion_cat_dummies <- model.matrix(~ t0_religion_cat - 1, data = dt_t8_prep_3)
 parent_education_dummies <- as.data.frame(parent_education_dummies)
 religion_cat_dummies <- as.data.frame(religion_cat_dummies)
 
+
 # combine with original data
 dt_t8_prep_4 <- cbind(dt_t8_prep_3, parent_education_dummies, religion_cat_dummies)
 
@@ -451,7 +463,7 @@ summary(dt_hot_coded)
 X = "t1_ritual_1aweek"
   
 
-
+# propensity score model
 match_ebal_ate <- margot::match_mi_general(data = dt_hot_coded, 
                                            X = X, 
                                            baseline_vars = baseline_vars_models, 
@@ -482,32 +494,19 @@ love_plot_marginal <-
 # inspect imbalance on exposure
 love_plot_marginal
 
-table(dt_hot_coded$t0_religion_cat1)
-table(dt_hot_coded$t0_religion_cat2)
-table(dt_hot_coded$t0_religion_cat3)
-table(dt_hot_coded$t0_religion_cat4)
-table(dt_hot_coded$t0_religion_cat5)
-table(dt_hot_coded$t0_religion_cat6)
-table(dt_hot_coded$t0_religion_cat7)
-table(dt_hot_coded$t0_religion_cat8)
-table(dt_hot_coded$t0_religion_cat9)
 
 # doubly robust marginal model --------------------------------------------
 
-
-# marginal model 
-
 # set data frame; output of match_mi_general model
-
 dt_hot_coded$t0_combo_weights <- match_ebal_ate$weights
 
+# we do not need this var
 dt_hot_coded <- dt_hot_coded |> 
   select(-t0_sample_weights)
 
+# double check
 colnames(dt_hot_coded)
 
-# remind self of levels if needed
-# levels(mice_health_long$t1_perfectionism_4tile)
 
 # set treatment level
 treat_0 = 0 # lowest quartile
@@ -530,9 +529,6 @@ cores = parallel::detectCores () # use all course
 # Example call to the function
 
 dt_hot_coded$t8_at_least_2_kids_in
-
-
-
 
 
 # propensity score only model
@@ -561,7 +557,7 @@ propensity_mod_fit_t8_kids <-margot::double_robust_marginal(
   sd = 1
 )
 
-
+# find the problem cases
 model <- lm(t8_at_least_2_kids_in ~ ., data = dt_hot_coded)
 
 # religion cat 9 and parent education are not valid - go back and remove and redo prop score
@@ -573,7 +569,7 @@ dt_hot_coded_prep <- dt_hot_coded |>
 
 colnames(dt_hot_coded_prep)
 
-
+# find the problem cases - check again
 model <- lm(t8_at_least_2_kids_in ~ ., data = dt_hot_coded_prep)
 
 # works
@@ -587,6 +583,9 @@ new_var_names <- dt_hot_coded_prep |>
 # check
 dt_hot_coded_prep$t8_at_least_2_kids_in
 
+
+
+# key results -------------------------------------------------------------
 
 
 ##### MARGINAL EFFECT ESTIMATE ON RISK RATIO SCALE #########
@@ -609,26 +608,25 @@ mod_fit_t8_kids <- margot::causal_contrast_marginal(
   vcov = vcov
 )
 
-mod_fit_t8_kids
 
-# GET RESULT IN FORM TO
-output <- margot::tab_engine_marginal(mod_fit_t8_kids, new_name = "Risk Ratio for Religious Service", 
-                              type = "RR")
+# GET RESULT IN FORM OF TABLE
+output <- margot::tab_engine_marginal(mod_fit_t8_kids, new_name = "Risk Ratio: Regular Religious Service on 2+ Children",  type = "RR")
 
-#check
-output
+
 
 # interpretation 
 margot::margot_interpret_table(output, causal_scale = "risk_ratio", estimand = "ATE")
 
 
 
+# using another function I wrote ------------------------------------------
+
+
 
 
 ### ANOTHER FUNCTION 
 
-
-mod_fit_t8_kids <- margot::double_robust_marginal(
+mod_2 <- margot::double_robust_marginal(
   df = dt_hot_coded_prep,
   Y = "t8_at_least_2_kids_in",
   X = X,
@@ -650,6 +648,14 @@ mod_fit_t8_kids <- margot::double_robust_marginal(
   sd = 1
 )
 
-margot::margot_interpret_table(mod_fit_t8_kids$tab_results, causal_scale = "risk_ratio", estimand = "ATE")
+margot::margot_interpret_table(mod_2$tab_results, causal_scale = "risk_ratio", estimand = "ATE")
 
 
+margot_plot(mod_2$tab_results, 
+            title = "Causal Effect of Regular Religious Service on Fertilty 7 Years Later", 
+            subtitle= "Outcome is Binary (Has Two Children Yes/No)", 
+            type = "RR",
+            x_lim_hi = 5,
+            x_lim_lo = -1, 
+            x_offset = -1,
+            estimate_scale  = 1)
