@@ -425,11 +425,12 @@ margot::here_save(n_participants, n_participants)
 n_participants
 
 
+numbers <- c(1000, 50000, 1234567)
 
-
+margot::pretty_number(numbers)
 
 n_participants <- n_unique(dat_long$id)
-n_participants <- prettyNum(n_participants,big.mark=",")
+n_participants <- prettyNum( n_participants,big.mark=",")
 
 margot::here_save(n_participants, n_participants)
 n_participants
