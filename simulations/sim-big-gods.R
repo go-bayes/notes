@@ -2,6 +2,8 @@
 if (!require("dplyr")) install.packages("dplyr")
 if (!require("tidyr")) install.packages("tidyr")
 if (!require("geepack")) install.packages("geepack")
+if (!require("naniar")) install.packages("naniar")
+
 library(dplyr)
 library(tidyr)
 library(geepack)
@@ -53,6 +55,8 @@ for (i in 1:n_cultures) {
 
 nrow(data)
 
+# view -- note this is in long format
+head(data)
 
 # hack to get the lead of social complexity as the correct value ( JAKE YOU WON'T NEED TO DO THIS)
 data <- data |>
@@ -61,6 +65,10 @@ data <- data |>
   ungroup()
 
 nrow(data)
+
+# view
+head(data)
+
 
 # create the lost indicator -- JAKE YOU"LL NEED TO GET A CENSORING INDICATOR IN YOUR DATA 
 # convert your data to long format and do this. 
@@ -130,8 +138,6 @@ summary (fit <- glm(lead_social_complexity ~ beliefs_big_gods + lag_confounder_i
 # risk ratio approximation when outcome is not rare
 
 exp(coef(fit)["beliefs_big_gods"])
-# approximate risk ratio
-exp(coef(gee_msm)["beliefs_big_gods"])
 
 
 # msm ---------------------------------------------------------------------
