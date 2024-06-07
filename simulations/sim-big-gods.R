@@ -169,7 +169,7 @@ head(final_data)
 
 
 # est mod
-summary (fit <- glm(lead_social_complexity ~ beliefs_big_gods + lag_confounder_impute,  
+summary (fit <- glm(lead_social_complexity ~ beliefs_big_gods + lag_confounder_impute + wave,  
                     family = "poisson", data = final_data) ) # when outcome is not rare do not use binomial models
 
 
