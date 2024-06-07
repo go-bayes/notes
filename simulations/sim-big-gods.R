@@ -308,7 +308,7 @@ fit_yes_beliefs <- lmtp::lmtp_tmle(
 contrast <- lmtp::lmtp_contrast(fit_yes_beliefs, ref = fit_no_beliefs, type = "rr")
 
 # get results using margot package
-result <- margot_lmtp_evalue(contrast, scale = "RR", new_name = "Causal Effect of Beliefs in Big Gods on Social Complexity (risk)")
+result <- margot_lmtp_evalue(contrast, scale = "RR", new_name = "Causal Effect of Beliefs in Big Gods on Social Complexity +1 Century Later (risk)")
 
 # result
 result
@@ -319,7 +319,7 @@ interpretation <- margot::margot_interpret_table(result, causal_scale = "RR", es
 interpretation
 
 # table for your manuscript
-table <- margot::margot_lmtp_evalue(contrast, scale = "RR", new_name = "Causal Effect of Beliefs in Big Gods on Social Complexity (risk)")
+table <- margot::margot_lmtp_evalue(contrast, scale = "RR", new_name = "Causal Effect of Beliefs in Big Gods on Social Complexity +1 Century Later (risk)")
 
 # markdown table
 table |> 
