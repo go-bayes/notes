@@ -62,7 +62,14 @@ for (i in 1:n_cultures) {
   data <- rbind(data, culture_data)
 }
 
-nrow(data)
+
+## oracle 
+summary(fit_oracle <- glm(data = data,social_complexity ~ beliefs_big_gods + confounder, family = "binomial") )
+
+# note this is not the risk... 
+coef(fit_oracle)["beliefs_big_gods"]
+
+
 
 # view -- note this is in long format
 head(data)
@@ -168,15 +175,22 @@ head(final_data)
 head(final_data)
 
 
-# est mod
-summary (fit <- glm(lead_social_complexity ~ beliefs_big_gods + lag_confounder_impute + wave,  
-                    family = "poisson", data = final_data) ) # when outcome is not rare do not use binomial models
+# est modle -- note selection bias
+summary (fit <- glm(lead_social_complexity ~ beliefs_big_gods + lag_confounder_impute,  
+                    family = "binomial", data = final_data) ) # when outcome is not rare do not use binomial models
 
 
+summary (fit_glmer <- glmer(lead_social_complexity ~ beliefs_big_gods + lag_confounder_impute  + (1|wave),  
+                    family = "binomial", data = final_data) ) # when outcome is not rare do not use binomial models
 
+
+fit_glmer
 # risk ratio approximation when outcome is not rare
+coef(fit)["beliefs_big_gods"]
 
-exp(coef(fit)["beliefs_big_gods"])
+
+# what does glmer do? overestimates effect/ why?  we actually select on wave it seems
+fit_glmer@beta[2]
 
 
 # msm ---------------------------------------------------------------------
@@ -220,7 +234,7 @@ gee_msm <- geeglm(
 # summary of the MSM model
 summary(gee_msm)
 
-# approximate risk ratio accounting for non indpendence. 
+# approximate risk ratio accounting for non indpendence.not good
 exp(coef(gee_msm)["beliefs_big_gods"])
 
 
@@ -261,7 +275,7 @@ policy_yes_big_gods <- function(data, trt) {
 }
 
 # confounder
-L <- c("lag_confounder_impute", "wave")
+L <- c("lag_confounder_impute") # add century of measurement if using real data WAVE won't work as it should here
 # lmtp model (not nec valid standard errors for small sample)
 
 
@@ -274,20 +288,23 @@ fit_no_beliefs <- lmtp::lmtp_tmle(
     shift = policy_no_big_gods,
     mtp = TRUE,
     outcome_type = "binomial",
-    learners_outcome = c("SL.ranger",  "SL.glmnet"),  # small sample properties of ranger and glmnet are OK. not sure of the others
-    learners_trt = c("SL.ranger",  "SL.glmnet"),
+    learners_outcome = c("SL.ranger",  "SL.glmnet", "SL.xgboost"),  # small sample properties of ranger and glmnet are OK. not sure of the others
+    learners_trt = c("SL.ranger",  "SL.glmnet", "SL.xgboost"),
     id = "id_f",
     folds = 10,
     n_cores = 5                                     
   )
 
-
-# check
 fit_no_beliefs
 
+# check and indeed we find ranger is doing the heavy lifting here
+fit_no_beliefs$fits_m
+
+# however the exposure model it is not, and this makes sense because the confounders do not predict beliefs in big gods in this simulation, ranger can't do anything
+fit_no_beliefs$fits_r
 
 
-
+# replicating usign the same learners
 fit_yes_beliefs <- lmtp::lmtp_tmle(
   data = df_clean,
   trt = "beliefs_big_gods",
@@ -297,12 +314,23 @@ fit_yes_beliefs <- lmtp::lmtp_tmle(
   shift = policy_yes_big_gods,
   mtp = TRUE,
   outcome_type = "binomial",
-  learners_outcome = c("SL.ranger",  "SL.glmnet"),  # small sample properties of ranger and glmnet are OK. not sure of the others
-  learners_trt = c("SL.ranger",  "SL.glmnet"),
+  learners_outcome = c("SL.ranger",  "SL.glmnet", "SL.xgboost"),  # small sample properties of ranger and glmnet are OK. not sure of the others
+  learners_trt = c("SL.ranger",  "SL.glmnet", "SL.xgboost"),
   id = "id_f",
   folds = 10,
   n_cores = 5                               
 )
+
+
+# check and indeed we find ranger is doing the heavy lifting here
+fit_yes_beliefs$fits_m
+
+# again, the learners can't do anything here can't do anything
+fit_yes_beliefs$fits_r
+
+
+fit_yes_beliefs
+
 
 #check
 contrast <- lmtp::lmtp_contrast(fit_yes_beliefs, ref = fit_no_beliefs, type = "rr")
