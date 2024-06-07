@@ -251,6 +251,7 @@ head(df_clean)
 table(df_clean$not_lost_f)
 
 
+
 policy_no_big_gods <- function(data, trt) {
   ifelse(data[[trt]] != 0, 0,  data[[trt]])
 }
@@ -318,7 +319,7 @@ interpretation <- margot::margot_interpret_table(result, causal_scale = "RR", es
 interpretation
 
 # table for your manuscript
-table <- margot::margot_lmtp_evalue(contrast, scale = "RD", new_name = "Causal Effect of Beliefs in Big Gods on Social Complexity (risk)")
+table <- margot::margot_lmtp_evalue(contrast, scale = "RR", new_name = "Causal Effect of Beliefs in Big Gods on Social Complexity (risk)")
 
 # markdown table
 table |> 
