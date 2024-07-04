@@ -16,3 +16,4 @@ Y = rnorm(n, L)
 parameters::model_parameters( lm(Y ~ A + L) )
 parameters::model_parameters( lm(Y ~ A + L_p ) )
 
+
