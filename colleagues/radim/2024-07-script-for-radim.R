@@ -856,8 +856,6 @@ margot::margot_plot(group_tab_contrast_t2_two_or_more_kids,
 
 # model total number of children  ----------------------------------------
 df_final$t2_children_count
-
-
 t2_children_count_gain   <- lmtp::lmtp_tmle(
   outcome = "t2_children_count",
   baseline = W,
@@ -914,24 +912,21 @@ tab_contrast_t2_children_count <-
 
                       
 # save
-margot::here_save(tab_contrast_t2_children_count, "tab_contrast_t2_two_or_more_kids")
+margot::here_save(tab_contrast_t2_children_count, "tab_contrast_t2_children_count")
 
 
-margot::margot_interpret_table(tab_contrast_t2_children_count, causal_scale = "risk_difference", estimand = "ATE")
+margot::margot_interpret_table(tab_contrast_t2_children_count, causal_scale = "causal_difference", estimand = "ATE")
 
-group_tab_contrast_t2_children_count <- margot::group_tab(tab_contrast_t2_children_count)
+group_tab_contrast_t2_children_count <- margot::group_tab(tab_contrast_t2_children_count, type = "RD")
 
 # compare - semi-parametric is more efficient, but valid errors? 
+
 margot::margot_plot(group_tab_contrast_t2_children_count, 
             title = "Causal Effect of Regular Religious Service on Fertility 7 Years Later", 
             subtitle= "Outcome is Continuous (Number of Children)", 
             type = "RD",
            # order = "alphabetical",
-            x_lim_hi = 3,
-            x_lim_lo = -1, 
-            x_offset = -1,
             estimate_scale  = 1)
-
 
 
 # GRF model for effect heterogeneity -------------------------------------
