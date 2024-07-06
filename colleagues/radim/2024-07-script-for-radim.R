@@ -777,7 +777,7 @@ listWrappers()
 
 
 # gain and loss models ---------------------------------------------------
-t2_two_or_more_kids_gain_test  <- lmtp::lmtp_tmle(
+t2_two_or_more_kids_gain  <- lmtp::lmtp_tmle(
   outcome = "t2_two_or_more_kids",
   baseline = W,
   shift = gain_A,
@@ -791,18 +791,19 @@ t2_two_or_more_kids_gain_test  <- lmtp::lmtp_tmle(
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-
 margot::here_save(t2_two_or_more_kids_gain,"t2_two_or_more_kids_gain")
 
-t2_two_or_more_kids_gain_test$fits_r
-t2_two_or_more_kids_gain_test$fits_m
+t2_two_or_more_kids_gain$fits_r
+t2_two_or_more_kids_gain$fits_m
+
+t2_two_or_more_kids_gain
 
 
 t2_two_or_more_kids_loss  <- lmtp::lmtp_tmle(
   outcome = "t2_two_or_more_kids",
   baseline = W,
   shift = loss_A,
-  data = df_cledf_finalan_slice,
+  data = df_final,
   trt = A,
   cens = C,
   mtp = TRUE,
@@ -817,225 +818,121 @@ margot::here_save(t2_two_or_more_kids_loss,"t2_two_or_more_kids_loss")
 t2_two_or_more_kids_loss$fits_r
 t2_two_or_more_kids_loss$fits_m
 
+t2_two_or_more_kids_loss
 
 # evaluate
-contrast_t2_two_or_more_kids <- lmtp::lmtp_contrast(t2_two_or_more_kids_gain, ref = t2_two_or_more_kids_los, type = "rr")
+contrast_t2_two_or_more_kids <- lmtp::lmtp_contrast(t2_two_or_more_kids_gain, ref = t2_two_or_more_kids_loss, type = "rr")
 
+contrast_t2_two_or_more_kids
 # table
+
 tab_contrast_t2_two_or_more_kids <-
   margot::margot_lmtp_evalue(contrast_t2_two_or_more_kids,
                              scale = "RR",
-                             new_name = "Smoker")
+                             new_name = "Weekly Religious Service Attendance")
 
+                      
+tab_contrast_t2_two_or_more_kids
 # save
-here_save(tab_contrast_t2_two_or_more_kids, "tab_contrast_t2_two_or_more_kids")
+margot::here_save(tab_contrast_t2_two_or_more_kids, "tab_contrast_t2_two_or_more_kids")
 
 
+margot::margot_interpret_table(tab_contrast_t2_two_or_more_kids, causal_scale = "risk_ratio", estimand = "ATE")
 
-
-
-
-
-
-
-# extra validation IGNORE -------------------------------------------------
-
-
-# EXTRA STUFF
-# try highly adaptive lasso (g-computation)
-  library(hal9001)
-set.seed(123)
-df <- dt_hot_coded_prep
-Y_hal <- df$t8_at_least_2_kids_in
-X_hal <-  df |> select("t0_male", "t0_age_z", "t0_race_binary", "t0_ritual_1aweek", 
-                       "t1_ritual_1aweek")
-head(X_hal)
-
-# check
-colnames(df[new_var_names])
-
-# make hal formula
-formula <- formula_hal(
-  Y_hal ~h(t0_male,  k=2) + h(t0_race_binary,  k=2) + h(t0_age_z,  k=2) + h(t0_ritual_1aweek,  k=2) + h(t1_ritual_1aweek,  k=6),X = X_hal,
-  smoothness_orders = 20, num_knots = 20
-)
-
-# check missingness
-naniar::vis_miss(df)
-
-# fit model
-m_hall <-  fit_hal(
-  X= X_hal,
-  Y= Y_hal,
-  formula = formula, 
-  family = "binomial",
-  fit_control = list(cv_select = TRUE)
-)
-summary(m_hall)
-
-# predict from model
-X_hal_1 <- X_hal
-X_hal_0 <- X_hal
-X_hal_1 <- X_hal$t1_ritual_1aweek <- 1
-X_hal_0 <- X_hal$t1_ritual_1aweek <- 0
-
-# predictions
-pred_0 <- predict(m_hall, new_data = X_hal_0)
-pred_1 <- predict(m_hall, new_data = X_hal_1)
-
-# inspect means
-mean(pred_0)
-mean(pred_1)
-
-# compute risk ratio - stronger than standard parameteric analysis, but not doubly robust
-mean(pred_1)/mean(pred_0)
-
-# try defaults for hal
-m_hall <-  fit_hal(
-  X= X_hal,
-  Y= Y_hal,
-  family = "binomial",
-  fit_control = list(cv_select = TRUE)
-)
-
-# predict form default model
-X_hal_1 <- X_hal
-X_hal_0 <- X_hal
-X_hal_1 <- X_hal$t1_ritual_1aweek <- 1
-X_hal_0 <- X_hal$t1_ritual_1aweek <- 0
-pred_0 <- predict(m_hall, new_data = X_hal_0)
-pred_1 <- predict(m_hall, new_data = X_hal_1)
-
-# view mean under each intervention
-mean(pred_0)
-mean(pred_1)
-
-# compute risk ratio - reduced somewhat
-mean(pred_1)/mean(pred_0)
-
-# as compared with our previous results
-mod_2$tab_results
-
-# next try semi-parameteric estimation. 
-# note none of this is valid without obtaining correct censoring weights
-# and the approach might not be valid for a smallish sample however...
-library(lmtp)
-library(progressr) 
-library(future)
-library(parallel)
-# set number of folds for ML here. use a minimum of 5 and a max of 10
-SL_folds = 5
-
-#this will allow you to track progress
-progressr::handlers(global = TRUE)
-
-# set seed for reproducing results
-set.seed(0112358)
-
-# set cores for estimation
-library(future)
-plan(multisession)
-
-# no longer implimented in lmtp, but in case it comes back
-n_cores <- parallel::detectCores() - 2 # save two cores for other work while these models run
-
-# check
-n_cores
-
-# set exposure
-A  <-"t1_ritual_1aweek"
-
-# set outcome
-Y <- "t8_at_least_2_kids_in"
-
-# shift functions 
-gain_A <- function(data, trt) {
-  ifelse(data[[trt]] != 1, 1,  data[[trt]])
-}
-zero_A <- function(data, trt) {
-  ifelse(data[[trt]] != 0, 0,  data[[trt]])
-}
-
-# note lmtp's unconventional use of "censored"
-#C <- c("t1_not_lost")
-
-# superlearner libraries
-sl_lib <- c(#"SL.glmnet",
-  "SL.ranger", # forests
-  "SL.glmnet", #
-  "SL.xgboost") 
-
-# check covariates
-W
-
-# check they are in the datafame
-colnames(df)
-
-# none parametric estimation 
-gain_church <- lmtp_tmle(
-  data = df,
-  trt = A,
-  baseline = W,
-  outcome = Y,
- # cens = C,
-  shift = gain_A,
-  mtp = TRUE,
-  folds = 5,
-  # trim = 0.99, # if needed
-  # time_vary = NULL,
-  outcome_type = "binomial",
- # weights = df$weights...,
-  learners_trt = sl_lib,
-  learners_outcome =sl_lib
-)
-
-margot::here_save(gain_church, "gain_church")
-
-no_church <- lmtp_tmle(
-  data = df,
-  trt = A,
-  baseline = W,
-  outcome = Y,
-  # cens = C,
-  shift = zero_A,
-  mtp = TRUE,
-  folds = 5,
-  # trim = 0.99, # if needed
-  # time_vary = NULL,
-  outcome_type = "binomial",
-  # weights = df$weights...,
-  learners_trt = sl_lib,
-  learners_outcome =sl_lib
-)
-
-# save model
-margot::here_save(no_church, "no_church")
-
-# causal contrast on RR scale
-contrast <- lmtp_contrast(gain_church, 
-                          ref = no_church, type = "rr")
-
-# view
-contrast
-
-# make table
-# interpret
-lmtp_estimate <- margot::margot_lmtp_evalue(contrast, scale = "RR", new_name= "RR 2 x kids (semi-parametric)")
-
-margot::margot_interpret_table(output, causal_scale = "risk_ratio", estimand = "ATE")
-
-semi_parametric_group_tab <- group_tab(lmtp_estimate)
-regression_group_tab <- group_tab(mod_2$tab_result)
-combo_tab <- rbind(semi_parametric_group_tab,
-                   regression_group_tab)
+group_tab_contrast_t2_two_or_more_kids <- margot::group_tab(tab_contrast_t2_two_or_more_kids)
 
 # compare - semi-parametric is more efficient, but valid errors? 
-margot_plot(combo_tab, 
-            title = "Causal Effect of Regular Religious Service on Fertilty 7 Years Later", 
+margot::margot_plot(group_tab_contrast_t2_two_or_more_kids, 
+            title = "Causal Effect of Regular Religious Service on Fertil9ty 7 Years Later", 
             subtitle= "Outcome is Binary (Has Two Children Yes/No)", 
             type = "RR",
            # order = "alphabetical",
-            x_lim_hi = 5,
+            x_lim_hi = 3,
             x_lim_lo = -1, 
             x_offset = -1,
             estimate_scale  = 1)
+
+
+
+# model total number of children  ----------------------------------------
+df_final$t2_children_count
+
+
+t2_children_count_gain   <- lmtp::lmtp_tmle(
+  outcome = "t2_children_count",
+  baseline = W,
+  shift = gain_A,
+  data = df_final,
+  trt = A,
+  cens = C,
+  mtp = TRUE,
+  folds = 10,
+  outcome_type = "continuous",
+  weights = df_final$t0_combo_weights,
+  learners_trt = sl_lib,
+  learners_outcome =  sl_lib,
+)
+margot::here_save(t2_children_count_gain,"t2_children_count_gain")
+
+t2_children_count_gain$fits_r
+t2_children_count_gain$fits_m
+
+t2_children_count_gain
+
+
+t2_children_count_loss  <- lmtp::lmtp_tmle(
+  outcome = "t2_children_count",
+  baseline = W,
+  shift = loss_A,
+  data = df_final,
+  trt = A,
+  cens = C,
+  mtp = TRUE,
+  folds = 10,
+  outcome_type = "continuous",
+  weights = df_final$t0_combo_weights,
+  learners_trt = sl_lib,
+  learners_outcome =  sl_lib,
+)
+margot::here_save(t2_children_count_loss,"t2_children_count_loss")
+
+t2_children_count_loss$fits_r
+t2_children_count_loss$fits_m
+
+t2_children_count_loss
+
+# evaluate
+contrast_t2_children_count <- lmtp::lmtp_contrast(t2_children_count_gain, ref = t2_children_count_loss, type = "additive")
+
+contrast_t2_children_count
+# table
+
+tab_contrast_t2_children_count <-
+  margot::margot_lmtp_evalue(contrast_t2_children_count,
+                             scale = "RD",
+                             new_name = "Weekly Religious Service Attendance")
+
+                      
+# save
+margot::here_save(tab_contrast_t2_children_count, "tab_contrast_t2_two_or_more_kids")
+
+
+margot::margot_interpret_table(tab_contrast_t2_children_count, causal_scale = "risk_difference", estimand = "ATE")
+
+group_tab_contrast_t2_children_count <- margot::group_tab(tab_contrast_t2_children_count)
+
+# compare - semi-parametric is more efficient, but valid errors? 
+margot::margot_plot(group_tab_contrast_t2_children_count, 
+            title = "Causal Effect of Regular Religious Service on Fertility 7 Years Later", 
+            subtitle= "Outcome is Continuous (Number of Children)", 
+            type = "RD",
+           # order = "alphabetical",
+            x_lim_hi = 3,
+            x_lim_lo = -1, 
+            x_offset = -1,
+            estimate_scale  = 1)
+
+
+
+# GRF model for effect heterogeneity -------------------------------------
+
