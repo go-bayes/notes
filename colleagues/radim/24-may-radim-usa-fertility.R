@@ -131,7 +131,6 @@ pacman::p_load(
   stringr
 )
 
-
 # import data
 dat_init <- read.csv(pull_mods)
 
@@ -142,7 +141,7 @@ head(dat_init)
 # create weights for male/not male in t0
 # note, please use either "male" or "female" or "not_male"  so that we know what the indicator means
 
-table(dat_init$t0_gender_binary) # I will assume that 1 = male?  
+table(dat_init$t0_gender_binary) # 
 
 # check this and reverse the code "male" if you mean female
 dat_init <- dat_init |> rename(t0_male = t0_gender_binary)
@@ -156,7 +155,6 @@ prop_male_population <-
   0.5  # target proportion of males in the population
 prop_female_population <-
   0.5  # target proportion of females in the population
-
 
 # math
 prop_male_sample <- mean(dat_init$t0_male)

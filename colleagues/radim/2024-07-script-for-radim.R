@@ -55,7 +55,6 @@
  
 # The data should be representative to the US adolescents so I guess gender balance is expectable. When doing the analyses, can you also do one for interaction between exposure and gender. My previous findings suggest that whatever effect of exposure is there, it is driven by men.
  
- 
 # We cannot really estimate fertility in early waves, e.g. t3_ because there are too few cases. We are chasing after noise I think.
  
 # Fine, I only include outcomes of ‘≥2kids in 2013’ and ‘total number of children in 2013’.
