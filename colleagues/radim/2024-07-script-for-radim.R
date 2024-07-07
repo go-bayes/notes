@@ -20,10 +20,10 @@ set.seed(123)
 # t0_race                             = [character] categories for ethnicity
  
 # Exposures
-# t1_ritual_scale      = raw continuous/ordered categorical variable for ritual
+# t1_ritual_scale  = raw continuous/ordered categorical variable for ritual
 # t1_ritual_1aweek = dichotomized variable for weekly ritual
-# t1_faith_scale       = raw continuous/ordered categorical variable for faith
-# t1_faith_full            = dichotomized variable for extreme faith (scoring 5 on scale 1-5)
+# t1_faith_scale   = raw continuous/ordered categorical variable for faith
+# t1_faith_full    = dichotomized variable for extreme faith (scoring 5 on scale 1-5)
  
 # For additional information
 # JB this makes no sense, ignore
@@ -91,7 +91,7 @@ if (!require(devtools, quietly = TRUE)) {
 }
 
 # get 'margot' from my github (make sure to update)
-devtools::install_github("go-bayes/margot")
+#devtools::install_github("go-bayes/margot")
 
 library(margot)
 # check if pacman is installed; if not, install it
@@ -134,17 +134,22 @@ pacman::p_load(
 # update.packages()
 
 # import data
-dat_raw <- read.csv(pull_mods)
+dat_raw_0 <- read.csv(pull_mods)
 
 # check
-head(dat_raw)
-
-table(dat_raw$wave1)
+head(dat_raw_0)
 # create weights for male/not male in t0
 # note, please use either "male" or "female" or "not_male"  so that we know what the indicator means
 
 
+ids_baseline <- dat_raw_0 |>
+  dplyr::filter(!is.na(t0_ritual_1aweek) & (!is.na(t0_ritual_1aweek))) |> # criteria, no missing in baseline exposure
+  pull(X)
 
+dat_raw <- dat_raw_0 |> 
+  filter(X %in% ids_baseline)
+
+nrow(dat_raw) # 3365
 
 # sample weights balanced male / female-------------------------------------
 # balance on gender weights
@@ -157,6 +162,13 @@ prop_female_population <-
 
 # slighly fewer females
 table(dat_raw$t0_female)
+
+
+table(dat_raw$t1_ritual_1aweek)
+table(dat_raw$t0_ritual_1aweek)
+table(dat_raw$t1_ritual_scale)
+
+
 # math
 prop_female_sample <- mean(dat_raw$t0_female)
 prop_male_sample <- 1 - prop_female_sample
@@ -227,7 +239,82 @@ table(dat_init$t0_parent_education )
 # define the levels of t0_parent_education in the desired order
 education_levels <- c("Less than 12th grade", "High school", "Beyond high school")
 
-# convert t0_parent_education to an ordered factor
+
+
+# transition matrix ------------------------------------------------------
+
+exposure_dat <- dat_init |> 
+  select(id, t0_ritual_1aweek, t1_ritual_1aweek) |>
+  pivot_longer(
+    cols = starts_with("t"),
+    names_to = c("wave", "measure"),
+    names_pattern = "t(\\d+)_(.*)",
+    values_to = "value"
+  ) |>
+  mutate(
+    wave = as.integer(wave)
+  )
+
+exposure_dat_2 <- dat_init |>
+  select(id, t0_ritual_scale, t1_ritual_scale) |>
+  pivot_longer(
+    cols = starts_with("t"),
+    names_to = c("wave", "measure"),
+    names_pattern = "t(\\d+)_(.*)",
+    values_to = "value"
+  ) |>
+  mutate(
+    wave = as.integer(wave)
+  )
+
+
+print(exposure_dat) 
+head(exposure_dat)
+
+print(exposure_dat_2) 
+head(exposure_dat_2)
+   
+
+# create transition matrix
+
+out <-margot::create_transition_matrix(
+  data = exposure_dat, 
+  state_var = "value", 
+  id_var = "id"
+)
+
+
+t_tab_2_labels <- c("< weekly", ">= weekly")
+# transition table
+
+transition_table  <- margot::transition_table(out)
+transition_table
+# for import later
+margot::here_save(transition_table, "transition_table")
+
+
+# second matrix
+
+out_2 <-margot::create_transition_matrix(
+  data = exposure_dat_2, 
+  state_var = "value", 
+  id_var = "id"
+)
+
+
+t_tab_2_labels <- #c("< weekly", ">= weekly")
+# transition table
+
+transition_table_2  <- margot::transition_table(out_2)
+transition_table_2
+# for import later
+margot::here_save(transition_table_2, "transition_table_2")
+
+
+
+# baseline table ---------------------------------------------------------
+# prepare df
+
 dat_baseline <- dat_init |>
   select(starts_with("t0_")) |>
   mutate(
@@ -235,6 +322,185 @@ dat_baseline <- dat_init |>
     t0_parent_education = factor(t0_parent_education, levels = education_levels, ordered = TRUE),
     t0_race = as.factor(t0_race)
   )
+
+
+dat_baseline_use  <- dat_baseline |> select(starts_with("t0"), - t0_not_lost) |> 
+  # remove t0 label
+  rename_with(~ str_remove(., "^t0_")) |> 
+    mutate(ritual_weekly = as.factor(ritual_1aweek)) |> 
+  select(-ritual_1aweek) |> 
+  relocate(ritual_weekly, .after = ritual_scale)
+  
+
+colnames(dat_baseline)
+
+
+
+
+
+#check
+#selected_base_cols <- setdiff(selected_base_cols)
+# baseline table
+
+library(gtsummary)
+table_baseline <- dat_baseline_use |> 
+  janitor::clean_names(case = "title") |> 
+  tbl_summary(
+    missing = "ifany",
+    percent = "column",
+    statistic = list(
+      all_continuous() ~ c(
+        "{mean} ({sd})", # Mean and SD
+        "{min}, {max}", # Range (Min, Max)
+        "{p25}, {p75}" # IQR (25th percentile, 75th percentile)
+      )
+    ),
+    type = all_continuous() ~ "continuous2"
+  ) |>
+  modify_header(label = "**Baseline Exposure + Demographic Variables**") |> # update the column header
+  bold_labels() 
+
+
+
+table_baseline
+# save baseline 
+# here_save(table_baseline, "table_baseline")
+# 
+
+here_save(table_baseline, 'table_baseline')
+
+
+library(tidyr)
+
+
+# exposure table ---------------------------------------------------------
+
+
+# reshaping and separating into distinct columns for ritual_weekly and ritual_scale
+exposure_dat_table <- dat_init |>
+  select(id, t0_ritual_1aweek, t1_ritual_1aweek, 
+  #  t0_ritual_scale, t1_ritual_scale
+  ) |>
+  pivot_longer(
+    cols = starts_with("t"),
+    names_to = c("wave", "measure"),
+    names_pattern = "t(\\d+)_(.*)",
+    values_to = "value"
+  ) |>
+  pivot_wider(
+    names_from = measure,
+    values_from = value,
+    names_glue = "ritual_{measure}"
+  ) |>
+  mutate(
+    wave = as.integer(wave)
+  ) |>
+  rename(
+    ritual_weekly = ritual_ritual_1aweek
+  ) |> 
+    # rename(
+    #   ritual_scale = ritual_ritual_scale
+    # ) |> 
+  mutate(ritual_weekly = as.factor(ritual_weekly))
+
+print(exposure_dat_table)
+print(exposure_dat_table)
+
+head(dat_init)
+
+
+# make tables
+table_exposures <- exposure_dat_table|>
+  select(-id) |> 
+  janitor::clean_names(case = "title")|> 
+  labelled::to_factor()|>  # ensure consistent use of pipe operator
+  tbl_summary(
+    by = "Wave",  #specify the grouping variable. Adjust "Wave" to match the cleaned column name
+    missing = "always", 
+    percent = "column",
+    # statistic = list(all_continuous() ~ "{mean} ({sd})")  # Uncomment and adjust if needed for continuous variables
+  )|>
+  #  add_n()|>  # Add column with total number of non-missing observations
+  modify_header(label = "**Exposure Variables by Wave**")|>  # Update the column header
+  bold_labels()
+
+table_exposures
+
+here_save(table_exposures, 'table_exposures')
+
+exposure_dat_table
+
+
+transition_table_dat <- exposure_dat_table |> 
+ # filter(!is.na(ritual_weekly)) |> 
+  mutate(ritual_weekly = as.numeric(as.character(ritual_weekly)))
+transition_table_dat
+
+# transition_table
+
+out <-margot::create_transition_matrix(
+  data = transition_table_dat, 
+  state_var = "ritual_weekly", 
+  id_var = "id"
+)
+
+
+
+
+tt_labels <- c("< weekly", ">= weekly")
+# transition table
+
+transition_table  <- margot::transition_table(out)
+transition_table
+# for import later
+
+margot::here_save(transition_table, "transition_table")
+
+
+
+# outcome table ----------------------------------------------------------
+
+outcome_dat  <- dat_init |>
+  select(t2_two_or_more_kids, t2_children_count)|>
+  rename_with(~ str_remove(., "^t2_")) |> 
+  mutate(two_or_more_kids = as.factor(two_or_more_kids))
+
+
+names_outcomes_sorted <- colnames(outcome_dat)
+
+names_outcomes_sorted
+
+
+# names_outcomes_final
+# better names
+selected_outcome_cols <-
+  names_outcomes_sorted 
+
+# checks
+str(selected_outcome_cols)
+colnames(selected_outcome_cols)
+
+table_outcomes <- outcome_dat %>%
+  janitor::clean_names(case = "title") %>% 
+  labelled::to_factor() %>%  # ensure consistent use of pipe operator
+  tbl_summary(
+   # by = "Wave",  #specify the grouping variable. Adjust "Wave" to match the cleaned column name
+    missing = "always", 
+    percent = "column",
+    # statistic = list(all_continuous() ~ "{mean} ({sd})")  # Uncomment and adjust if needed for continuous variables
+  ) %>%
+  #  add_n() %>%  # Add column with total number of non-missing observations
+  modify_header(label = "**Outcome Variables by Wave**") %>%  # Update the column header
+  bold_labels()
+
+table_outcomes
+
+
+here_save(table_outcomes, "table_outcomes")
+
+
+
+# convert t0_parent_education to an ordered factor
 
 
 # perform the imputation
@@ -517,12 +783,12 @@ t1_na_condition <-
 # baseline_vars
 # df_impute_base$t0_sample_weights
 
-df_clean_t2 <- df_clean_t1 %>%
+df_clean_t2 <- df_clean_t1|>
   # select(-t0_alert_level_combined_lead) |>
-  mutate(t0_not_lost = ifelse(t0_na_condition, 0, t0_not_lost)) %>%
-  mutate(t1_not_lost = ifelse(t1_na_condition, 0, t1_not_lost)) %>%
+  mutate(t0_not_lost = ifelse(t0_na_condition, 0, t0_not_lost))|>
+  mutate(t1_not_lost = ifelse(t1_na_condition, 0, t1_not_lost))|>
   mutate(across(starts_with("t1_"), ~ ifelse(t0_not_lost == 0, NA_real_, .)),
-         across(starts_with("t2_"), ~ ifelse(t0_not_lost == 0, NA_real_, .))) %>%
+         across(starts_with("t2_"), ~ ifelse(t0_not_lost == 0, NA_real_, .)))|>
   mutate(across(starts_with("t2_"), ~ ifelse(t1_not_lost == 0, NA_real_, .))) |>
   # mutate(t0_lost = 1 - t0_not_lost) |>
   mutate(t1_lost = 1 - t1_not_lost) |>
@@ -1122,6 +1388,7 @@ t2_children_count_gain$fits_m
 t2_children_count_gain
 
 
+
 t2_children_count_loss  <- lmtp::lmtp_tmle(
   outcome = "t2_children_count",
   baseline = W,
@@ -1133,8 +1400,8 @@ t2_children_count_loss  <- lmtp::lmtp_tmle(
   folds = 10,
   outcome_type = "continuous",
   weights = df_final$t0_combo_weights,
-  learners_trt = sl_lib,
-  learners_outcome =  sl_lib,
+  learners_trt =  sl_lib,
+  learners_outcome = sl_lib,
 )
 margot::here_save(t2_children_count_loss,"t2_children_count_loss")
 
@@ -1152,6 +1419,7 @@ contrast_t2_children_count <- lmtp::lmtp_contrast(t2_children_count_gain, ref = 
 
 contrast_t2_children_count
 # table
+
 
 tab_contrast_t2_children_count <-
   margot::margot_lmtp_evalue(contrast_t2_children_count,
@@ -1332,6 +1600,9 @@ rbind_total <- rbind(
               subtitle= "Outcome is Continuous (Number of Children)", 
               type = "RD",
              # order = "alphabetical",
+              x_lim_hi = 1,
+              x_lim_lo = -1, 
+              x_offset = -1,
               estimate_scale  = 1)
   
 
@@ -1864,7 +2135,7 @@ table(df$g_W)
 library(tidyr)
 
 # Reshape the dataframe
-df_long <- df %>%
+df_long <- df|>
   pivot_longer(cols = starts_with("t0_"),
                names_to = "variable",
                values_to = "value") |>
