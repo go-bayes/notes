@@ -734,6 +734,9 @@ W <- margot::here_read("W")
 df_final <- margot::here_read("df_final")
 #
 #
+A <- c("t1_ritual_1aweek")  # EXPOSURE VARIABLE **************
+C <- c("t1_not_lost")
+
 gain_A <- function(data, trt) {
   data[[trt]]  = 1  # increase all by 20 up to 80 hours per week
 }
@@ -763,11 +766,8 @@ loss_A <- function(data, trt) {
 
 
 # set libraries
-#sl_lib <- c("SL.glmnet", "SL.xgboost", "SL.ranger")
+sl_lib  <- c("SL.glmnet", "SL.xgboost", "SL.ranger", "SL.polymars", "SL.earth")
 
-sl_lib <- match_lib
-
-sl_lib
 # view superlearners
 listWrappers()
 # test data
@@ -1095,9 +1095,7 @@ margot::margot_plot(group_bind_results,
 
 
 
-
-
-# WORKS IN PROGRESS IGNORE -----------------------------------------------
+# total children IGNORE -----------------------------------------------
 
 
 # model total number of children  ----------------------------------------
@@ -1146,6 +1144,10 @@ t2_children_count_loss$fits_m
 t2_children_count_loss
 
 # evaluate
+
+t2_children_count_gain <- here_read('t2_children_count_gain')
+t2_children_count_loss<- here_read('t2_children_count_loss')
+
 contrast_t2_children_count <- lmtp::lmtp_contrast(t2_children_count_gain, ref = t2_children_count_loss, type = "additive")
 
 contrast_t2_children_count
@@ -1154,7 +1156,7 @@ contrast_t2_children_count
 tab_contrast_t2_children_count <-
   margot::margot_lmtp_evalue(contrast_t2_children_count,
                              scale = "RD",
-                             new_name = "Weekly Religious Service Attendance")
+                             new_name = "Weekly Service Total Children: ATE")
 
                       
 # save
@@ -1176,11 +1178,162 @@ margot::margot_plot(group_tab_contrast_t2_children_count,
 
 
 
+# total children men ---------------------------------------------------
+
+
+# model total number of children  ----------------------------------------
+t2_children_count_gain_men   <- lmtp::lmtp_tmle(
+  outcome = "t2_children_count",
+  baseline = W_sub,
+  shift = gain_A,
+  data = df_final_male,
+  trt = A,
+  cens = C,
+  mtp = TRUE,
+  folds = 10,
+  outcome_type = "continuous",
+  weights = df_final_male$t0_combo_weights,
+  learners_trt = sl_lib,
+  learners_outcome =  sl_lib,
+)
+margot::here_save(t2_children_count_gain_men,"t2_children_count_gain_men")
+
+t2_children_count_gain_men$fits_r
+t2_children_count_gain_men$fits_m
+
+t2_children_count_gain_men
+
+
+t2_children_count_loss_men  <- lmtp::lmtp_tmle(
+  outcome = "t2_children_count",
+  baseline = W_sub,
+  shift = loss_A,
+  data = df_final_male,
+  trt = A,
+  cens = C,
+  mtp = TRUE,
+  folds = 10,
+  outcome_type = "continuous",
+  weights = df_final_male$t0_combo_weights,
+  learners_trt = sl_lib,
+  learners_outcome =  sl_lib,
+)
+margot::here_save(t2_children_count_loss_men,"t2_children_count_loss_men")
+
+t2_children_count_loss_men$fits_r
+t2_children_count_loss_men$fits_m
+
+t2_children_count_loss_men
+
+
+
+# counts women loss ------------------------------------------------------
+
+# model total number of children  ----------------------------------------
+t2_children_count_gain_female   <- lmtp::lmtp_tmle(
+  outcome = "t2_children_count",
+  baseline = W_sub,
+  shift = gain_A,
+  data = df_final_female,
+  trt = A,
+  cens = C,
+  mtp = TRUE,
+  folds = 10,
+  outcome_type = "continuous",
+  weights = df_final_female$t0_combo_weights,
+  learners_trt = sl_lib,
+  learners_outcome =  sl_lib,
+)
+margot::here_save(t2_children_count_gain_female,"t2_children_count_gain_female")
+
+t2_children_count_gain_female$fits_r
+t2_children_count_gain_female$fits_m
+
+t2_children_count_gain_female
+
+
+t2_children_count_loss_female  <- lmtp::lmtp_tmle(
+  outcome = "t2_children_count",
+  baseline = W_sub,
+  shift = loss_A,
+  data = df_final_female,
+  trt = A,
+  cens = C,
+  mtp = TRUE,
+  folds = 10,
+  outcome_type = "continuous",
+  weights = df_final_female$t0_combo_weights,
+  learners_trt = sl_lib,
+  learners_outcome =  sl_lib,
+)
+margot::here_save(t2_children_count_loss_female,"t2_children_count_loss_female")
+
+t2_children_count_loss_female$fits_r
+t2_children_count_loss_female$fits_m
+
+t2_children_count_loss_female
 
 
 
 
 
+# evaluate
+contrast_t2_children_count_men <- lmtp::lmtp_contrast(t2_children_count_gain_men, ref = t2_children_count_loss_men, type = "additive")
+
+contrast_t2_children_count_men
+# table
+
+tab_contrast_t2_children_count_men <-
+  margot::margot_lmtp_evalue(contrast_t2_children_count_men,
+                             scale = "RD",
+                             new_name = "Weekly Service Total Children: Male")
+
+                      
+# save
+margot::here_save(tab_contrast_t2_children_count_men, "tab_contrast_t2_children_count_men")
+
+
+# female
+
+contrast_t2_children_count_female <- lmtp::lmtp_contrast(t2_children_count_gain_female, 
+  ref = t2_children_count_loss_female, type = "additive")
+
+contrast_t2_children_count_female
+
+# table
+
+tab_contrast_t2_children_count_female <-
+  margot::margot_lmtp_evalue(contrast_t2_children_count_female,
+                             scale = "RD",
+                             new_name = "Weekly Service Total Children: Female")
+
+                      
+# save
+margot::here_save(tab_contrast_t2_children_count_female, "tab_contrast_t2_children_count_female")
+
+
+
+tab_contrast_t2_children_count_men
+tab_contrast_t2_children_count_female
+
+# graphs
+
+
+rbind_total <- rbind( 
+  tab_contrast_t2_children_count, 
+  tab_contrast_t2_children_count_men,
+  tab_contrast_t2_children_count_female) 
+
+
+  # compare - semi-parametric is more efficient, but valid errors? 
+  
+  margot::margot_plot(rbind_total, 
+              title = "Causal Effect of Regular Religious Service on Fertility 7 Years Later", 
+              subtitle= "Outcome is Continuous (Number of Children)", 
+              type = "RD",
+             # order = "alphabetical",
+              estimate_scale  = 1)
+  
 
 # GRF model for effect heterogeneity -------------------------------------
 
@@ -1238,7 +1391,7 @@ nrow(df_grf)
 
 # select exposure
 selected_A = matrix(df_grf$t1_ritual_1aweek) # standard deviation of exposure
-selected_Y = matrix(df_clean_hot$t2_two_or_more_kids)
+selected_Y = matrix(df_grf$t2_two_or_more_kids)
 
 
 # select covariates, make sure to remove attributes (we did this above)
@@ -1248,7 +1401,6 @@ length(D)
 
 # predict censoring
 cen_forest <- probability_forest(cen_X, D)
-
 
 # generate predictions
 predictions_grf <- predict(cen_forest, newdata = cen_X, type = "response")
@@ -1260,7 +1412,7 @@ hist(pscore)
 mean(pscore)
 sd(pscore)
 
-df_grf$pscore <- pscore
+#df_grf$pscore <- pscore
 
 # make censoring weights
 df_grf$cen_weights <- ifelse(t1_lost == 1, 1 / pscore, 1 / (1 - pscore))
@@ -1268,20 +1420,20 @@ df_grf$cen_weights <- ifelse(t1_lost == 1, 1 / pscore, 1 / (1 - pscore))
 # view
 hist(df_grf$cen_weights, breaks = 50)
 # check
-hist(df_grf$cen_weights)
+df_grf$cen_weights
 
 # obtain stablise weights
 marginal_censored <- mean(df_grf$t1_lost)
 
 marginal_censored
 
-df_grf$t1_lost
+df_grf$t1_lost 
 
 # stabalised weights
 df_grf$weights_stabilised <- ifelse(
   df_grf$t1_lost == 1,
-  marginal_censored / df_grf$pscore,
-  (1 - marginal_censored) / (1 - df_grf$pscore)
+  marginal_censored / pscore,
+  (1 - marginal_censored) / (1 - pscore)
 )
 
 
@@ -1296,7 +1448,6 @@ min(df_grf$weights_stabilised)
 # check
 
 # set up data
-df_grf$t1_not_lost = 1 - df_grf$t1_not_lost
 
 
 # set up superlearner
@@ -1342,9 +1493,12 @@ sl_2$cvRisk                  # cross-validated risks for each learner
 sl_2$coef                    # weights assigned to each learner in the final ensemble
 
 
+plogis(sl_2$cvRisk)
 
 # generate predictions
 predictions_super <- predict(sl_2, newdata = cen_X, type = "response")
+
+predictions_super
 
 
 # very similar to grf
@@ -1357,6 +1511,7 @@ df_grf$super_pscore <- predictions_super$pred[, 1]
 
 # check the structure of the predictions
 str(df_grf$super_pscore)
+mean(df_grf$super_pscore)  # same as grf
 
 # check pscore
 hist(df_grf$super_pscore)
@@ -1365,6 +1520,7 @@ hist(df_grf$super_pscore)
 df_grf$super_weights <- ifelse(t1_lost == 1, 1 / df_grf$super_pscore, 1 / (1 - df_grf$super_pscore))
 
 # check
+
 hist(df_grf$super_weights, breaks = 50)
 
 
@@ -1387,8 +1543,17 @@ hist(df_grf$weights_stabilised , breaks = 50)
 max(df_grf$weights_stabilised)
 min(df_grf$weights_stabilised)
 
+# # Load necessary library for evaluation
+# library(pROC)
 
-# lets use superlearner (it gives us forests and more)
+# # Compute ROC curve and AUC
+# roc_curve <- roc(Y, predicted_probs)
+# auc_value <- auc(roc_curve)
+# print(auc_value)
+
+# # Plot ROC curve
+# plot(roc_curve)
+# # lets use superlearner (it gives us forests and more)
 
 
 # ok for combo weights to be labelled t0 because we just have a point estimate
@@ -1408,12 +1573,15 @@ df_grf_t2 <- df_grf |>
   relocate(starts_with("t0_"), .before = starts_with("t1_")) |>
   relocate(starts_with("t1_"), .before = starts_with("t2_")) |>
   relocate("t1_not_lost", .before = starts_with("t2_")) |> 
-  select(-c(super_pscore, super_weights, cen_weights, weights_stabilised, weights_stabilised_super, pscore, t1_lost, t1_not_lost)) |> 
+  select(-c(super_pscore, super_weights, cen_weights, weights_stabilised, 
+    weights_stabilised_super, t1_lost, t1_not_lost)) |> 
   droplevels()
 
 colnames(df_grf_t2)
 
 vis_miss(df_grf)
+
+# good
 vis_miss(df_grf_t2)
 
 
@@ -1422,11 +1590,19 @@ here_save(df_grf_t2, "df_grf_t2")
 
 table(df_grf$t1_ritual_1aweek)
 
+#test how many males at end of study
+df_test <- df_grf |> 
+  filter(t1_lost == 0)
+
+table(df_test$t0_female) # more females
+
+
+
 # variables need to be in matrix form
 
 # make it so that large is good
-g_W  = matrix(1 - df_grf_t2$t1_ritual_1aweek)
-t2_two_or_more_kids = matrix(df_grf_t2$t2_two_or_more_kids)
+g_W  = matrix(df_grf_t2$t1_ritual_1aweek)
+#t2_two_or_more_kids = matrix(df_grf_t2$t2_two_or_more_kids)
 
 # make it so that large is good
 g_Y = matrix(df_grf_t2$t2_two_or_more_kids)
@@ -1451,7 +1627,8 @@ str(g_W)
 str(g_Y)
 str(g_weights)
 g_Y
-# model anxiety
+
+# model 
 tau_forest_outcome <- grf::causal_forest(
   X = g_X,
   Y = g_Y,
@@ -1468,7 +1645,7 @@ here_save(
 
 # view
 tau_forest_outcome
-
+colnames(g_X)
 # ATE
 forest_ate <- average_treatment_effect(tau_forest_outcome, target.sample = "all")
 
@@ -1481,7 +1658,7 @@ forest_ate
 
 # model 
 
-tau_forest_anxiety_binary <- grf::causal_forest(
+tau_forest_y_binary <- grf::causal_forest(
   X = g_X,
   Y = g_Y,
   W = g_W,
@@ -1489,50 +1666,53 @@ tau_forest_anxiety_binary <- grf::causal_forest(
 )
 
 # save
-here_save(tau_forest_anxiety_binary, 'tau_forest_anxiety_binary')
+here_save(tau_forest_y_binary, 'tau_forest_y_binary')
 
 
 # ATE
-bin_anxiety_forest_ate <- average_treatment_effect(tau_forest_anxiety_binary, target.sample = "overlap")
-bin_anxiety_forest_ate
+bin_y_forest_ate <- average_treatment_effect(tau_forest_y_binary,
+   target.sample = "overlap")
+bin_y_forest_ate
 
 # save
-here_save(bin_anxiety_forest_ate, "bin_anxiety_forest_ate")
+here_save(bin_y_forest_ate, "bin_y_forest_ate")
 
 
 # not possible with a continuous treatement, but this is the code for binary treatments
-bin_anxiety_att <- average_treatment_effect(tau_forest_anxiety_binary, target.sample = "treated")
-bin_anxiety_att
+bin_att <- average_treatment_effect(tau_forest_y_binary, target.sample = "treated")
+bin_att
 
+table( g_W )
+table(df_final$t1_ritual_1aweek)
 # get a histogram that shows heterogeniety
-tau.hat.oob <- predict(tau_forest_anxiety_binary)
+tau.hat.oob <- predict(tau_forest_y_binary)
 
 # show
 hist(tau.hat.oob$predictions)
 
 # description of heterogeneity
-best_linear_projection(tau_forest_anxiety_binary, g_X)
+best_linear_projection(tau_forest_y_binary, g_X)
 
 names_grf
 # this only works for binary treatments
-rate <- rank_average_treatment_effect(tau_forest_anxiety_binary, g_X[, "t0_eth_cateuro"])
+rate <- rank_average_treatment_effect(tau_forest_y_binary, g_X[, "t0_female"])
 
 #
-plot(rate, ylab = "Euro", main = "TOC: ranked by decreasing weight")
+plot(rate, ylab = "Female", main = "TOC: ranked by decreasing weight")
 
 # #
-# forest.W <- regression_forest(g_X, g_W, tune.parameters = "all")
+forest.W <- regression_forest(g_X, g_W, tune.parameters = "all")
 # #
-# W.hat <- predict(forest.W)$predictions
+W.hat <- predict(forest.W)$predictions
 #
 # #
-# forest.Y <- regression_forest(g_X, g_Y, tune.parameters = "all")
+forest.Y <- regression_forest(g_X, g_Y, tune.parameters = "all")
 #
 # #
-# Y.hat <- predict(forest.Y)$predictions
+Y.hat <- predict(forest.Y)$predictions
 
 
-forest.Y.varimp <- variable_importance(tau_forest_anxiety_binary)
+forest.Y.varimp <- variable_importance(tau_forest_y_binary)
 #forest.Y.varimp
 selected.vars <- which(forest.Y.varimp / mean(forest.Y.varimp) > 0.99)
 selected.vars
@@ -1542,7 +1722,7 @@ colnames(g_X)
 tau.forest <- causal_forest(
   g_X[, selected.vars],
   g_Y,
-  g_W_binary,
+  g_W,
   W.hat = W.hat,
   Y.hat = Y.hat,
   tune.parameters = "all",
@@ -1561,10 +1741,10 @@ train <- sample(1:n, n / 2) # get half sampl
 train
 
 # training sample
-train.forest <- causal_forest(g_X[train, ], g_Y[train], g_W_binary[train], sample.weights = g_weights[train])
+train.forest <- causal_forest(g_X[train, ], g_Y[train], g_W[train], sample.weights = g_weights[train])
 
 # eavaluation sample
-eval.forest <- causal_forest(g_X[-train, ], g_Y[-train], g_W_binary[-train], sample.weights = g_weights[-train])
+eval.forest <- causal_forest(g_X[-train, ], g_Y[-train], g_W[-train], sample.weights = g_weights[-train])
 
 # rank on new data (ony supports binary treatment effects)
 rate <- rank_average_treatment_effect(eval.forest, predict(train.forest, g_X[-train, ])$predictions)
@@ -1583,13 +1763,13 @@ library(policytree)
 library(DiagrammeR)
 
 # get ate
-ate <- average_treatment_effect(tau_forest_anxiety_binary)
+ate <- average_treatment_effect(tau_forest_y_binary)
 
 # check for overlap
-hist(tau_forest_anxiety_binary$W.hat)
+hist(tau_forest_y_binary$W.hat)
 
 # quick eval
-varimp <- variable_importance(tau_forest_anxiety_binary)
+varimp <- variable_importance(tau_forest_y_binary)
 varimp
 ranked.vars <- order(varimp, decreasing = TRUE)
 ranked.vars
@@ -1603,15 +1783,15 @@ ranked.cols
 
 
 # not much evidence for heterogeneity!
-best_linear_projection(tau_forest_t2_kessler_latent_anxiety_z, g_X[ranked.vars[1:5]])
+#best_linear_projection(tau_forest_y_binary, g_X[ranked.vars[1:5]])
 
 
 # Compute doubly robust scores
-# dr.scores <- grf::get_scores(tau_forest_anxiety_binary)
+dr.scores <- grf::get_scores(tau_forest_y_binary)
 
 
 # will only work for binary variables
-dr.scores <- double_robust_scores(tau_forest_anxiety_binary)
+dr.scores <- double_robust_scores(tau_forest_y_binary)
 dr.scores
 
 # # Use as the ATE as a "cost" of program treatment to find something non-trivial
