@@ -100,6 +100,8 @@ if (!require(pacman, quietly = TRUE)) {
   library(pacman)
 }
 
+
+# install.packages('maq')
 # use p_load to load / install the packages
 pacman::p_load(
   skimr,
@@ -129,9 +131,20 @@ pacman::p_load(
   tidyr,
   stringr,
   patchwork,
-  margot
+  margot,
+  future,
+  progressr,
+  maq
 )
 # update.packages()
+
+library(future)
+# model charitable giving
+# this will allow you to track progress
+progressr::handlers(global = TRUE)
+
+# set seed for reproducing results
+plan(multisession)
 
 # import data
 dat_raw_0 <- read.csv(pull_mods)
@@ -143,7 +156,7 @@ head(dat_raw_0)
 
 
 ids_baseline <- dat_raw_0 |>
-  dplyr::filter(!is.na(t0_ritual_1aweek) & (!is.na(t0_ritual_1aweek))) |> # criteria, no missing in baseline exposure
+  dplyr::filter(!is.na(t0_ritual_1aweek)) |> # criteria, no missing in baseline exposure
   pull(X)
 
 dat_raw <- dat_raw_0 |> 
@@ -190,6 +203,7 @@ dat_raw$sample_weights <-
 # i think this is id (r to confirm)
 dat_init <- dat_raw |> 
   filter(!is.na( t0_ritual_1aweek)) |>  # no missing data for the exposure variable at baseline
+  select(-t0_faith_full, -t1_faith_full, -t1_ritual_scale) |>  ## irrelevant 
   rename(id = X,
 # use meaningful consistent names
   t0_not_lost = wave2,   # not lost in the subsequent in  treatment wave is 2005
@@ -202,6 +216,18 @@ dat_init <- dat_raw |>
 # clean
 
 
+## View missing values
+dat_init_miss <- dat_init |> 
+  select(-id, -sample_weights) |> 
+  relocate(starts_with('t0'), .before = starts_with('t1')) |> 
+  relocate(starts_with('t1'), .before = starts_with('t2'))
+
+ missing_total <- naniar::vis_miss(dat_init_miss)
+
+#view
+missing_total
+here_save(missing_total, 'missing_total')
+
 
 # single imputation ------------------------------------------------------
 
@@ -210,19 +236,30 @@ dat_init <- as.data.frame(dat_init )
 
 # prepare data
 dat_init <- margot::remove_numeric_attributes(dat_init)
-
-
 # test total n in the data
-n_total <- nrow(dat_init)
+
+n_total <- nrow(dat_raw_0)
 
 # get comma in number
 n_total <- prettyNum(n_total, big.mark = ",")
 
-# check n total
+# check
 n_total
 
 # save n for manuscript
 margot::here_save(n_total, "n_total")
+
+# test total n in the data
+n_participants <- nrow(dat_init)
+
+# get comma in number
+n_participants <- prettyNum(n_participants, big.mark = ",")
+
+# check n total
+n_participants
+
+# save n for manuscript
+margot::here_save(n_participants, "n_participants")
 
 # name of exposure
 
@@ -256,7 +293,7 @@ exposure_dat <- dat_init |>
   )
 
 exposure_dat_2 <- dat_init |>
-  select(id, t0_ritual_scale, t1_ritual_scale) |>
+  select(id, t0_ritual_scale) |>
   pivot_longer(
     cols = starts_with("t"),
     names_to = c("wave", "measure"),
@@ -282,7 +319,7 @@ out <-margot::create_transition_matrix(
   state_var = "value", 
   id_var = "id"
 )
-
+219 + 176
 
 t_tab_2_labels <- c("< weekly", ">= weekly")
 # transition table
@@ -324,18 +361,19 @@ dat_baseline <- dat_init |>
   )
 
 
+
 dat_baseline_use  <- dat_baseline |> select(starts_with("t0"), - t0_not_lost) |> 
   # remove t0 label
   rename_with(~ str_remove(., "^t0_")) |> 
     mutate(ritual_weekly = as.factor(ritual_1aweek)) |> 
-  select(-ritual_1aweek) |> 
-  relocate(ritual_weekly, .after = ritual_scale)
+  select(-ritual_1aweek) #|> 
+  #relocate(ritual_weekly, .after = ritual_scale)
   
 
-colnames(dat_baseline)
-
-
-
+# sort column names
+dat_baseline_sorted <- sort(
+  colnames(dat_baseline_use)
+)
 
 
 #check
@@ -344,6 +382,7 @@ colnames(dat_baseline)
 
 library(gtsummary)
 table_baseline <- dat_baseline_use |> 
+select(all_of(dat_baseline_sorted)) |>
   janitor::clean_names(case = "title") |> 
   tbl_summary(
     missing = "ifany",
@@ -359,7 +398,6 @@ table_baseline <- dat_baseline_use |>
   ) |>
   modify_header(label = "**Baseline Exposure + Demographic Variables**") |> # update the column header
   bold_labels() 
-
 
 
 table_baseline
@@ -428,33 +466,30 @@ table_exposures
 
 here_save(table_exposures, 'table_exposures')
 
-exposure_dat_table
+# not needed, done above
+# transition_table_dat <- exposure_dat_table |> 
+#  # filter(!is.na(ritual_weekly)) |> 
+#   mutate(ritual_weekly = as.numeric(as.character(ritual_weekly)))
+# transition_table_dat
 
+# # transition_table
 
-transition_table_dat <- exposure_dat_table |> 
- # filter(!is.na(ritual_weekly)) |> 
-  mutate(ritual_weekly = as.numeric(as.character(ritual_weekly)))
-transition_table_dat
+# out <-margot::create_transition_matrix(
+#   data = transition_table_dat, 
+#   state_var = "ritual_weekly", 
+#   id_var = "id"
+# )
 
-# transition_table
-
-out <-margot::create_transition_matrix(
-  data = transition_table_dat, 
-  state_var = "ritual_weekly", 
-  id_var = "id"
-)
-
-
-
-
-tt_labels <- c("< weekly", ">= weekly")
-# transition table
-
-transition_table  <- margot::transition_table(out)
 transition_table
-# for import later
 
-margot::here_save(transition_table, "transition_table")
+# tt_labels <- c("< weekly", ">= weekly")
+# # transition table
+
+# transition_table  <- margot::transition_table(out)
+# transition_table
+# # for import later
+
+# margot::here_save(transition_table, "transition_table")
 
 
 
@@ -498,7 +533,8 @@ table_outcomes
 
 here_save(table_outcomes, "table_outcomes")
 
-
+# sums correctly 
+# 156 + 48 + 16 + 2
 
 # convert t0_parent_education to an ordered factor
 
@@ -541,7 +577,7 @@ df_clean <- combined_data |>
 # checks
 naniar::vis_miss(df_clean, warn_large_data = FALSE)
 
-
+here_save(df_clean, "df_clean")
 
 # make weights for loss to follow up -------------------------------------
 
@@ -600,7 +636,8 @@ baseline_vars_set <- setdiff(names(df_clean_pre),
                                "id", 
                                "t0_religion_cat",
                                "t0_parent_education", 
-                               "t0_race"))
+                               "t0_race", 
+                              "t0_ritual_1aweek"))# Redundant
 
 # check
 baseline_vars_set
@@ -618,6 +655,7 @@ str(df_clean_hot)
 
 
 # censoring weights t1 ---------------------------------------------------
+# compute censoring weights for loss to follow up, after time 1
 library(SuperLearner)
 
 # library for multicore processing
@@ -630,7 +668,7 @@ listWrappers()
 cv_control <- list(V = 10, stratifyCV = TRUE)  # 10-fold CV with stratification
 
 
-# Set up parallel back end
+# set up parallel back end
 no_cores <- detectCores()
 cl <- makeCluster(no_cores - 1)
 registerDoParallel(cl)
@@ -694,33 +732,36 @@ df_clean_hot$weights <- ifelse(df_clean_hot$t0_lost == 1,
 
 # check 
 hist(df_clean_hot$weights)# nothing extreme
+hist(df_clean_hot$sample_weights)# nothing extreme
+#obtain stablised weights, if needed
+marginal_not_lost <- mean(df_clean_hot$t0_lost)
 
-# obtain stablise weights
-# marginal_not_lost <- mean(df_clean_hot$t0_lost)
-
-# # check (fyi)
-# marginal_not_lost
+# check (fyi)
+marginal_not_lost
 
 
-# # stabalised weights
-# df_clean_hot$weights_stabilised <- ifelse(
-#   df_clean_hot$t0_lost == 1,
-#   marginal_not_lost / df_clean_hot$pscore,
-#   (1 - marginal_not_lost) / (1 - df_clean_hot$pscore)
-# )
+# stabalised weights
+df_clean_hot$weights_stabilised <- ifelse(
+  df_clean_hot$t0_lost == 1,
+  marginal_not_lost / df_clean_hot$pscore,
+  (1 - marginal_not_lost) / (1 - df_clean_hot$pscore)
+)
 
-# checks
-# hist(df_clean_hot$weights_stabilised)
-# max(df_clean_hot$weights_stabilised)
-# min(df_clean_hot$weights_stabilised)
+#checks
+#hist(df_clean_hot$weights_stabilised)
+max(df_clean_hot$weights_stabilised)
+min(df_clean_hot$weights_stabilised)
 
 # save output of hot code dataset
 here_save(df_clean_hot, "df_clean_hot")
 df_clean_hot <- here_read( "df_clean_hot")
 
+nrow(df_clean)
+nrow(df_clean_hot)
+
 # get weights into the model
 # new weights by combining censor and sample weights, using stabalised weights
-df_clean$t0_combo_weights = df_clean_hot$weights * df_clean$sample_weights
+df_clean$t0_combo_weights = df_clean_hot$weights_stabilised * df_clean$sample_weights
 
 # checks
 min(df_clean$t0_combo_weights)
@@ -774,7 +815,9 @@ margot::here_save(df_clean_t1, "df_clean_t1")
 df_clean_t1 <- margot::here_read("df_clean_t1")
 
 # get correct censoring -----------------------------------------
-# THIS CODE IS NOT REDUNDANT 
+
+
+# THIS CODE IS **NOT** REDUNDANT 
 t0_na_condition <-
   rowSums(is.na(select(df_clean_t1, starts_with("t1_")))) > 0
 
@@ -784,7 +827,6 @@ t1_na_condition <-
 # df_impute_base$t0_sample_weights
 
 df_clean_t2 <- df_clean_t1|>
-  # select(-t0_alert_level_combined_lead) |>
   mutate(t0_not_lost = ifelse(t0_na_condition, 0, t0_not_lost))|>
   mutate(t1_not_lost = ifelse(t1_na_condition, 0, t1_not_lost))|>
   mutate(across(starts_with("t1_"), ~ ifelse(t0_not_lost == 0, NA_real_, .)),
@@ -813,9 +855,56 @@ here_save(df_clean_t2, "df_clean_t2")
 # check propensity scores -------------------------------------------------
 # imbalance plot ----------------------------------------------------------
 df_clean_t2 <- here_read("df_clean_t2")
-# if you are comparing 2 x subgroups out of n > 2 groups,  do this
-# df_female<-df_clean_t2 |> filter(t0_female == 1) |> droplevels()
 
+df_clean_t2$t1_ritual_scale
+
+df_clean_no_na_treatment_one <- df_clean_t2 |> filter(!is.na(t1_ritual_1aweek))
+
+names_propensity  <- df_clean_t2 |> select(c( starts_with('t0_'))) |> colnames()
+
+names_propensity_use  <- setdiff( names_propensity, c("t0_combo_weights", 't0_ritual_1aweek'))
+
+names_propensity_use
+
+
+match_ebal_one<- margot::match_mi_general(data = df_clean_no_na_treatment_one,
+                              X = "t1_ritual_1aweek",
+                              baseline_vars = names_propensity_use,
+                              estimand = "ATE",
+                              #  focal = 0, #for ATT
+                              method = "ebal",
+                              sample_weights = "t0_sample_weights")
+
+# save
+here_save(match_ebal_one, "match_ebal_one")
+
+
+
+bal.tab(match_ebal_one)
+love_plot_one <- love.plot(match_ebal_one, binary = "std", thresholds = c(m = .1),
+                       wrap = 50, position = "bottom", size = 3,  limits = list(m = c(-1, 2))) 
+love_plot_one
+here_save(love_plot_one, "love_plot_one")
+
+# consider results 
+summary_match_ebal_one <- summary(match_ebal_one)
+summary_match_ebal_one
+here_save(summary_match_ebal_one, "summary_match_ebal_one")
+
+plot(summary_match_ebal_one)
+
+
+
+# For trimmed weights e.g.
+#trim if needed (weights > 10 might be a problem)
+match_ebal_trim <- WeightIt::trim(match_ebal_one, at = .99)
+#bal.tab(match_ebal_trim_health)
+summary_match_ebal_trim<- summary(match_ebal_trim)
+plot(summary_match_ebal_trim)
+
+
+
+# set variable names ------------------------------------------------------
 # check
 colnames(df_clean_t2)
 
@@ -826,7 +915,7 @@ str(df_clean_t2)
 
 # names of vars for modelling
 names_base <-
-  df_clean_t2 |> select(starts_with("t0"), -t0_combo_weights) |> colnames()
+  df_clean_t2 |> select(starts_with("t0"), -t0_combo_weights, -t0_ritual_1aweek) |> colnames()
 
 # check
 names_base
@@ -916,45 +1005,6 @@ colnames(df_clean_hot_t2)
 
 colnames( df_clean_hot_t2 ) 
 
-
-
-
-# inclusion criteria ------------------------------------------------------
-# propensity score model
-
-match_ebal_ate <- margot::match_mi_general(data = df_clean_hot_t2, 
-                                           X = "t1_ritual_1aweek", 
-                                           baseline_vars = set_final_names, 
-                                           estimand = "ATE",  
-                                           #   focal = "1", #for ATT
-                                           method = "ebal", 
-                                           sample_weights = "sample_weights")
-
-
-# propensity score summary
-propensity_score_summary <- summary(match_ebal_ate)
-
-propensity_score_summary
-
-#view weights
-plot(propensity_score_summary)
-
-love_plot_marginal <-
-  love.plot(
-    match_ebal_ate,
-    binary = "std",
-    thresholds = c(m = .1),
-    wrap = 50,
-    position = "bottom",
-    size = 3
-  )
-
-# inspect imbalance on exposure
-love_plot_marginal
-
-
-
-
 # models -----------------------------------------------------------------
 
 # estimate models ---------------------------------------------------------
@@ -978,8 +1028,9 @@ n_cores <- parallel::detectCores() - 2
 
 A <- c("t1_ritual_1aweek")  # EXPOSURE VARIABLE **************
 C <- c("t1_not_lost")
+set_final_names
 W <- set_final_names
-
+W
 
 #  checks
 colnames(df_final)
@@ -992,7 +1043,6 @@ margot::here_save(W, "W")
 
 
 # really start here -------------------------------------------------------
-
 
 # ANALYSIS ----------------------------------------------------------------
 W <- margot::here_read("W")
@@ -1049,7 +1099,7 @@ listWrappers()
 
 
 # gain and loss models ---------------------------------------------------
-t2_two_or_more_kids_gain  <- lmtp::lmtp_tmle(
+two_or_more_kids_gain  <- lmtp::lmtp_tmle(
   outcome = "t2_two_or_more_kids",
   baseline = W,
   shift = gain_A,
@@ -1063,15 +1113,15 @@ t2_two_or_more_kids_gain  <- lmtp::lmtp_tmle(
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-margot::here_save(t2_two_or_more_kids_gain,"t2_two_or_more_kids_gain")
+margot::here_save(two_or_more_kids_gain,"two_or_more_kids_gain")
 
-t2_two_or_more_kids_gain$fits_r
-t2_two_or_more_kids_gain$fits_m
+two_or_more_kids_gain$fits_r
+two_or_more_kids_gain$fits_m
 
-t2_two_or_more_kids_gain
+two_or_more_kids_gain
 
 
-t2_two_or_more_kids_loss  <- lmtp::lmtp_tmle(
+two_or_more_kids_loss  <- lmtp::lmtp_tmle(
   outcome = "t2_two_or_more_kids",
   baseline = W,
   shift = loss_A,
@@ -1085,18 +1135,19 @@ t2_two_or_more_kids_loss  <- lmtp::lmtp_tmle(
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-margot::here_save(t2_two_or_more_kids_loss,"t2_two_or_more_kids_loss")
+margot::here_save(two_or_more_kids_loss,"two_or_more_kids_loss")
 
-t2_two_or_more_kids_loss$fits_r
-t2_two_or_more_kids_loss$fits_m
+two_or_more_kids_loss$fits_r
+two_or_more_kids_loss$fits_m
 
-t2_two_or_more_kids_loss
+two_or_more_kids_loss
 
 # evaluate
-t2_two_or_more_kids_gain <- here_read("t2_two_or_more_kids_gain")
-t2_two_or_more_kids_loss <- here_read('t2_two_or_more_kids_loss')
-contrast_t2_two_or_more_kids <- lmtp::lmtp_contrast(t2_two_or_more_kids_gain, 
-  ref = t2_two_or_more_kids_loss, type = "rr")
+two_or_more_kids_gain <- here_read("two_or_more_kids_gain")
+two_or_more_kids_loss <- here_read('two_or_more_kids_loss')
+
+contrast_t2_two_or_more_kids <- lmtp::lmtp_contrast(two_or_more_kids_gain, 
+  ref = two_or_more_kids_loss, type = "rr")
 
 contrast_t2_two_or_more_kids
 # table
@@ -1148,7 +1199,7 @@ df_final_female <- df_final |> filter(t0_female == 1)
 
 
 # gain and loss models ---------------------------------------------------
-male_t2_two_or_more_kids_gain  <- lmtp::lmtp_tmle(
+male_two_or_more_kids_gain  <- lmtp::lmtp_tmle(
   outcome = "t2_two_or_more_kids",
   baseline = W_sub,
   shift = gain_A,
@@ -1162,15 +1213,15 @@ male_t2_two_or_more_kids_gain  <- lmtp::lmtp_tmle(
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-margot::here_save(male_t2_two_or_more_kids_gain,"male_t2_two_or_more_kids_gain")
+margot::here_save(male_two_or_more_kids_gain,"male_two_or_more_kids_gain")
 
-male_t2_two_or_more_kids_gain$fits_r
-male_t2_two_or_more_kids_gain$fits_m
+male_two_or_more_kids_gain$fits_r
+male_two_or_more_kids_gain$fits_m
 
-male_t2_two_or_more_kids_gain
+male_two_or_more_kids_gain
 
 
- male_t2_two_or_more_kids_loss  <- lmtp::lmtp_tmle(
+ male_two_or_more_kids_loss  <- lmtp::lmtp_tmle(
   outcome = "t2_two_or_more_kids",
   baseline = W_sub,
   shift = loss_A,
@@ -1184,15 +1235,15 @@ male_t2_two_or_more_kids_gain
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-margot::here_save(male_t2_two_or_more_kids_loss,"male_t2_two_or_more_kids_loss")
+margot::here_save(male_two_or_more_kids_loss,"male_two_or_more_kids_loss")
 
-male_t2_two_or_more_kids_loss$fits_r
-male_t2_two_or_more_kids_loss$fits_m
+male_two_or_more_kids_loss$fits_r
+male_two_or_more_kids_loss$fits_m
 
-male_t2_two_or_more_kids_loss
+male_two_or_more_kids_loss
 
 # evaluate
-contrast_male_t2_two_or_more_kids <- lmtp::lmtp_contrast(male_t2_two_or_more_kids_gain, ref = male_t2_two_or_more_kids_loss, type = "rr")
+contrast_male_t2_two_or_more_kids <- lmtp::lmtp_contrast(male_two_or_more_kids_gain, ref = male_two_or_more_kids_loss, type = "rr")
 
 contrast_male_t2_two_or_more_kids
 # table
@@ -1210,7 +1261,7 @@ margot::here_save(tab_contrast_male_t2_two_or_more_kids, "tab_contrast_male_t2_t
 
 margot::margot_interpret_table(tab_contrast_male_t2_two_or_more_kids, causal_scale = "risk_ratio", estimand = "ATE")
 
-group_tab_contrast_male_t2_two_or_more_kids <- margot::group_tab(tab_contrast_male_t2_two_or_more_kids)
+# group_tab_contrast_male_t2_two_or_more_kids <- margot::group_tab(tab_contrast_male_t2_two_or_more_kids)
 
 # compare - semi-parametric is more efficient, but valid errors? 
 margot::margot_plot(tab_contrast_male_t2_two_or_more_kids, 
@@ -1228,7 +1279,7 @@ margot::margot_plot(tab_contrast_male_t2_two_or_more_kids,
 # female stratify --------------------------------------------------------
 
 
-female_t2_two_or_more_kids_gain  <- lmtp::lmtp_tmle(
+female_two_or_more_kids_gain  <- lmtp::lmtp_tmle(
   outcome = "t2_two_or_more_kids",
   baseline = W_sub,
   shift = gain_A,
@@ -1242,15 +1293,15 @@ female_t2_two_or_more_kids_gain  <- lmtp::lmtp_tmle(
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-margot::here_save(female_t2_two_or_more_kids_gain,"female_t2_two_or_more_kids_gain")
+margot::here_save(female_two_or_more_kids_gain,"female_two_or_more_kids_gain")
 
-female_t2_two_or_more_kids_gain$fits_r
-female_t2_two_or_more_kids_gain$fits_m
+female_two_or_more_kids_gain$fits_r
+female_two_or_more_kids_gain$fits_m
 
-female_t2_two_or_more_kids_gain
+female_two_or_more_kids_gain
 
 
- female_t2_two_or_more_kids_loss  <- lmtp::lmtp_tmle(
+ female_two_or_more_kids_loss  <- lmtp::lmtp_tmle(
   outcome = "t2_two_or_more_kids",
   baseline = W_sub,
   shift = loss_A,
@@ -1265,17 +1316,17 @@ female_t2_two_or_more_kids_gain
   learners_outcome =  sl_lib,
 )
 
-female_t2_two_or_more_kids_loss
+female_two_or_more_kids_loss
 
-margot::here_save(female_t2_two_or_more_kids_loss,"female_t2_two_or_more_kids_loss")
+margot::here_save(female_two_or_more_kids_loss,"female_two_or_more_kids_loss")
 
-female_t2_two_or_more_kids_loss$fits_r
-female_t2_two_or_more_kids_loss$fits_m
+female_two_or_more_kids_loss$fits_r
+female_two_or_more_kids_loss$fits_m
 
-female_t2_two_or_more_kids_loss
+female_two_or_more_kids_loss
 
 # evaluate
-contrast_female_t2_two_or_more_kids <- lmtp::lmtp_contrast(female_t2_two_or_more_kids_gain, ref = female_t2_two_or_more_kids_loss, type = "rr")
+contrast_female_t2_two_or_more_kids <- lmtp::lmtp_contrast(female_two_or_more_kids_gain, ref = female_two_or_more_kids_loss, type = "rr")
 
 contrast_female_t2_two_or_more_kids
 # table
@@ -1290,7 +1341,6 @@ margot::here_save(tab_contrast_female_t2_two_or_more_kids, "tab_contrast_female_
 
 margot::margot_interpret_table(tab_contrast_female_t2_two_or_more_kids, causal_scale = "risk_ratio", estimand = "ATE")
 
-group_tab_contrast_female_t2_two_or_more_kids<- margot::group_tab(tab_contrast_female_t2_two_or_more_kids)
 
 # compare - semi-parametric is more efficient, but valid errors? 
 margot::margot_plot(tab_contrast_female_t2_two_or_more_kids, 
@@ -1306,6 +1356,9 @@ margot::margot_plot(tab_contrast_female_t2_two_or_more_kids,
 
 # compute the relative risk ratio between the two groups
 sub_group_compare <- margot::compute_difference(contrast_male_t2_two_or_more_kids, contrast_female_t2_two_or_more_kids, type = "RR")
+
+sub_group_compare
+
 
 here_save(sub_group_compare, "sub_group_compare")
 
@@ -1361,12 +1414,11 @@ margot::margot_plot(group_bind_results,
 
 
 
-# total children IGNORE -----------------------------------------------
+# total children -----------------------------------------------
 
 
 # model total number of children  ----------------------------------------
-df_final$t2_children_count
-t2_children_count_gain   <- lmtp::lmtp_tmle(
+children_count_gain   <- lmtp::lmtp_tmle(
   outcome = "t2_children_count",
   baseline = W,
   shift = gain_A,
@@ -1380,16 +1432,16 @@ t2_children_count_gain   <- lmtp::lmtp_tmle(
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-margot::here_save(t2_children_count_gain,"t2_children_count_gain")
+margot::here_save(children_count_gain,"children_count_gain")
 
-t2_children_count_gain$fits_r
-t2_children_count_gain$fits_m
+children_count_gain$fits_r
+children_count_gain$fits_m
 
-t2_children_count_gain
+children_count_gain
 
 
 
-t2_children_count_loss  <- lmtp::lmtp_tmle(
+children_count_loss  <- lmtp::lmtp_tmle(
   outcome = "t2_children_count",
   baseline = W,
   shift = loss_A,
@@ -1403,19 +1455,19 @@ t2_children_count_loss  <- lmtp::lmtp_tmle(
   learners_trt =  sl_lib,
   learners_outcome = sl_lib,
 )
-margot::here_save(t2_children_count_loss,"t2_children_count_loss")
+margot::here_save(children_count_loss,"children_count_loss")
 
-t2_children_count_loss$fits_r
-t2_children_count_loss$fits_m
+children_count_loss$fits_r
+children_count_loss$fits_m
 
-t2_children_count_loss
+children_count_loss
 
 # evaluate
 
-t2_children_count_gain <- here_read('t2_children_count_gain')
-t2_children_count_loss<- here_read('t2_children_count_loss')
+children_count_gain <- here_read('children_count_gain')
+children_count_loss<- here_read('children_count_loss')
 
-contrast_t2_children_count <- lmtp::lmtp_contrast(t2_children_count_gain, ref = t2_children_count_loss, type = "additive")
+contrast_t2_children_count <- lmtp::lmtp_contrast(children_count_gain, ref = children_count_loss, type = "additive")
 
 contrast_t2_children_count
 # table
@@ -1433,11 +1485,11 @@ margot::here_save(tab_contrast_t2_children_count, "tab_contrast_t2_children_coun
 
 margot::margot_interpret_table(tab_contrast_t2_children_count, causal_scale = "causal_difference", estimand = "ATE")
 
-group_tab_contrast_t2_children_count <- margot::group_tab(tab_contrast_t2_children_count, type = "RD")
+# group_tab_contrast_t2_children_count <- margot::group_tab(tab_contrast_t2_children_count, type = "RD")
 
 # compare - semi-parametric is more efficient, but valid errors? 
 
-margot::margot_plot(group_tab_contrast_t2_children_count, 
+margot::margot_plot(tab_contrast_t2_children_count, 
             title = "Causal Effect of Regular Religious Service on Fertility 7 Years Later", 
             subtitle= "Outcome is Continuous (Number of Children)", 
             type = "RD",
@@ -1450,7 +1502,7 @@ margot::margot_plot(group_tab_contrast_t2_children_count,
 
 
 # model total number of children  ----------------------------------------
-t2_children_count_gain_men   <- lmtp::lmtp_tmle(
+children_count_gain_men   <- lmtp::lmtp_tmle(
   outcome = "t2_children_count",
   baseline = W_sub,
   shift = gain_A,
@@ -1464,15 +1516,15 @@ t2_children_count_gain_men   <- lmtp::lmtp_tmle(
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-margot::here_save(t2_children_count_gain_men,"t2_children_count_gain_men")
+margot::here_save(children_count_gain_men,"children_count_gain_men")
 
-t2_children_count_gain_men$fits_r
-t2_children_count_gain_men$fits_m
+children_count_gain_men$fits_r
+children_count_gain_men$fits_m
 
-t2_children_count_gain_men
+children_count_gain_men
 
 
-t2_children_count_loss_men  <- lmtp::lmtp_tmle(
+children_count_loss_men  <- lmtp::lmtp_tmle(
   outcome = "t2_children_count",
   baseline = W_sub,
   shift = loss_A,
@@ -1486,19 +1538,19 @@ t2_children_count_loss_men  <- lmtp::lmtp_tmle(
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-margot::here_save(t2_children_count_loss_men,"t2_children_count_loss_men")
+margot::here_save(children_count_loss_men,"children_count_loss_men")
 
-t2_children_count_loss_men$fits_r
-t2_children_count_loss_men$fits_m
+children_count_loss_men$fits_r
+children_count_loss_men$fits_m
 
-t2_children_count_loss_men
+children_count_loss_men
 
 
 
 # counts women loss ------------------------------------------------------
 
 # model total number of children  ----------------------------------------
-t2_children_count_gain_female   <- lmtp::lmtp_tmle(
+children_count_gain_female   <- lmtp::lmtp_tmle(
   outcome = "t2_children_count",
   baseline = W_sub,
   shift = gain_A,
@@ -1512,15 +1564,15 @@ t2_children_count_gain_female   <- lmtp::lmtp_tmle(
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-margot::here_save(t2_children_count_gain_female,"t2_children_count_gain_female")
+margot::here_save(children_count_gain_female,"children_count_gain_female")
 
-t2_children_count_gain_female$fits_r
-t2_children_count_gain_female$fits_m
+children_count_gain_female$fits_r
+children_count_gain_female$fits_m
 
-t2_children_count_gain_female
+children_count_gain_female
 
 
-t2_children_count_loss_female  <- lmtp::lmtp_tmle(
+children_count_loss_female  <- lmtp::lmtp_tmle(
   outcome = "t2_children_count",
   baseline = W_sub,
   shift = loss_A,
@@ -1534,19 +1586,16 @@ t2_children_count_loss_female  <- lmtp::lmtp_tmle(
   learners_trt = sl_lib,
   learners_outcome =  sl_lib,
 )
-margot::here_save(t2_children_count_loss_female,"t2_children_count_loss_female")
+margot::here_save(children_count_loss_female,"children_count_loss_female")
 
-t2_children_count_loss_female$fits_r
-t2_children_count_loss_female$fits_m
+children_count_loss_female$fits_r
+children_count_loss_female$fits_m
 
-t2_children_count_loss_female
-
-
-
-
+children_count_loss_female
 
 # evaluate
-contrast_t2_children_count_men <- lmtp::lmtp_contrast(t2_children_count_gain_men, ref = t2_children_count_loss_men, type = "additive")
+
+contrast_t2_children_count_men <- lmtp::lmtp_contrast(children_count_gain_men, ref = children_count_loss_men, type = "additive")
 
 contrast_t2_children_count_men
 # table
@@ -1563,8 +1612,8 @@ margot::here_save(tab_contrast_t2_children_count_men, "tab_contrast_t2_children_
 
 # female
 
-contrast_t2_children_count_female <- lmtp::lmtp_contrast(t2_children_count_gain_female, 
-  ref = t2_children_count_loss_female, type = "additive")
+contrast_t2_children_count_female <- lmtp::lmtp_contrast(children_count_gain_female, 
+  ref =children_count_loss_female, type = "additive")
 
 contrast_t2_children_count_female
 
@@ -1627,8 +1676,9 @@ df_grf <- margot::here_read("df_final")
 # get baseline names
 names_grf <- margot::here_read("W")
 
+names_grf <- setdiff(W, "t0_ritual_scale")
 
-
+names_grf <- c(names_grf, "t0_ritual_1aweek")
 
 # check all indicators are numeric or binary
 colnames(df_grf)
@@ -1651,8 +1701,8 @@ table(t1_lost)
 df_grf$t1_lost <- t1_lost
 
 # label this D
-D <- as.factor (1 - df_grf$t1_not_lost)
-
+D <-  as.factor( t1_lost) 
+D
 # get key data features
 nrow(df_grf)
 
@@ -1661,9 +1711,11 @@ nrow(df_grf)
 
 
 # select exposure
-selected_A = matrix(df_grf$t1_ritual_1aweek) # standard deviation of exposure
+selected_A = matrix(df_grf$t1_ritual_1aweek) # exposure
 selected_Y = matrix(df_grf$t2_two_or_more_kids)
 
+# selected_W = matrix(df_grf$t1_ritual_1aweek) # for later
+#selected_X <- cbind(df_grf[names_grf]) # for later
 
 # select covariates, make sure to remove attributes (we did this above)
 cen_X <- cbind(df_grf[names_grf], selected_A)
@@ -1682,6 +1734,7 @@ pscore <- predictions_grf$pred[, 2]
 hist(pscore)
 mean(pscore)
 sd(pscore)
+
 
 #df_grf$pscore <- pscore
 
@@ -1859,6 +1912,7 @@ vis_miss(df_grf_t2)
 # save data with weights
 here_save(df_grf_t2, "df_grf_t2")
 
+# check
 table(df_grf$t1_ritual_1aweek)
 
 #test how many males at end of study
@@ -1885,8 +1939,10 @@ temp_df<- data.frame( df_grf_t2[ names_grf ] )
 temp_df <- margot::remove_numeric_attributes(temp_df)
 
 colnames(temp_df)
-g_X <- as.matrix(temp_df)
 
+# data
+g_X <- temp_df
+colnames(g_X)
 
 naniar::vis_miss(g_W)
 
@@ -1898,6 +1954,10 @@ str(g_W)
 str(g_Y)
 str(g_weights)
 g_Y
+
+
+average_treatment_effect(csf)
+
 
 # model 
 tau_forest_outcome <- grf::causal_forest(
@@ -1965,11 +2025,12 @@ hist(tau.hat.oob$predictions)
 best_linear_projection(tau_forest_y_binary, g_X)
 
 names_grf
+
 # this only works for binary treatments
 rate <- rank_average_treatment_effect(tau_forest_y_binary, g_X[, "t0_female"])
 
 #
-plot(rate, ylab = "Female", main = "TOC: ranked by decreasing weight")
+plot(rate, ylab = "Female", main = "TOC: ranked by decreasing ")
 
 # #
 forest.W <- regression_forest(g_X, g_W, tune.parameters = "all")
@@ -1987,7 +2048,8 @@ forest.Y.varimp <- variable_importance(tau_forest_y_binary)
 #forest.Y.varimp
 selected.vars <- which(forest.Y.varimp / mean(forest.Y.varimp) > 0.99)
 selected.vars
-colnames(g_X)
+
+colnames( g_X[, selected.vars])
 
 # obtain treatment effect in the most important predictors
 tau.forest <- causal_forest(
@@ -2020,10 +2082,17 @@ eval.forest <- causal_forest(g_X[-train, ], g_Y[-train], g_W[-train], sample.wei
 # rank on new data (ony supports binary treatment effects)
 rate <- rank_average_treatment_effect(eval.forest, predict(train.forest, g_X[-train, ])$predictions)
 plot(rate)
+g_X
+eval.forest
+head(g_X)
 
-average_treatment_effect(train.forest, target.sample = "treated")
-average_treatment_effect(eval.forest, target.sample = "treated")
+g_X[ ,t0_female ]
+g_X$t0_female
 
+rate <- rank_average_treatment_effect(eval.forest, g_X[ ,t0_female ])
+plot(rate, ylab = "Days until first catch", main = "TOC: ranked by decreasing weight")
+
+plot(rate, ylab = "Days until first catch", main = "TOC: ranked by decreasing weight")
 
 #tau.hat <- predict(tau.forest, X.test, estimate.variance = TRUE)
 # paste("AUTOC:", round(rate$estimate, 2), "+/", round(1.96 * rate$std.err, 2))
@@ -2069,15 +2138,15 @@ dr.scores
 # cost <- ate[["estimate"]]
 # cost
 # -dr.scores
-#
+# #
 # dr.rewards <- cbind.data.frame(control = -dr.scores,
 #                      treat = dr.scores - cost)
 # dr.rewards
 # # plot overlap
 use_X <- g_X[, selected.vars]
 head(use_X)
-tree <- policy_tree(use_X, dr.scores, depth = 2)
-tree_full <- policy_tree(g_X, dr.scores, depth = 2)
+tree <- policy_tree(use_X, dr.scores, depth = 3)
+tree_full <- policy_tree(g_X, dr.scores, depth = 3)
 
 #save
 here_save(tree, "tree")
@@ -2090,23 +2159,23 @@ print(tree_full)
 plot(tree_full)
 
 # Predict the treatment assignment {1, 2} for each sample.
-predicted <- predict(tree_full, g_X)
-plot(X[, 1], X[, 2], col = predicted)
-legend("topright",
-       c("control", "treat"),
-       col = c(1, 2),
-       pch = 19)
-abline(0, -1, lty = 2)
-dev.off()
-node.id <- predict(tree_full, g_X, type = "node.id")
-
-values <- aggregate(
-  dr.scores,
-  by = list(leaf.node = node.id),
-  FUN = function(x)
-    c(mean = mean(x), se = sd(x) / sqrt(length(x)))
-)
-print(values, digits = 2)
+# predicted <- predict(tree_full, g_X)
+# plot(X[, 1], X[, 2], col = predicted)
+# legend("topright",
+#        c("control", "treat"),
+#        col = c(1, 2),
+#        pch = 19)
+# abline(0, -1, lty = 2)
+# dev.off()
+# node.id <- predict(tree_full, g_X, type = "node.id")
+# node.id
+# values <- aggregate(
+#   dr.scores,
+#   by = list(leaf.node = node.id),
+#   FUN = function(x)
+#     c(mean = mean(x), se = sd(x) / sqrt(length(x)))
+# )
+# print(values, digits = 2)
 
 
 # eval grf fit ------------------------------------------------------------
@@ -2126,7 +2195,7 @@ min(IPW)
 
 #Make long
 
-df <- cbind.data.frame(g_W, g_X_binary, IPW)
+df <- cbind.data.frame(g_W, g_X, IPW)
 df
 head(df)
 table(df$g_W)
@@ -2152,7 +2221,7 @@ ggplot(df_long, aes(x = value, weight = IPW, fill = W)) +
 
 ggplot(df,
        aes(
-         x = t0_religion_church_round_z,
+         x = t0_ritual_1aweek,
          weight = IPW,
          fill = as.factor(g_W)
        )) +
@@ -2163,15 +2232,30 @@ ggplot(df,
 
 
 
-n <- 2000
-p <- 10
-X <- matrix(rnorm(n * p), n, p)
-dim(X)
-X
-X.test <- matrix(0, 101, p)
 
-dim(X.test)
 
-X.test[, 1] <- seq(-2, 2, length.out = 101)
-dim(X.test)
+# try a quini curve ------------------------------------------------------
 
+# training sample
+train_forest <- causal_forest(g_X[train, ], g_Y[train], g_W[train], sample.weights = g_weights[train])
+
+# eavaluation sample
+eval_forest <- causal_forest(g_X[-train, ], g_Y[-train], g_W[-train], sample.weights = g_weights[-train])
+
+# predict CATEs on test set.
+test <- -train
+tau_hat <- predict(eval_forest, g_X[test, ])$predictions
+
+
+
+# 3) Form a multi-armed Qini curve based on IPW (convenience function part of `maq`).
+IPW.scores <- get_ipw_scores(Y[test], W[test])
+
+# The cost of arm 1 and 2.
+cost <- c(0.2, 0.5)
+
+# A Qini curve for a multi-armed policy.
+ma.qini <- maq(tau.hat, cost, IPW.scores, R = 200)
+
+# A "baseline" Qini curve that ignores covariates.
+ma.qini.baseline <- maq(tau.hat, cost, IPW.scores, target.with.covariates = FALSE, R = 200)
