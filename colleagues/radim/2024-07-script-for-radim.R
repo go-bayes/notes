@@ -321,10 +321,12 @@ out <-margot::create_transition_matrix(
 )
 219 + 176
 
-t_tab_2_labels <- c("< weekly", ">= weekly")
+t_labels <- c("< weekly", ">= weekly")
 # transition table
 
-transition_table  <- margot::transition_table(out)
+transition_table  <- margot::transition_table(out, state_names = t_labels)
+
+
 transition_table
 # for import later
 margot::here_save(transition_table, "transition_table")
@@ -856,8 +858,6 @@ here_save(df_clean_t2, "df_clean_t2")
 # imbalance plot ----------------------------------------------------------
 df_clean_t2 <- here_read("df_clean_t2")
 
-df_clean_t2$t1_ritual_scale
-
 df_clean_no_na_treatment_one <- df_clean_t2 |> filter(!is.na(t1_ritual_1aweek))
 
 names_propensity  <- df_clean_t2 |> select(c( starts_with('t0_'))) |> colnames()
@@ -1164,6 +1164,7 @@ margot::here_save(tab_contrast_t2_two_or_more_kids, "tab_contrast_t2_two_or_more
 
 
 margot::margot_interpret_table(tab_contrast_t2_two_or_more_kids, causal_scale = "risk_ratio", estimand = "ATE")
+
 
 group_tab_contrast_t2_two_or_more_kids <- margot::group_tab(tab_contrast_t2_two_or_more_kids)
 
@@ -1478,7 +1479,7 @@ tab_contrast_t2_children_count <-
                              scale = "RD",
                              new_name = "Weekly Service Total Children: ATE")
 
-                      
+tab_contrast_t2_children_count                      
 # save
 margot::here_save(tab_contrast_t2_children_count, "tab_contrast_t2_children_count")
 
@@ -2148,6 +2149,9 @@ head(use_X)
 tree <- policy_tree(use_X, dr.scores, depth = 3)
 tree_full <- policy_tree(g_X, dr.scores, depth = 3)
 
+tree_full_2 <- policy_tree(g_X, dr.scores, depth = 2)
+
+
 #save
 here_save(tree, "tree")
 here_save(tree_full, "tree_full")
@@ -2157,6 +2161,9 @@ plot(tree)
 dev.off()
 print(tree_full)
 plot(tree_full)
+
+print(tree_full_2)
+plot(tree_full_2)
 
 # Predict the treatment assignment {1, 2} for each sample.
 # predicted <- predict(tree_full, g_X)
@@ -2246,16 +2253,29 @@ eval_forest <- causal_forest(g_X[-train, ], g_Y[-train], g_W[-train], sample.wei
 test <- -train
 tau_hat <- predict(eval_forest, g_X[test, ])$predictions
 
-
-
+g_WW = as.factor(g_W)
 # 3) Form a multi-armed Qini curve based on IPW (convenience function part of `maq`).
-IPW.scores <- get_ipw_scores(Y[test], W[test])
+ipw_scores <- get_ipw_scores(g_Y[test], g_WW[test])
 
-# The cost of arm 1 and 2.
-cost <- c(0.2, 0.5)
+# 
+cost <- 1
 
 # A Qini curve for a multi-armed policy.
-ma.qini <- maq(tau.hat, cost, IPW.scores, R = 200)
+ma_qini <- maq(tau_hat, cost, ipw_scores, R = 200)
 
 # A "baseline" Qini curve that ignores covariates.
-ma.qini.baseline <- maq(tau.hat, cost, IPW.scores, target.with.covariates = FALSE, R = 200)
+ma_qini_baseline <- maq(tau_hat, cost, ipw_scores, target.with.covariates = FALSE, R = 200)
+
+# plot
+plot(ma_qini)
+plot(ma_qini_baseline, add = TRUE, lty = 2, ci.args = NULL)
+
+
+difference_gain(ma_qini, ma_qini_baseline, spend = 0.5)
+difference_gain(ma_qini, ma_qini_baseline, spend = .1)
+
+integrated_difference(ma_qini, ma_qini_baseline, spend = 0.5)
+
+
+# 
+dev.off()
