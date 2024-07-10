@@ -91,7 +91,7 @@ if (!require(devtools, quietly = TRUE)) {
 }
 
 # get 'margot' from my github (make sure to update)
-#devtools::install_github("go-bayes/margot")
+devtools::install_github("go-bayes/margot")
 
 library(margot)
 # check if pacman is installed; if not, install it
@@ -1005,6 +1005,17 @@ colnames(df_clean_hot_t2)
 
 colnames( df_clean_hot_t2 ) 
 
+
+# final dataset 
+df_final <- df_clean_hot_t2
+
+colnames(df_final)
+naniar::vis_miss(df_final, warn_large_data = F)
+
+
+# Save 
+margot::here_save(df_final, "df_final")
+
 # models -----------------------------------------------------------------
 
 # estimate models ---------------------------------------------------------
@@ -1013,8 +1024,8 @@ library(SuperLearner)
 library(xgboost)
 library(ranger)
 library(future)
-# model charitable giving
-# this will allow you to track progress
+library(polspline)
+#
 progressr::handlers(global = TRUE)
 
 # set seed for reproducing results
@@ -1032,15 +1043,8 @@ set_final_names
 W <- set_final_names
 W
 
-#  checks
-colnames(df_final)
-naniar::vis_miss(df_final, warn_large_data = F)
-
-
-# Save 
-margot::here_save(df_final, "df_final")
+# save
 margot::here_save(W, "W")
-
 
 # really start here -------------------------------------------------------
 
@@ -1057,43 +1061,14 @@ gain_A <- function(data, trt) {
   data[[trt]]  = 1  # increase all by 20 up to 80 hours per week
 }
 
-# # shift function
-# gain_A <- function(data, trt) {
-#   ifelse(data[[trt]] < max_data - 1, data[[trt]] + 1, max_data)
-# }
-
 loss_A <- function(data, trt) {
    data[[trt]] <-  0
 }
 
-
-
-# examples of other shift functions 
-# # changing your function to be fixed at 7 if you like...
-# fixed_shift_to_7 <- function(data, trt) {
-#   ifelse(data[[trt]] != 7, 7, data[[trt]])
-# }
-
-# # changing your function to be fixed at 0 if you like...
-# fixed_shift_to_0 <- function(data, trt) {
-#   ifelse(data[[trt]] != 0, 0, data[[trt]])
-# }
-
-
-
+citation(package = 'glmnet')
 # set libraries
 sl_lib  <- c("SL.glmnet", "SL.xgboost", "SL.ranger", "SL.polymars", "SL.earth")
 
-# view superlearners
-listWrappers()
-# test data
-
-
-# testing data set
-
-# df_clean_slice <- df_final |>
-#   slice_head(n = 1000) |>
-#   as.data.frame()
 
 
 
@@ -1170,7 +1145,7 @@ group_tab_contrast_t2_two_or_more_kids <- margot::group_tab(tab_contrast_t2_two_
 
 # compare - semi-parametric is more efficient, but valid errors? 
 margot::margot_plot(group_tab_contrast_t2_two_or_more_kids, 
-            title = "Causal Effect of Regular Religious Service on Fertil9ty 7 Years Later", 
+            title = "Causal Effect of Regular Religious Service on Fertility 8 Years Later", 
             subtitle= "Outcome is Binary (Has Two Children Yes/No)", 
             type = "RR",
            # order = "alphabetical",
@@ -1252,7 +1227,7 @@ contrast_male_t2_two_or_more_kids
 tab_contrast_male_t2_two_or_more_kids <-
   margot::margot_lmtp_evalue(contrast_male_t2_two_or_more_kids,
                              scale = "RR",
-                             new_name = "Weekly Religious Service Attendance in Males")
+                             new_name = "Weekly Religious Service Attendance: Males")
 
                       
 tab_contrast_male_t2_two_or_more_kids
@@ -1266,7 +1241,7 @@ margot::margot_interpret_table(tab_contrast_male_t2_two_or_more_kids, causal_sca
 
 # compare - semi-parametric is more efficient, but valid errors? 
 margot::margot_plot(tab_contrast_male_t2_two_or_more_kids, 
-            title = "Causal Effect of Regular Religious Service on Fertil9ty 7 Years Later", 
+            title = "Causal Effect of Regular Religious Service on Fertility 8 Years Later", 
             subtitle= "Outcome is Binary (Has Two Children Yes/No)", 
             type = "RR",
            # order = "alphabetical",
@@ -1335,7 +1310,7 @@ contrast_female_t2_two_or_more_kids
 tab_contrast_female_t2_two_or_more_kids <-
   margot::margot_lmtp_evalue(contrast_female_t2_two_or_more_kids,
                              scale = "RR",
-                             new_name = "Weekly Religious Service Attendance in Females")
+                             new_name = "Weekly Religious Service Attendance: Females")
 # save
 margot::here_save(tab_contrast_female_t2_two_or_more_kids, "tab_contrast_female_t2_two_or_more_kids")
 
@@ -1345,7 +1320,7 @@ margot::margot_interpret_table(tab_contrast_female_t2_two_or_more_kids, causal_s
 
 # compare - semi-parametric is more efficient, but valid errors? 
 margot::margot_plot(tab_contrast_female_t2_two_or_more_kids, 
-            title = "Causal Effect of Regular Religious Service on Fertil9ty 7 Years Later", 
+            title = "Causal Effect of Regular Religious Service on Fetility 8 Years Later", 
             subtitle= "Outcome is Binary (Has Two Children Yes/No)", 
             type = "RR",
            # order = "alphabetical",
@@ -1356,23 +1331,16 @@ margot::margot_plot(tab_contrast_female_t2_two_or_more_kids,
 
 
 # compute the relative risk ratio between the two groups
-sub_group_compare <- margot::compute_difference(contrast_male_t2_two_or_more_kids, contrast_female_t2_two_or_more_kids, type = "RR")
+sub_group_compare_binary <- margot::compute_difference(contrast_male_t2_two_or_more_kids, contrast_female_t2_two_or_more_kids, type = "RR")
 
-sub_group_compare
+sub_group_compare_binary
 
 
-here_save(sub_group_compare, "sub_group_compare")
+here_save(sub_group_compare_binary, "sub_group_compare_binary")
 
 str(contrast_male_t2_two_or_more_kids)
 str(contrast_female_t2_two_or_more_kids)
 contrast_male_t2_two_or_more_kids$theta
-
-
-result
-# display the result
-print(result$results)
-print(result$interpretation)
-
 
 
 # compute the difference in means between the two groups
@@ -1403,7 +1371,7 @@ group_bind_results <- margot::group_tab(df_bind_results)
 
 
 margot::margot_plot(group_bind_results, 
-  title = "Causal Effect of Regular Religious Service on Fertility 7 Years Later", 
+  title = "Causal Effect of Regular Religious Service on Fertility 8 Years Later", 
   subtitle= "Outcome is Binary (Has Two Children Yes/No)", 
   type = "RR",
   order = "alphabetical",
@@ -1628,6 +1596,14 @@ tab_contrast_t2_children_count_female <-
                       
 # save
 margot::here_save(tab_contrast_t2_children_count_female, "tab_contrast_t2_children_count_female")
+
+contrast_t2_children_count_female
+contrast_t2_children_count_men
+
+
+sub_group_compare_count <- margot::compute_difference(contrast_t2_children_count_men, contrast_t2_children_count_female, type = "RD")
+sub_group_compare_count
+
 
 
 
