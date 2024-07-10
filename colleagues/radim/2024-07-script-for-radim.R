@@ -1572,7 +1572,7 @@ contrast_t2_children_count_men
 tab_contrast_t2_children_count_men <-
   margot::margot_lmtp_evalue(contrast_t2_children_count_men,
                              scale = "RD",
-                             new_name = "Weekly Service Total Children: Male")
+                             new_name = "Weekly Service Total Children in Males")
 
                       
 # save
@@ -1591,7 +1591,7 @@ contrast_t2_children_count_female
 tab_contrast_t2_children_count_female <-
   margot::margot_lmtp_evalue(contrast_t2_children_count_female,
                              scale = "RD",
-                             new_name = "Weekly Service Total Children: Female")
+                             new_name = "Weekly Service Total Children in Females")
 
                       
 # save
