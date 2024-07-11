@@ -1,0 +1,243 @@
+---
+title: "Feedback on 'Need for Speed? The role of perceptual speed in generalised visual comparison'"
+author: 
+  - name: Joseph A. Bulbulia
+    affiliation: Victoria University of Wellington, New Zealand
+    orcid: 0000-0002-5861-2056
+    email: joseph.bulbulia@vuw.ac.nz
+editor_options: 
+  chunk_output_type: console
+format:
+  pdf:
+    sanitise: true
+    keep-tex: true
+    link-citations: true
+    colorlinks: true
+    documentclass: article
+    classoption: [single column]
+    lof: false
+    lot: false
+    geometry:
+      - top=30mm
+      - left=25mm
+      - heightrounded
+      - headsep=22pt
+      - headheight=11pt
+      - footskip=33pt
+      - ignorehead
+      - ignorefoot
+    template-partials: 
+      - /Users/joseph/GIT/templates/quarto/title.tex
+    header-includes:
+      - \input{/Users/joseph/GIT/latex/latex-for-quarto.tex}
+date: last-modified
+pdf-engine: lualatex
+execute:
+  echo: true
+  warning: false
+  include: true
+  eval: true
+fontfamily: libertinus
+bibliography: /Users/joseph/GIT/templates/bib/references.bib
+csl: /Users/joseph/GIT/templates/csl/apa-7.csl
+---
+
+## Overview
+
+This study examines the relationship between perceptual speed and visual comparison ability, using a sample of 122 participants who completed a perceptual speed task and two visual comparison tasks. The research found a significant positive correlation between perceptual speed and visual comparison performance, which remained reliable after adjusting for age. 
+
+Here, I evaluate the study's strengths and offer a few suggestions for improvement.
+
+## Detailed Evaluation
+
+### Abstract and Title (4.5/5)
+
+The title "Need for Speed? The role of perceptual speed in generalised visual comparison" is catchy and effectively conveys the study's focus. While I personally prefer more descriptive titles (e.g., "Perceptual Speed is Associated with Visual Comparison"), the chosen title is appropriate if that is your preference.
+
+The abstract is well-structured and provides a concise overview of the study's purpose, methods, findings, and conclusion. However, it slightly oversells the design by claiming to explore the "role" of perceptual speed, which suggests causality. Given the correlational nature of the study, it would be more accurate to describe it as examining the "relationship" between perceptual speed and visual comparison ability.
+
+### Introduction (20/25)
+
+**Strengths**:
+- Clear justification for the research topic
+- Demonstrates a strong rationale based on relevant literature and theory
+- Evidence of critical evaluation and synthesis of background information
+- Effective examination of Varga and Hamburger's (2014) tri-dimensional model
+
+**Areas for Improvement**:
+- Could further emphasise the theoretical implications of finding (or not finding) similarities between perceptual speed and visual comparison tasks
+- More explicit discussion of how this study fits into the broader research context
+
+### Method (17/20)
+
+**Strengths**:
+- Design, data, and R scripts available on OSF
+- Inclusion of power analysis
+- Clear visual aids for describing the design
+
+**Areas for Improvement**:
+- Pre-register future studies on OSF
+- Clarify the rationale for choosing r = .3 in the power analysis
+- Reconsider the timing of the intrinsic motivation scale
+- Be cautious about excluding participants after data collection
+- Strengthen the rationale for using 30-second trials over 20-second trials
+- Correct the mischaracterisation of the study as a "within-subject design"
+
+### Results (18/20)
+
+**Strengths**:
+- Appropriate analytic strategy
+- Clear and accurate presentation of results
+- Competent data analysis
+
+**Areas for Improvement**:
+- Include raw data and full data with excluded participants
+- Provide scripts used for data cleaning, with documentation for column names
+- Include the 20-second and 30-second trial data from the pilot study
+- Add confidence intervals to your analyses
+
+### Discussion (17/20)
+
+**Strengths**:
+- Effectively relates results to previous research
+- Explores the meaning of findings
+- Well-considered limitations
+- Logical future research directions
+
+**Areas for Improvement**:
+- Further clarify the correlational nature of the findings and its limitations in understanding causality
+- Reconsider the speculative argument about hiring practices in forensic analysis
+- Provide a more nuanced discussion of how perceptual speed might interact with other factors in professional settings
+
+### Formatting, Clarity & Referencing (9/10)
+
+**Strengths**:
+- Adheres to APA 7th edition formatting
+- Writing is clear
+- Appropriate use of references and citations
+
+**Areas for Improvement**:
+- None noted
+
+
+## Overall Mark: 85.5
+
+## Overall Assessment
+
+This honours project demonstrates strong research skills, clear writing, and a solid understanding of the topic. You have effectively conducted and reported a meaningful study on visual comparison and perceptual speed. The main areas for improvement lie in:
+
+1. More careful interpretation of correlational findings;
+2. Strengthening methodological decisions and their rationales;
+3. Providing more comprehensive data and analysis scripts;
+
+These improvements would further enhance what is already a commendable piece of research. Your work contributes valuable insights to the understanding of perceptual speed and visual comparison ability and sets a strong foundation for future research in this area.
+
+## Specific Feedback on p.19 Argument
+
+p.19 This argument is unconvincing:
+
+> Forensic experts rendering "match" or "onmatch" judgments in court can have significant implications. Therefore, selecting individuals who exhibit a natural aptitude in visual comparison and its related cognitive mechanisms (i.e., perceptual speed) could boost overall professional performance and reduce costly errors. If faster perceptual speed indeed enables individuals to extract additional information from stimuli, subsequently enhancing visual comparison performance, then prioritising this trait during the hiring process could allow for more accurate and reliable outcomes in fields like forensic analysis.
+
+The argument presented has several limitations:
+
+1. **Lack of Evidence**:
+
+   - The argument assumes that faster perceptual speed directly leads to better performance in forensic analysis without providing concrete data or studies to support this claim.
+
+2. **Overgeneralisation**:
+
+   - It overgeneralises the relationship between perceptual speed and job performance, ignoring other critical skills and traits necessary for accurate forensic analysis.
+   
+   - Forensic analysis involves various tasks and cognitive processes beyond just perceptual speed. The argument oversimplifies the complexity of these tasks and the factors contributing to overall performance.
+   
+   - It does not address how perceptual speed can be reliably measured and integrated into the hiring process, or whether this single trait should outweigh other qualifications and experiences.
+
+Overall, while the observation about perceptual speed is intriguing, to my ear, this speculation detracts from your work because it overreaches.
+
+
+Code for obtaining confidence intervals (and to simply your life). Again please provide clear definitions of your variables in your work. 
+
+```{r}
+#| label: analysis
+#| echo: true
+#| include: true
+#| eval: true
+
+# Load necessary libraries
+library(ggplot2) # graphs
+library(here) # for easy importing of data
+library(ggeffects) # graphs
+library(tidyverse) # wrangling 
+library(parameters) # nice tables
+library(marginaleffects) # results
+library(here) # for importing data
+library(janitor) # better names
+library(readxl) # better to use csv files, but what you did is fine. 
+
+# import data
+data <- read_excel(here::here("students", "briana_murphy", "FinalCleanedData.xlsx"))
+
+# inspect data
+# head(data)
+
+# z scores and composite scores made easier
+data <- data |> 
+  rename(PS_total_score = PStotal_score) |> 
+  dplyr::mutate(
+    ArtificialAcc_z = scale(ArtificialAcc), 
+    FingerprintAcc_z = scale(FingerprintAcc),
+    VC_General = rowMeans(cbind(ArtificialAcc_z, FingerprintAcc_z))
+  )
+
+# better names
+df <- data |> 
+  janitor::clean_names()
+
+# check if you like
+# head(df)
+
+# linear regression of vc_general on ps total score, adjusting for age and gender
+
+fit_0 <- lm(vc_general  ~ ps_total_score +  age + female, data = df) 
+
+# table: obtain standardised regression coefficients
+parameters::model_parameters(fit_0, standardize = "refit") 
+
+
+# graph
+predicted_fit_0 <- predict_response(fit_0, terms = "ps_total_score")
+
+
+# plots response
+p <- plot( 
+  predicted_fit_0, 
+  dot_alpha = 0.35,
+  show_data = TRUE,
+  jitter = .05
+  )  +  scale_y_continuous(limits = c(-2,2)) # set as desired
+
+p
+```
+
+```{r}
+#| label: fig-1_1
+#| fig-cap: "Graph of Results"
+#| eval: true
+#| include: true
+#| echo: false
+#| fig-width: 10
+#| fig-height: 12
+
+
+# plot, see 'ggeffects' documentation for further interest
+p + labs(
+    x = "Perceptual Speed",
+    y = "Visual Comparison General",
+    title = "Predicted Values of Visual Comparison General by Perceptual Speed"
+  )
+
+
+```
+
+
+
