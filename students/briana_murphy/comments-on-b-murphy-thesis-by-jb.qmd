@@ -46,9 +46,12 @@ csl: /Users/joseph/GIT/templates/csl/apa-7.csl
 
 This study examines the relationship between perceptual speed and visual comparison ability, using a sample of 122 participants who completed a perceptual speed task and two visual comparison tasks. The research found a significant positive correlation between perceptual speed and visual comparison performance, which remained reliable after adjusting for age. 
 
-Here, I evaluate the study's strengths and offer a few suggestions for improvement.
+Here, I evaluate the study's strengths and offer a few suggestions.
 
-## Detailed Evaluation
+## Overall Mark: 84.5  $\approx$ A
+
+
+## Evaluation
 
 ### Abstract and Title (4.5/5)
 
@@ -58,104 +61,101 @@ The abstract is well-structured and provides a concise overview of the study's p
 
 ### Introduction (20/25)
 
-**Strengths**:
+**Strengths**
+
 - Clear justification for the research topic
 - Demonstrates a strong rationale based on relevant literature and theory
 - Evidence of critical evaluation and synthesis of background information
-- Effective examination of Varga and Hamburger's (2014) tri-dimensional model
+- Effective examination of Varga and Hamburger's (2014) tri-dimensional model.
 
-**Areas for Improvement**:
-- Could further emphasise the theoretical implications of finding (or not finding) similarities between perceptual speed and visual comparison tasks
-- More explicit discussion of how this study fits into the broader research context
+**Areas for Improvement**
+
+- Could further emphasise the theoretical implications of finding (or not finding) similarities between perceptual speed and visual comparison tasks.
+- More explicit discussion of how this study fits into the broader research context.
 
 ### Method (17/20)
 
-**Strengths**:
-- Design, data, and R scripts available on OSF
-- Inclusion of power analysis
-- Clear visual aids for describing the design
+**Strengths**
 
-**Areas for Improvement**:
+- Design, data, and R scripts available on OSF.
+- Inclusion of power analysis.
+- Clear visual aids for describing the design.
+
+**Areas for Improvement**
+
 - Pre-register future studies on OSF
-- Clarify the rationale for choosing r = .3 in the power analysis
-- Reconsider the timing of the intrinsic motivation scale
-- Be cautious about excluding participants after data collection
-- Strengthen the rationale for using 30-second trials over 20-second trials
-- Correct the mischaracterisation of the study as a "within-subject design"
+- Clarify the rationale for choosing r = .3 in the power analysis?
+- Reconsider the timing of the intrinsic motivation scale because performance on the tasks might affect motivation.
+- Likewise, be cautious about excluding participants after data collection (see [@bulbulia_2024_experiments])
+- Strengthen the rationale for using 30-second trials over 20-second trials. The motivation for the 20-second trial is unconvincing. The normality assumption applies to the *residuals* of a fitted model.  Had you fit a non-linear model, you might have have satisfied this assumption.  What would a 20-second trial have revealed?  Generally, what would a non-linear model would imply for the relationship between perceptual speed and visual comparison? 
+- Correct the mis-characterisation of the study as a 'within-subject design' -- there's no experiment here.
 
-### Results (18/20)
+### Results (17/20)
 
-**Strengths**:
+**Strengths**
+
 - Appropriate analytic strategy
 - Clear and accurate presentation of results
-- Competent data analysis
+- Competent data analysis.
 
-**Areas for Improvement**:
-- Include raw data and full data with excluded participants
+**Areas for Improvement**
+
+- Include raw data and full data with all information for excluded participants
 - Provide scripts used for data cleaning, with documentation for column names
 - Include the 20-second and 30-second trial data from the pilot study
-- Add confidence intervals to your analyses
+- Add confidence intervals to your analyses. I give some code below to show you how. 
+
+
+
 
 ### Discussion (17/20)
 
-**Strengths**:
+**Strengths**
+
 - Effectively relates results to previous research
 - Explores the meaning of findings
 - Well-considered limitations
 - Logical future research directions
 
-**Areas for Improvement**:
+**Areas for Improvement**
+
 - Further clarify the correlational nature of the findings and its limitations in understanding causality
-- Reconsider the speculative argument about hiring practices in forensic analysis
-- Provide a more nuanced discussion of how perceptual speed might interact with other factors in professional settings
+- Reconsider the speculative argument about hiring practices in forensic analysis. Specifically this argument on p.19 is unconvincing:
+
+> *Forensic experts rendering "match" or "onmatch" judgments in court can have significant implications. Therefore, selecting individuals who exhibit a natural aptitude in visual comparison and its related cognitive mechanisms (i.e., perceptual speed) could boost overall professional performance and reduce costly errors. If faster perceptual speed indeed enables individuals to extract additional information from stimuli, subsequently enhancing visual comparison performance, then prioritising this trait during the hiring process could allow for more accurate and reliable outcomes in fields like forensic analysis.*
+
+The argument assumes that faster perceptual speed directly leads to better performance in forensic analysis however this ignores other critical skills and traits necessary for accurate forensic analysis. To my ear, this speculation detracts a little from your work because it overreaches.
+
+
 
 ### Formatting, Clarity & Referencing (9/10)
 
-**Strengths**:
+**Strengths**
+
 - Adheres to APA 7th edition formatting
 - Writing is clear
 - Appropriate use of references and citations
 
-**Areas for Improvement**:
+**Areas for Improvement**
+
 - None noted
-
-
-## Overall Mark: 85.5
 
 ## Overall Assessment
 
 This honours project demonstrates strong research skills, clear writing, and a solid understanding of the topic. You have effectively conducted and reported a meaningful study on visual comparison and perceptual speed. The main areas for improvement lie in:
 
-1. More careful interpretation of correlational findings;
-2. Strengthening methodological decisions and their rationales;
-3. Providing more comprehensive data and analysis scripts;
+1. More careful interpretation of correlational findings
+2. Strengthening methodological decisions and their rationales
+3. Providing more comprehensive data and analysis scripts.
 
-These improvements would further enhance what is already a commendable piece of research. Your work contributes valuable insights to the understanding of perceptual speed and visual comparison ability and sets a strong foundation for future research in this area.
+These improvements would further enhance what is already a commendable piece of research. Your work contributes valuable insights to the understanding of perceptual speed and visual comparison ability suggests intriguing horizons for future research.
 
-## Specific Feedback on p.19 Argument
+{{< pagebreak >}}
 
-p.19 This argument is unconvincing:
+## Some Code
 
-> Forensic experts rendering "match" or "onmatch" judgments in court can have significant implications. Therefore, selecting individuals who exhibit a natural aptitude in visual comparison and its related cognitive mechanisms (i.e., perceptual speed) could boost overall professional performance and reduce costly errors. If faster perceptual speed indeed enables individuals to extract additional information from stimuli, subsequently enhancing visual comparison performance, then prioritising this trait during the hiring process could allow for more accurate and reliable outcomes in fields like forensic analysis.
-
-The argument presented has several limitations:
-
-1. **Lack of Evidence**:
-
-   - The argument assumes that faster perceptual speed directly leads to better performance in forensic analysis without providing concrete data or studies to support this claim.
-
-2. **Overgeneralisation**:
-
-   - It overgeneralises the relationship between perceptual speed and job performance, ignoring other critical skills and traits necessary for accurate forensic analysis.
-   
-   - Forensic analysis involves various tasks and cognitive processes beyond just perceptual speed. The argument oversimplifies the complexity of these tasks and the factors contributing to overall performance.
-   
-   - It does not address how perceptual speed can be reliably measured and integrated into the hiring process, or whether this single trait should outweigh other qualifications and experiences.
-
-Overall, while the observation about perceptual speed is intriguing, to my ear, this speculation detracts from your work because it overreaches.
-
-
-Code for obtaining confidence intervals (and to simply your life). Again please provide clear definitions of your variables in your work. 
+Code for obtaining confidence intervals (and to simply your life). 
+Again please provide clear definitions of your variables in your work. 
 
 ```{r}
 #| label: analysis
@@ -197,13 +197,15 @@ df <- data |>
 # head(df)
 
 # linear regression of vc_general on ps total score, adjusting for age and gender
-
 fit_0 <- lm(vc_general  ~ ps_total_score +  age + female, data = df) 
 
 # table: obtain standardised regression coefficients
-parameters::model_parameters(fit_0, standardize = "refit") 
+parameters::model_parameters(fit_0, standardize = "refit")
+```
 
+Next we make a graph:
 
+```{r}
 # graph
 predicted_fit_0 <- predict_response(fit_0, terms = "ps_total_score")
 
@@ -216,8 +218,8 @@ p <- plot(
   jitter = .05
   )  +  scale_y_continuous(limits = c(-2,2)) # set as desired
 
-p
 ```
+
 
 ```{r}
 #| label: fig-1_1
@@ -238,6 +240,7 @@ p + labs(
 
 
 ```
+{{< pagebreak >}}
 
-
+## References {.appendix}
 

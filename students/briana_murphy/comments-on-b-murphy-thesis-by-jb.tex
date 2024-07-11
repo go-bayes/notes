@@ -130,6 +130,39 @@
 \makeatletter
 \def\fps@figure{htbp}
 \makeatother
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  % set entry spacing
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 
 \input{/Users/joseph/GIT/latex/latex-for-quarto.tex}
 \makeatletter
@@ -217,10 +250,12 @@ found a significant positive correlation between perceptual speed and
 visual comparison performance, which remained reliable after adjusting
 for age.
 
-Here, I evaluate the study's strengths and offer a few suggestions for
-improvement.
+Here, I evaluate the study's strengths and offer a few suggestions.
 
-\subsection{Detailed Evaluation}\label{detailed-evaluation}
+\subsection{\texorpdfstring{Overall Mark: 84.5 \(\approx\)
+A}{Overall Mark: 84.5 \textbackslash approx A}}\label{overall-mark-84.5-approx-a}
+
+\subsection{Evaluation}\label{evaluation}
 
 \subsubsection{Abstract and Title
 (4.5/5)}\label{abstract-and-title-4.55}
@@ -240,62 +275,178 @@ study, it would be more accurate to describe it as examining the
 
 \subsubsection{Introduction (20/25)}\label{introduction-2025}
 
-\textbf{Strengths}: - Clear justification for the research topic -
-Demonstrates a strong rationale based on relevant literature and theory
-- Evidence of critical evaluation and synthesis of background
-information - Effective examination of Varga and Hamburger's (2014)
-tri-dimensional model
+\textbf{Strengths}
 
-\textbf{Areas for Improvement}: - Could further emphasise the
-theoretical implications of finding (or not finding) similarities
-between perceptual speed and visual comparison tasks - More explicit
-discussion of how this study fits into the broader research context
+\begin{itemize}
+\tightlist
+\item
+  Clear justification for the research topic
+\item
+  Demonstrates a strong rationale based on relevant literature and
+  theory
+\item
+  Evidence of critical evaluation and synthesis of background
+  information
+\item
+  Effective examination of Varga and Hamburger's (2014) tri-dimensional
+  model.
+\end{itemize}
+
+\textbf{Areas for Improvement}
+
+\begin{itemize}
+\tightlist
+\item
+  Could further emphasise the theoretical implications of finding (or
+  not finding) similarities between perceptual speed and visual
+  comparison tasks.
+\item
+  More explicit discussion of how this study fits into the broader
+  research context.
+\end{itemize}
 
 \subsubsection{Method (17/20)}\label{method-1720}
 
-\textbf{Strengths}: - Design, data, and R scripts available on OSF -
-Inclusion of power analysis - Clear visual aids for describing the
-design
+\textbf{Strengths}
 
-\textbf{Areas for Improvement}: - Pre-register future studies on OSF -
-Clarify the rationale for choosing r = .3 in the power analysis -
-Reconsider the timing of the intrinsic motivation scale - Be cautious
-about excluding participants after data collection - Strengthen the
-rationale for using 30-second trials over 20-second trials - Correct the
-mischaracterisation of the study as a ``within-subject design''
+\begin{itemize}
+\tightlist
+\item
+  Design, data, and R scripts available on OSF.
+\item
+  Inclusion of power analysis.
+\item
+  Clear visual aids for describing the design.
+\end{itemize}
 
-\subsubsection{Results (18/20)}\label{results-1820}
+\textbf{Areas for Improvement}
 
-\textbf{Strengths}: - Appropriate analytic strategy - Clear and accurate
-presentation of results - Competent data analysis
+\begin{itemize}
+\tightlist
+\item
+  Pre-register future studies on OSF
+\item
+  Clarify the rationale for choosing r = .3 in the power analysis?
+\item
+  Reconsider the timing of the intrinsic motivation scale because
+  performance on the tasks might affect motivation.
+\item
+  Likewise, be cautious about excluding participants after data
+  collection (see (\citeproc{ref-bulbulia_2024_experiments}{Bulbulia,
+  2024}))
+\item
+  Strengthen the rationale for using 30-second trials over 20-second
+  trials. The motivation for the 20-second trial is unconvincing. The
+  normality assumption applies to the \emph{residuals} of a fitted
+  model. Had you fit a non-linear model, you might have have satisfied
+  this assumption. What would a 20-second trial have revealed?
+  Generally, what would a non-linear model would imply for the
+  relationship between perceptual speed and visual comparison?
+\item
+  Correct the mis-characterisation of the study as a `within-subject
+  design' -- there's no experiment here.
+\end{itemize}
 
-\textbf{Areas for Improvement}: - Include raw data and full data with
-excluded participants - Provide scripts used for data cleaning, with
-documentation for column names - Include the 20-second and 30-second
-trial data from the pilot study - Add confidence intervals to your
-analyses
+\subsubsection{Results (17/20)}\label{results-1720}
+
+\textbf{Strengths}
+
+\begin{itemize}
+\tightlist
+\item
+  Appropriate analytic strategy
+\item
+  Clear and accurate presentation of results
+\item
+  Competent data analysis.
+\end{itemize}
+
+\textbf{Areas for Improvement}
+
+\begin{itemize}
+\tightlist
+\item
+  Include raw data and full data with all information for excluded
+  participants
+\item
+  Provide scripts used for data cleaning, with documentation for column
+  names
+\item
+  Include the 20-second and 30-second trial data from the pilot study
+\item
+  Add confidence intervals to your analyses. I give some code below to
+  show you how.
+\end{itemize}
 
 \subsubsection{Discussion (17/20)}\label{discussion-1720}
 
-\textbf{Strengths}: - Effectively relates results to previous research -
-Explores the meaning of findings - Well-considered limitations - Logical
-future research directions
+\textbf{Strengths}
 
-\textbf{Areas for Improvement}: - Further clarify the correlational
-nature of the findings and its limitations in understanding causality -
-Reconsider the speculative argument about hiring practices in forensic
-analysis - Provide a more nuanced discussion of how perceptual speed
-might interact with other factors in professional settings
+\begin{itemize}
+\tightlist
+\item
+  Effectively relates results to previous research
+\item
+  Explores the meaning of findings
+\item
+  Well-considered limitations
+\item
+  Logical future research directions
+\end{itemize}
+
+\textbf{Areas for Improvement}
+
+\begin{itemize}
+\tightlist
+\item
+  Further clarify the correlational nature of the findings and its
+  limitations in understanding causality
+\item
+  Reconsider the speculative argument about hiring practices in forensic
+  analysis. Specifically this argument on p.19 is unconvincing:
+\end{itemize}
+
+\begin{quote}
+\emph{Forensic experts rendering ``match'' or ``onmatch'' judgments in
+court can have significant implications. Therefore, selecting
+individuals who exhibit a natural aptitude in visual comparison and its
+related cognitive mechanisms (i.e., perceptual speed) could boost
+overall professional performance and reduce costly errors. If faster
+perceptual speed indeed enables individuals to extract additional
+information from stimuli, subsequently enhancing visual comparison
+performance, then prioritising this trait during the hiring process
+could allow for more accurate and reliable outcomes in fields like
+forensic analysis.}
+\end{quote}
+
+The argument assumes that faster perceptual speed directly leads to
+better performance in forensic analysis however this ignores other
+critical skills and traits necessary for accurate forensic analysis. To
+my ear, this speculation detracts a little from your work because it
+overreaches.
 
 \subsubsection{Formatting, Clarity \& Referencing
 (9/10)}\label{formatting-clarity-referencing-910}
 
-\textbf{Strengths}: - Adheres to APA 7th edition formatting - Writing is
-clear - Appropriate use of references and citations
+\textbf{Strengths}
 
-\textbf{Areas for Improvement}: - None noted
+\begin{itemize}
+\tightlist
+\item
+  Adheres to APA 7th edition formatting
+\item
+  Writing is clear
+\item
+  Appropriate use of references and citations
+\end{itemize}
 
-\subsection{Overall Mark: 85.5}\label{overall-mark-85.5}
+\textbf{Areas for Improvement}
+
+\begin{itemize}
+\tightlist
+\item
+  None noted
+\end{itemize}
 
 \subsection{Overall Assessment}\label{overall-assessment}
 
@@ -308,71 +459,21 @@ speed. The main areas for improvement lie in:
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  More careful interpretation of correlational findings;
+  More careful interpretation of correlational findings
 \item
-  Strengthening methodological decisions and their rationales;
+  Strengthening methodological decisions and their rationales
 \item
-  Providing more comprehensive data and analysis scripts;
+  Providing more comprehensive data and analysis scripts.
 \end{enumerate}
 
 These improvements would further enhance what is already a commendable
 piece of research. Your work contributes valuable insights to the
-understanding of perceptual speed and visual comparison ability and sets
-a strong foundation for future research in this area.
+understanding of perceptual speed and visual comparison ability suggests
+intriguing horizons for future research.
 
-\subsection{Specific Feedback on p.19
-Argument}\label{specific-feedback-on-p.19-argument}
+\newpage{}
 
-p.19 This argument is unconvincing:
-
-\begin{quote}
-Forensic experts rendering ``match'' or ``onmatch'' judgments in court
-can have significant implications. Therefore, selecting individuals who
-exhibit a natural aptitude in visual comparison and its related
-cognitive mechanisms (i.e., perceptual speed) could boost overall
-professional performance and reduce costly errors. If faster perceptual
-speed indeed enables individuals to extract additional information from
-stimuli, subsequently enhancing visual comparison performance, then
-prioritising this trait during the hiring process could allow for more
-accurate and reliable outcomes in fields like forensic analysis.
-\end{quote}
-
-The argument presented has several limitations:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\item
-  \textbf{Lack of Evidence}:
-
-  \begin{itemize}
-  \tightlist
-  \item
-    The argument assumes that faster perceptual speed directly leads to
-    better performance in forensic analysis without providing concrete
-    data or studies to support this claim.
-  \end{itemize}
-\item
-  \textbf{Overgeneralisation}:
-
-  \begin{itemize}
-  \item
-    It overgeneralises the relationship between perceptual speed and job
-    performance, ignoring other critical skills and traits necessary for
-    accurate forensic analysis.
-  \item
-    Forensic analysis involves various tasks and cognitive processes
-    beyond just perceptual speed. The argument oversimplifies the
-    complexity of these tasks and the factors contributing to overall
-    performance.
-  \item
-    It does not address how perceptual speed can be reliably measured
-    and integrated into the hiring process, or whether this single trait
-    should outweigh other qualifications and experiences.
-  \end{itemize}
-\end{enumerate}
-
-Overall, while the observation about perceptual speed is intriguing, to
-my ear, this speculation detracts from your work because it overreaches.
+\subsection{Some Code}\label{some-code}
 
 Code for obtaining confidence intervals (and to simply your life). Again
 please provide clear definitions of your variables in your work.
@@ -413,11 +514,10 @@ please provide clear definitions of your variables in your work.
 \CommentTok{\# head(df)}
 
 \CommentTok{\# linear regression of vc\_general on ps total score, adjusting for age and gender}
-
 \NormalTok{fit\_0 }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(vc\_general  }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ps\_total\_score }\SpecialCharTok{+}\NormalTok{  age }\SpecialCharTok{+}\NormalTok{ female, }\AttributeTok{data =}\NormalTok{ df) }
 
 \CommentTok{\# table: obtain standardised regression coefficients}
-\NormalTok{parameters}\SpecialCharTok{::}\FunctionTok{model\_parameters}\NormalTok{(fit\_0, }\AttributeTok{standardize =} \StringTok{"refit"}\NormalTok{) }
+\NormalTok{parameters}\SpecialCharTok{::}\FunctionTok{model\_parameters}\NormalTok{(fit\_0, }\AttributeTok{standardize =} \StringTok{"refit"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -429,6 +529,8 @@ ps total score |        0.23 | 0.09 | [ 0.05, 0.42] |     2.46 | 0.015
 age            |       -0.08 | 0.09 | [-0.27, 0.11] |    -0.83 | 0.409 
 female         |        0.07 | 0.09 | [-0.12, 0.25] |     0.73 | 0.469 
 \end{verbatim}
+
+Next we make a graph:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -443,12 +545,8 @@ female         |        0.07 | 0.09 | [-0.12, 0.25] |     0.73 | 0.469
   \AttributeTok{show\_data =} \ConstantTok{TRUE}\NormalTok{,}
   \AttributeTok{jitter =}\NormalTok{ .}\DecValTok{05}
 \NormalTok{  )  }\SpecialCharTok{+}  \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{limits =} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{)) }\CommentTok{\# set as desired}
-
-\NormalTok{p}
 \end{Highlighting}
 \end{Shaded}
-
-\includegraphics{comments-on-b-murphy-thesis-by-jb_files/figure-pdf/analysis-1.pdf}
 
 \begin{figure}
 
@@ -461,6 +559,20 @@ female         |        0.07 | 0.09 | [-0.12, 0.25] |     0.73 | 0.469
 \caption{\label{fig-1_1}Graph of Results}
 
 \end{figure}%
+
+\newpage{}
+
+\subsection*{References}\label{references}
+\addcontentsline{toc}{subsection}{References}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{1}{0}
+\bibitem[\citeproctext]{ref-bulbulia_2024_experiments}
+Bulbulia, J. A. (2024). Methods in causal inference part 4: Confounding
+in experiments. \emph{Evolutionary Human Sciences}, \emph{6}.
+\url{https://osf.io/preprints/psyarxiv/6rnj5}
+
+\end{CSLReferences}
 
 
 
