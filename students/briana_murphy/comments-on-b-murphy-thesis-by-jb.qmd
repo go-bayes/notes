@@ -226,7 +226,7 @@ p <- plot(
 #| fig-cap: "Graph of Results"
 #| eval: true
 #| include: true
-#| echo: false
+#| echo: true
 #| fig-width: 10
 #| fig-height: 12
 
