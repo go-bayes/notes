@@ -40,8 +40,6 @@ set.seed(123)
 # waves_1_2_4 = was participant in all 3 waves that we use in our study? Note that attrition was not linear. Some participants were not present in W2 but then they were in W4.
 # caregiver1 = informs about the identity of caregiver; they are mostly parents  # JB when? 
 
- 
- 
 # here I respond to your questions
 # I am using the dataset that you included in this thread.  I  think that we have dropped the missing data from waves that are > time_1. 
 # This reduces efficiency and may lead to bias if there is a systematic relationship between missingness and the covariates/treatment and coverates x treatment.
